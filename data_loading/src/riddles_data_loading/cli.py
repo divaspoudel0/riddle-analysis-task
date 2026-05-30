@@ -30,6 +30,7 @@ from riddles_data_loading.reports import (
     write_reports,
     write_submission_jsonl,
 )
+from riddles_data_loading.contributor_feedback import write_contributor_feedback
 from riddles_data_loading.validation import validate_query_sheet_against_reference
 
 
@@ -184,7 +185,8 @@ def run(args: argparse.Namespace) -> int:
         summary_rows.append(summarize_result(workbook_path, result))
 
     csv_path, json_path = write_reports(full_results, summary_rows, args.report_dir)
-    _print_run_summary(summary_rows, csv_path, json_path, jsonl_dir, passed_jsonl_dir)
+    feedback_path = write_contributor_feedback(summary_rows, args.report_dir)
+    _print_run_summary(summary_rows, csv_path, json_path, feedback_path, jsonl_dir, passed_jsonl_dir)
 
     return 0 if all(row["passed"] for row in summary_rows) else 1
 
@@ -241,6 +243,7 @@ def _print_run_summary(
     summary_rows: list[dict[str, Any]],
     csv_path: Path,
     json_path: Path,
+    feedback_path: Path,
     jsonl_dir: Path,
     passed_jsonl_dir: Path,
 ) -> None:
@@ -251,6 +254,7 @@ def _print_run_summary(
     print(f"Validated {total} workbook(s): {passed} passed, {failed} failed.")
     print(f"Summary CSV: {csv_path}")
     print(f"Full JSON: {json_path}")
+    print(f"Contributor feedback CSV: {feedback_path}")
     print(f"Submission JSONL directory: {jsonl_dir}")
     print(f"Passed submission JSONL directory: {passed_jsonl_dir}")
 

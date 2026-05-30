@@ -20,6 +20,7 @@ then writes:
 
 - `reports/validation_summary.csv`
 - `reports/validation_results.json`
+- `reports/contributor_feedback.csv` (human-readable feedback per submission)
 - `reports/jsonl/*.jsonl`
 - `reports/passed_jsonl/*.jsonl`
 
