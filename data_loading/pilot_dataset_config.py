@@ -1,0 +1,179 @@
+"""Configuration for building the pilot dataset.
+
+Centralizes lookups and mappings so they can be edited without touching
+the build logic. Add new languages, schema fields, or topic rules here.
+"""
+
+from __future__ import annotations
+
+# ---------------------------------------------------------------------------
+# Language codes
+# ---------------------------------------------------------------------------
+# Maps community language token (lowercased, derived from filename) to
+# ISO 639-2/639-3 code. Verified by inspecting actual riddle source content
+# where dialects were ambiguous (Arabic varieties, Cantonese, Mongondow).
+#
+# Notes:
+#   - Arabic dialects use 639-3 codes (arz, apd, apc, ary) since 639-2
+#     only has the macro-language "ara". This is the standard practice for
+#     dialect-specific benchmarks.
+#   - "mog" (Mongondow) only exists in 639-3.
+#   - "yue" (Cantonese) is 639-3; sits inside the 639-2 macro-language "chi".
+
+LANGUAGE_TO_ISO_639_2 = {
+    "belarusian": "bel",
+    "bengali": "ben",
+    "bugisnese": "bug",
+    "bulgarian": "bul",
+    "cantonese": "yue",            # verified by source inspection
+    "chinese": "zho",
+    "dutch": "nld",
+    "egyptian": "arz",             # Egyptian Arabic, verified
+    "english": "eng",
+    "french": "fra",
+    "german": "deu",
+    "hungarian": "hun",
+    "indonesian": "ind",
+    "italian": "ita",
+    "kannada": "kan",
+    "luganda": "lug",
+    "lumasaba": "myx",             # Lumasaba (Bukusu/Bagisu)
+    "lusoga": "xog",
+    "malayalam": "mal",
+    "marathi": "mar",
+    "mongondow": "mog",            # Bolaang Mongondow, verified
+    "moroccan": "ary",             # Moroccan Arabic / Darija, verified
+    "nepali": "nep",
+    "polish": "pol",
+    "runyankore": "nyn",
+    "russian": "rus",
+    "spanish": "spa",
+    "sudanese": "apd",             # Sudanese Arabic, verified (NOT Sundanese)
+    "swahili": "swa",
+    "syrian": "apc",               # North Levantine Arabic, verified
+    "tamil": "tam",
+    "telugu": "tel",
+    "thai": "tha",
+    "urdu": "urd",
+    "uzbek": "uzb",
+}
+
+# Expected Unicode script family for each ISO code. Used by the script-
+# detection sanity check (Option A) to catch mismatches between the
+# mapping and actual riddle content. Languages not listed default to
+# "latin".
+ISO_TO_SCRIPT_FAMILY = {
+    # Arabic-script
+    "arz": "arabic",
+    "apd": "arabic",
+    "apc": "arabic",
+    "ary": "arabic",
+    "urd": "arabic",
+    # Han (Chinese characters)
+    "yue": "han",
+    "zho": "han",
+    # Cyrillic
+    "bel": "cyrillic",
+    "bul": "cyrillic",
+    "rus": "cyrillic",
+    # Brahmic family — each Indic script gets its own family
+    "ben": "bengali",
+    "hin": "devanagari",
+    "kan": "kannada",
+    "mal": "malayalam",
+    "mar": "devanagari",
+    "nep": "devanagari",
+    "tam": "tamil",
+    "tel": "telugu",
+    # Thai
+    "tha": "thai",
+    # Latin-script (everything else defaults to this)
+}
+
+DEFAULT_SCRIPT_FAMILY = "latin"
+
+
+# ---------------------------------------------------------------------------
+# Schema mapping
+# ---------------------------------------------------------------------------
+# Maps template column names (what contributors fill in) to canonical
+# schema field names (what the Analysis team consumes). Source columns
+# not listed here are preserved under the nested `raw_template_fields`
+# object in v1 and reviewed before being dropped or added to canonical
+# in v2.
+
+TEMPLATE_TO_CANONICAL = {
+    "Number": "source_row_number",
+    "Topic": "topic",
+    "Author": "author_credit",
+    "Riddle (Original Language)": "riddle_original",
+    "Riddle (English Translation)": "riddle_english",
+    "English Translation": "riddle_english",      # variant some files use
+    "Hints (Optional)": "riddle_hint",
+    "Comments (Optional), e.g. about region/generation-specificity": "riddle_note",
+    "Reference Answer (Original)": "reference_answer_original",
+    "Reference Answer (English)": "reference_answer_english",
+    "Human Validator Name": "human_validator_name",
+    "Human Answer (Original)": "human_answer_original",
+    "Rating of Human Answer (0-2)": "human_answer_score",
+    "Comment (Optional) about evaluation of human answer": "human_answer_comment",
+}
+
+# Order of fields in the output JSONL. Anything not listed appears at
+# the end in insertion order. Keep canonical schema fields first.
+SCHEMA_FIELD_ORDER = [
+    "instance_result_id",
+    "riddle_id",
+    "created_at",
+    "source_row_number",
+    "language",
+    "language_secondary",
+    "community",
+    "topic",
+    "is_wildcard",
+    "riddle_original",
+    "riddle_english",
+    "reference_answer_original",
+    "reference_answer_english",
+    "riddle_hint",
+    "riddle_note",
+    "author_credit",
+    "human_validator_name",
+    "human_answer_original",
+    "human_answer_score",
+    "human_answer_comment",
+    "row_status",
+    "raw_template_fields",
+]
+
+
+# ---------------------------------------------------------------------------
+# Topic rules
+# ---------------------------------------------------------------------------
+# The 8 standard topics every community must cover. Anything else is
+# treated as a wildcard (community-specific choice).
+
+STANDARD_TOPICS = {
+    "Politics",
+    "History",
+    "Geography",
+    "Arts",
+    "Sports",
+    "National Heritage",
+    "Kid's World",
+    "Everyday Life",
+}
+
+
+# ---------------------------------------------------------------------------
+# Community -> language mapping
+# ---------------------------------------------------------------------------
+# Some submissions cover two languages (e.g. Luganda&Lumasaba_Uganda).
+# Map community filename token to (primary, secondary) language tokens.
+# Secondary is None for single-language communities. Both tokens must
+# exist in LANGUAGE_TO_ISO_639_2.
+
+COMPOUND_COMMUNITIES = {
+    "luganda&lumasaba": ("luganda", "lumasaba"),
+    "kenya_swahili": ("swahili", None),    # filename uses country+language
+}
