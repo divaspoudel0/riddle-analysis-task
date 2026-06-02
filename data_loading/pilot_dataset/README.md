@@ -1,6 +1,6 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-02T03:00:39.496870+00:00
+Generated: 2026-06-02T16:46:52.650181+00:00
 Total submissions: 26
 Total riddles: 2600
 
@@ -20,8 +20,7 @@ Each line is one riddle as a JSON object. Fields:
 | `riddle_id` | string | Stable structured ID: `{community}_{topic}_{number}` |
 | `created_at` | ISO 8601 | When this dataset was built |
 | `source_row_number` | int | Original row number in contributor's spreadsheet |
-| `language` | string (ISO 639-2/3) | Primary language code |
-| `language_secondary` | string or null | For two-language communities (e.g. Luganda&Lumasaba) |
+| `language` | string (ISO 639-2/3) | Language code, per project metadata spec |
 | `community` | string | Community token (e.g. `tamil_india`) |
 | `topic` | string | Topic name as submitted |
 | `is_wildcard` | bool | True if topic is community-specific, not one of the 8 standard topics |
@@ -99,9 +98,11 @@ Each line is one riddle as a JSON object. Fields:
 2. **`human_answer_score` field**: kept as raw string label (e.g.
    `"2: correct"`) for v1 because contributor files use inconsistent
    formats. Should be parsed to int 0/1/2 in v2.
-3. **Compound communities**: `Luganda&Lumasaba_Uganda` extends the
-   canonical schema with `language_secondary`. Confirm this is the
-   right representation with Analysis team.
+3. **Scoring scale mismatch**: contributor template uses a 0-2 scale
+   for `Rating of Human Answer`, while the project metadata schema
+   and aggregate metrics use a 0-3 scale (0=hallucination, 1=honest
+   uncertainty, 2=partial, 3=correct). Needs reconciliation before
+   benchmarking starts.
 
 ## How to rebuild
 
@@ -117,5 +118,5 @@ uv run python build_pilot_dataset.py                  # consolidate
   compatibility. Analysis team consumes canonical fields; data preserved
   for review.
 - **v2** (planned): drops `raw_template_fields` after Analysis confirms
-  the mapping is complete. May parse `human_answer_score` to int. May
-  fold compound-language representation differently.
+  the mapping is complete. May parse `human_answer_score` to int and
+  reconcile the 0-2 vs 0-3 scoring scale mismatch.

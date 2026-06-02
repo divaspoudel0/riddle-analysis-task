@@ -163,17 +163,3 @@ STANDARD_TOPICS = {
     "Kid's World",
     "Everyday Life",
 }
-
-
-# ---------------------------------------------------------------------------
-# Community -> language mapping
-# ---------------------------------------------------------------------------
-# Some submissions cover two languages (e.g. Luganda&Lumasaba_Uganda).
-# Map community filename token to (primary, secondary) language tokens.
-# Secondary is None for single-language communities. Both tokens must
-# exist in LANGUAGE_TO_ISO_639_2.
-
-COMPOUND_COMMUNITIES = {
-    "luganda&lumasaba": ("luganda", "lumasaba"),
-    "kenya_swahili": ("swahili", None),    # filename uses country+language
-}
