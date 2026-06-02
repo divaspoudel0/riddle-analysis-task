@@ -244,7 +244,7 @@ def script_check(records: list[dict], community: str, primary_iso: str) -> str |
         return None  # short or unusual content; don't false-alarm
 
     return (
-        f"  ⚠️  {community}: expected {expected!r} script for ISO {primary_iso!r}, "
+        f"    {community}: expected {expected!r} script for ISO {primary_iso!r}, "
         f"but riddles look like {detected!r}. Verify language code in config."
     )
 
@@ -274,7 +274,7 @@ def main() -> None:
         try:
             primary_iso, secondary_iso = map_language(community)
         except ValueError as exc:
-            warnings.append(f"  ⚠️  {community}: {exc}")
+            warnings.append(f"   {community}: {exc}")
             continue
 
         # Read raw records
