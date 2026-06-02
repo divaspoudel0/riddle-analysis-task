@@ -127,7 +127,6 @@ SCHEMA_FIELD_ORDER = [
     "created_at",
     "source_row_number",
     "language",
-    "language_secondary",
     "community",
     "topic",
     "is_wildcard",
