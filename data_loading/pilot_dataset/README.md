@@ -1,8 +1,8 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-02T16:46:52.650181+00:00
-Total submissions: 26
-Total riddles: 2600
+Generated: 2026-06-06T14:34:45.067386+00:00
+Total submissions: 37
+Total riddles: 3700
 
 ## Purpose
 
@@ -42,32 +42,43 @@ Each line is one riddle as a JSON object. Fields:
 
 | Community | Riddles |
 |---|---|
+| `arabic_egypt` | 100 |
+| `arabic_morocco` | 100 |
+| `arabic_sudan` | 100 |
+| `arabic_syria` | 100 |
 | `belarusian_belarus` | 100 |
 | `bengali_bangladesh` | 100 |
 | `bengali_india` | 100 |
 | `bugisnese_indonesia` | 100 |
 | `bulgarian_bulgaria` | 100 |
+| `cantonese_china` | 100 |
 | `chinese_china` | 100 |
 | `dutch_netherlands` | 100 |
-| `egyptian_egypt` | 100 |
 | `english_usa` | 100 |
 | `french_france` | 100 |
 | `german_germany` | 100 |
 | `hungarian_hungary` | 100 |
 | `indonesian_indonesia` | 100 |
 | `italian_italy` | 100 |
+| `konkani_india` | 100 |
+| `luganda_uganda` | 100 |
+| `lumasaba_uganda` | 100 |
 | `malayalam_india` | 100 |
-| `mongondow_mongondownese` | 100 |
-| `moroccan_morocco` | 100 |
+| `mongondow_indonesia` | 100 |
 | `nepali_nepal` | 100 |
+| `persian_iran` | 100 |
 | `polish_poland` | 100 |
+| `portuguese_portugal` | 100 |
 | `russian_russia` | 100 |
-| `sudanese_sudan` | 100 |
-| `syrian_syria` | 100 |
+| `sinhala_sri_lanka` | 100 |
+| `spanish_peru` | 100 |
+| `swahili_kenya` | 100 |
 | `tamil_india` | 100 |
+| `telugu_india` | 100 |
 | `thai_thailand` | 100 |
 | `urdu_pakistan` | 100 |
 | `uzbek_uzbekistan` | 100 |
+| `yoruba_nigeria` | 100 |
 
 ## Design decisions
 
