@@ -114,10 +114,20 @@ def map_language(community: str) -> str:
     """Map community token to a single ISO 639-2/3 code.
 
     Per the project metadata spec, each riddle has exactly one language
-    code. The first underscore-separated token in the community name is
-    the language (e.g. 'tamil_india' -> 'tamil' -> 'tam').
+    code. Lookup strategy:
+      1. Try the full community key (e.g. "arabic_egypt" -> "arz").
+         This is needed for languages whose dialect depends on country
+         (Arabic varieties especially).
+      2. Fall back to the first underscore-separated token
+         (e.g. "tamil_india" -> "tamil" -> "tam"). This is the
+         common case for monolithic languages.
     """
     community_lower = community.lower()
+
+    iso = LANGUAGE_TO_ISO_639_2.get(community_lower)
+    if iso is not None:
+        return iso
+
     first_token = community_lower.split("_")[0]
     iso = LANGUAGE_TO_ISO_639_2.get(first_token)
     if iso is None:

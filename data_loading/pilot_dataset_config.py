@@ -21,14 +21,24 @@ from __future__ import annotations
 #   - "yue" (Cantonese) is 639-3; sits inside the 639-2 macro-language "chi".
 
 LANGUAGE_TO_ISO_639_2 = {
+    # ----- Compound keys (community-specific dialect codes) -----
+    # When a language has dialects that vary by country, we use the full
+    # community key so the right ISO 639-3 dialect code is selected.
+    "arabic_egypt": "arz",         # Egyptian Arabic
+    "arabic_morocco": "ary",       # Moroccan Arabic / Darija
+    "arabic_sudan": "apd",         # Sudanese Arabic (NOT Sundanese)
+    "arabic_syria": "apc",         # North Levantine Arabic
+
+    # ----- Simple keys (first-token lookup) -----
     "belarusian": "bel",
     "bengali": "ben",
+    "brazilian": "por",            # Brazilian Portuguese (no separate 639-3 code)
     "bugisnese": "bug",
     "bulgarian": "bul",
     "cantonese": "yue",            # verified by source inspection
     "chinese": "zho",
     "dutch": "nld",
-    "egyptian": "arz",             # Egyptian Arabic, verified
+    "egyptian": "arz",             # legacy alias; new filenames use arabic_egypt
     "english": "eng",
     "french": "fra",
     "german": "deu",
@@ -36,26 +46,32 @@ LANGUAGE_TO_ISO_639_2 = {
     "indonesian": "ind",
     "italian": "ita",
     "kannada": "kan",
+    "konkani": "kok",
     "luganda": "lug",
     "lumasaba": "myx",             # Lumasaba (Bukusu/Bagisu)
     "lusoga": "xog",
     "malayalam": "mal",
     "marathi": "mar",
     "mongondow": "mog",            # Bolaang Mongondow, verified
-    "moroccan": "ary",             # Moroccan Arabic / Darija, verified
+    "moroccan": "ary",             # legacy alias; new filenames use arabic_morocco
     "nepali": "nep",
+    "persian": "pes",              # Iranian Persian (Western Farsi)
     "polish": "pol",
+    "portuguese": "por",
+    "runyankole": "nyn",           # alt spelling of runyankore
     "runyankore": "nyn",
     "russian": "rus",
+    "sinhala": "sin",
     "spanish": "spa",
-    "sudanese": "apd",             # Sudanese Arabic, verified (NOT Sundanese)
+    "sudanese": "apd",             # legacy alias; new filenames use arabic_sudan
     "swahili": "swa",
-    "syrian": "apc",               # North Levantine Arabic, verified
+    "syrian": "apc",               # legacy alias; new filenames use arabic_syria
     "tamil": "tam",
     "telugu": "tel",
     "thai": "tha",
     "urdu": "urd",
     "uzbek": "uzb",
+    "yoruba": "yor",
 }
 
 # Expected Unicode script family for each ISO code. Used by the script-
@@ -87,6 +103,13 @@ ISO_TO_SCRIPT_FAMILY = {
     "tel": "telugu",
     # Thai
     "tha": "thai",
+    # Iranian Persian (Western Farsi) uses Arabic script
+    "pes": "arabic",
+    # Konkani primarily uses Devanagari (also Kannada/Roman in some regions)
+    "kok": "devanagari",
+    # Sinhala has its own Unicode block; script detector returns "unknown"
+    # for it, so we skip the explicit mapping (no false warnings)
+    # Yoruba uses Latin script with diacritics — covered by DEFAULT_SCRIPT_FAMILY
     # Latin-script (everything else defaults to this)
 }
 
