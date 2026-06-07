@@ -446,11 +446,22 @@ def _validate_topics(
             f"{config.expected_topic_count}; found: {issue_details}"
         )
 
+    if config.require_ten_per_topic:
+        non_missing_topics = [t for t in query_topic_counts.keys() if not _is_missing(t)]
+        expected_distinct = len(config.expected_topics)
+        if len(non_missing_topics) != expected_distinct:
+            blocking_issues.append(
+                f"query_sheet must have exactly {expected_distinct} distinct topics; "
+                f"found {len(non_missing_topics)}: "
+                f"{sorted(non_missing_topics, key=str)}"
+            )
+
     wildcard_summary = _validate_wildcard_replacements_by_topic_set(
         query_sheet,
         query_topic_counts,
         config,
         wildcard_topics,
+        blocking_issues,
         tolerated_issues,
     )
     replacement_topics = wildcard_summary["replacement_topics"]
@@ -485,6 +496,7 @@ def _validate_wildcard_replacements_by_topic_set(
     query_topic_counts: dict[object, int],
     config: ValidationConfig,
     wildcard_topics: set[str],
+    blocking_issues: list[str],
     tolerated_issues: list[str],
 ) -> dict[str, object]:
     standard_topics = {
@@ -513,21 +525,26 @@ def _validate_wildcard_replacements_by_topic_set(
         for row in rows
     ]
 
+    # Per the README, wildcard placeholders must be renamed and there must be
+    # exactly two distinct replacement topics. When the strict topic check is
+    # enabled, these are blocking; otherwise they are recorded as tolerated.
+    target_list = blocking_issues if config.require_ten_per_topic else tolerated_issues
+
     if unresolved_rows:
-        tolerated_issues.append(
+        target_list.append(
             "Wildcard placeholder topic names remain in query_sheet on rows: "
             f"{unresolved_rows}"
         )
 
     if len(replacement_topics) != 2:
-        tolerated_issues.append(
+        target_list.append(
             "Wildcard replacements are inferred from the full set of submitted topics; "
             f"expected 2 non-standard topics, found {len(replacement_topics)}: "
             f"{replacement_topics}"
         )
 
     if missing_standard_topics:
-        tolerated_issues.append(
+        target_list.append(
             f"query_sheet is missing expected standard topics: {missing_standard_topics}"
         )
 
