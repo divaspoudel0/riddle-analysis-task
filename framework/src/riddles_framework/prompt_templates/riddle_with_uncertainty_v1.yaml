@@ -1,0 +1,7 @@
+template_id: riddle_with_uncertainty
+template_version: v1
+recommended_response_format: json
+instruction_text: |
+  Solve the following cultural riddle.
+  Return your answer as a single short phrase.
+  If you genuinely do not know, it is acceptable to say so honestly rather than guess.

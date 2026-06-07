@@ -1,0 +1,50 @@
+runner_name: ana
+
+dataset_path: data_loading/pilot_dataset/pilot_dataset_v1.jsonl
+dataset_version: pilot_dataset_v1
+
+prompt_template_id: riddle_basic
+prompt_template_version: v2
+prompt_language: eng
+riddle_language_presented: source
+is_hint_provided: false
+
+reasoning_mode: null
+search_enabled: false
+response_format: free_form
+batch_mode: false
+
+temperature: null
+max_output_tokens: 128
+seed: null
+
+model_params: {}
+
+cache_enabled: true
+cache_backend: cachesaver
+cache_namespace: multicultural_riddles/pilot_dataset_v1/local_gemma/source_no_hint/v2
+cache_dir: .cache/cachesaver
+
+api_key_env_var: null
+base_url: null
+
+runner_version: v1.0.0
+notes: local transformers example
+strict_capability_check: true
+
+# NOTE: requires `uv sync --extra local` to install torch + transformers.
+# Replace provider_model_name with the actual Hugging Face model id before running.
+model_spec:
+  model_name: gemma-4-31b
+  model_id: local/google__gemma-4-31b
+  provider: local
+  access_pattern: local
+  provider_model_name: google/gemma-4-31b
+  closed_source: false
+  notes: local HF model
+  capabilities:
+    supports_reasoning: false
+    supports_search: false
+    supports_structured_output: false
+    supports_batch: false
+    supports_seed: false
