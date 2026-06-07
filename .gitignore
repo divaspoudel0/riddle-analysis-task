@@ -1,0 +1,4 @@
+.env
+judge/__pycache__/
+judge/*.jsonl
+judge/*.log
