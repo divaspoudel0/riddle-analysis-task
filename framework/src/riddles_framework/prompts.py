@@ -19,7 +19,12 @@ from .schemas import BenchmarkInstance, PromptConfig, PromptTemplate
 #   template_version: v1
 #   instruction_text: |
 #     ...
-#   recommended_response_format: json   # optional
+#   recommended_response_format: json   # optional, informational only
+#
+# Note: recommended_response_format is loaded onto the PromptTemplate dataclass
+# for documentation purposes only. The runtime response_format is always taken
+# from RunConfig.response_format, never from the template. A template can
+# declare what it was designed for, but the run config wins.
 #
 # Contributors add new templates by dropping a new YAML file; no code change.
 
