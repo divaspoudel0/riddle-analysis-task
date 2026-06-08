@@ -464,12 +464,14 @@ def list_registered_adapters() -> list[str]
 **Example registrations (from `cli.py`):**
 
 ```python
-("dummy:local",        lambda spec, cfg: DummyModel(spec))
-("openai:direct_api",  lambda spec, cfg: OpenAIAdapter(spec, cfg))
+("dummy:local",          lambda spec, cfg: DummyModel(spec))
+("openai:direct_api",    lambda spec, cfg: OpenAIAdapter(spec, cfg))
 ("anthropic:direct_api", lambda spec, cfg: AnthropicAdapter(spec, cfg))
-("google:direct_api", lambda spec, cfg: GeminiAdapter(spec, cfg))
-("qwen:openrouter",    lambda spec, cfg: OpenRouterAdapter(spec, cfg))
-("local:local",        lambda spec, cfg: LocalTransformersAdapter(spec, cfg))
+("google:direct_api",    lambda spec, cfg: GeminiAdapter(spec, cfg))
+("qwen:openrouter",      lambda spec, cfg: OpenRouterAdapter(spec, cfg))
+("xai:openrouter",       lambda spec, cfg: OpenRouterAdapter(spec, cfg))
+("openrouter:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg))
+("local:local",          lambda spec, cfg: LocalTransformersAdapter(spec, cfg))
 ```
 
 **To add a new adapter:** See `CONTRIBUTING.md`. The pattern is:

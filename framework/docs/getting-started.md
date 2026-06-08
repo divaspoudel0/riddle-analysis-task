@@ -184,18 +184,18 @@ Answer it. If you are not certain, honestly say so.
 
 **Available placeholders:**
 
-| Placeholder | Example | What it is |
-|---|---|---|
-| `{language}` | `tam` | ISO 639-3 code from the dataset |
-| `{language_name}` | `Tamil` | Readable language name |
-| `{community}` | `tamil_india` | Community key from the dataset |
-| `{community_display}` | `Tamil, India` | Curated readable form |
-| `{country}` | `India` | Country portion |
-| `{script_iso}` | `Taml` | ISO 15924 script code |
-| `{script_name}` | `Tamil script` | Readable script name |
-| `{topic}` | `History` | Riddle topic |
-| `{riddle_text}` | (the riddle) | Useful for custom layouts |
-| `{hint_text}` | (the hint) | If hints are enabled |
+| Placeholder           | Example        | What it is                      |
+| --------------------- | -------------- | ------------------------------- |
+| `{language}`          | `tam`          | ISO 639-3 code from the dataset |
+| `{language_name}`     | `Tamil`        | Readable language name          |
+| `{community}`         | `tamil_india`  | Community key from the dataset  |
+| `{community_display}` | `Tamil, India` | Curated readable form           |
+| `{country}`           | `India`        | Country portion                 |
+| `{script_iso}`        | `Taml`         | ISO 15924 script code           |
+| `{script_name}`       | `Tamil script` | Readable script name            |
+| `{topic}`             | `History`      | Riddle topic                    |
+| `{riddle_text}`       | (the riddle)   | Useful for custom layouts       |
+| `{hint_text}`         | (the hint)     | If hints are enabled            |
 
 You don't have to use all of them. A template using just `{community_display}` and `{topic}` is fine. Templates that don't use any placeholders still work — the framework just renders the instruction as-is. This is backward compatible with older templates.
 
@@ -236,9 +236,14 @@ This is the **matching system** that connects "I want to use OpenAI" with "here'
 Instead of hardcoding "use OpenAI adapter for OpenAI," the framework keeps a registry:
 
 ```
-"openai:direct_api" → OpenAIAdapter
-"anthropic:direct_api" → AnthropicAdapter
-"google:direct_api" → GeminiAdapter
+"dummy:local"           → DummyModel
+"openai:direct_api"     → OpenAIAdapter
+"anthropic:direct_api"  → AnthropicAdapter
+"google:direct_api"     → GeminiAdapter
+"qwen:openrouter"       → OpenRouterAdapter
+"xai:openrouter"        → OpenRouterAdapter
+"openrouter:openrouter" → OpenRouterAdapter
+"local:local"           → LocalTransformersAdapter
 ```
 
 When you say `provider: openai` and `access_pattern: direct_api`, it looks up the right adapter in the registry.
@@ -557,28 +562,32 @@ Verify the install:
 uv run pytest
 ```
 
-You should see **28 passed**.
+All tests should pass green. If any fail, something is wrong with the install — see Troubleshooting below.
 
 ### Step 2 — Set your API key
 
 Each provider uses a different environment variable. **Never commit API keys to git.** Set them in your shell:
 
 **OpenAI:**
+
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
 
 **Anthropic (Claude):**
+
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
 **Google Gemini:**
+
 ```bash
 export GOOGLE_API_KEY="..."
 ```
 
 **OpenRouter** (covers Qwen, DeepSeek, xAI, and many others through one key):
+
 ```bash
 export OPENROUTER_API_KEY="sk-or-..."
 ```
@@ -624,27 +633,27 @@ For coordinated team runs (such as Karoly's 5×5 test), the team will share spec
 
 ## Glossary for Non-Technical Readers
 
-| Term             | Plain English                                                               |
-| ---------------- | --------------------------------------------------------------------------- |
-| **Adapter**      | A translator that makes the framework work with different AI providers      |
-| **Benchmark**    | A test to measure how well AI models perform on a specific task             |
-| **Cache**        | Storage of previous API responses so you don't need to call again           |
-| **Config**       | A settings file that tells the framework what to do                         |
-| **Cultural context** | Language, community, country, topic, and script information injected into prompts so the model knows what kind of riddle it's answering |
-| **Framework**    | The main code system that ties everything together                          |
-| **Instance**     | One riddle being tested (one "test case")                                   |
-| **ISO 639-3**    | International standard for 3-letter language codes (`tam` = Tamil)          |
-| **ISO 15924**    | International standard for 4-letter script codes (`Taml` = Tamil script, `Arab` = Arabic script, `Latn` = Latin script) |
-| **JSON / JSONL** | A data format that's easy for computers to read. JSONL = one JSON per line. |
-| **Model**        | An AI system (like GPT-5, Claude, Gemini)                                   |
-| **Placeholder**  | A `{name}` token inside a prompt template that the framework fills in from each riddle (e.g. `{community_display}` becomes `Tamil, India`) |
-| **Provider**     | The company that provides the AI (OpenAI, Anthropic, Google, etc.)          |
-| **Prompt**       | The message sent to the AI model                                            |
-| **Registry**     | A list connecting provider names to their adapters                          |
-| **Run**          | One complete benchmark execution                                            |
-| **Schema**       | A template defining what data looks like                                    |
-| **Script**       | The writing system a language uses (Arabic, Latin, Devanagari, etc.)        |
-| **Template**     | A reusable prompt design stored as a YAML file                              |
+| Term                 | Plain English                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Adapter**          | A translator that makes the framework work with different AI providers                                                                     |
+| **Benchmark**        | A test to measure how well AI models perform on a specific task                                                                            |
+| **Cache**            | Storage of previous API responses so you don't need to call again                                                                          |
+| **Config**           | A settings file that tells the framework what to do                                                                                        |
+| **Cultural context** | Language, community, country, topic, and script information injected into prompts so the model knows what kind of riddle it's answering    |
+| **Framework**        | The main code system that ties everything together                                                                                         |
+| **Instance**         | One riddle being tested (one "test case")                                                                                                  |
+| **ISO 639-3**        | International standard for 3-letter language codes (`tam` = Tamil)                                                                         |
+| **ISO 15924**        | International standard for 4-letter script codes (`Taml` = Tamil script, `Arab` = Arabic script, `Latn` = Latin script)                    |
+| **JSON / JSONL**     | A data format that's easy for computers to read. JSONL = one JSON per line.                                                                |
+| **Model**            | An AI system (like GPT-5, Claude, Gemini)                                                                                                  |
+| **Placeholder**      | A `{name}` token inside a prompt template that the framework fills in from each riddle (e.g. `{community_display}` becomes `Tamil, India`) |
+| **Provider**         | The company that provides the AI (OpenAI, Anthropic, Google, etc.)                                                                         |
+| **Prompt**           | The message sent to the AI model                                                                                                           |
+| **Registry**         | A list connecting provider names to their adapters                                                                                         |
+| **Run**              | One complete benchmark execution                                                                                                           |
+| **Schema**           | A template defining what data looks like                                                                                                   |
+| **Script**           | The writing system a language uses (Arabic, Latin, Devanagari, etc.)                                                                       |
+| **Template**         | A reusable prompt design stored as a YAML file                                                                                             |
 
 ---
 

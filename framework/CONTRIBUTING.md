@@ -9,6 +9,7 @@ This document is for contributors adding a new model adapter, a new prompt templ
 - New models -> add an adapter under `src/riddles_framework/models/`
 - New prompts -> drop a YAML file in `src/riddles_framework/prompt_templates/`
 - New provider params (top_p, frequency_penalty, etc.) → use `model_params:` in your run config YAML
+- New docs or guides → add a Markdown file under `docs/`
 
 If you find yourself wanting to edit `runner.py`, please discuss with the team lead.
 

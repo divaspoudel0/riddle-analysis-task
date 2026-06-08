@@ -10,6 +10,9 @@ framework/
 ├── README.md
 ├── CONTRIBUTING.md
 ├── configs/                              # example run configs (YAML)
+├── docs/                                 # human-readable docs
+│   ├── getting-started.md                # plain-language guide
+│   └── code-reference.md                 # file-by-file technical reference
 ├── tests/                                # pytest suite
 └── src/
     └── riddles_framework/                # the installed package
@@ -61,8 +64,10 @@ framework/
 ## Input
 
 ```
-data_loading/pilot_dataset/pilot_dataset_v1.jsonl
+../data_loading/pilot_dataset/pilot_dataset_v1.jsonl
 ```
+
+The pilot dataset is produced by the sibling `data_loading/` package via `build_pilot_dataset.py`. The framework reads it as a finished artifact — it doesn't validate or modify the file. If you need a new build, run that script in `data_loading/` first.
 
 ## Output
 
@@ -110,10 +115,16 @@ uv sync --extra local
 
 ## Run
 
-Smoke test with the dummy model:
+Smoke test with the dummy model (no API calls):
 
 ```bash
 uv run python -m riddles_framework.cli --config configs/dummy.yaml
+```
+
+Smoke test with cultural-context substitution (also dummy, no API calls; verifies the placeholder system end-to-end):
+
+```bash
+uv run python -m riddles_framework.cli --config configs/dummy_cultural_context.yaml
 ```
 
 Real provider:
@@ -122,6 +133,8 @@ Real provider:
 export OPENAI_API_KEY=...
 uv run python -m riddles_framework.cli --config configs/openai_gpt55_high.yaml
 ```
+
+For non-engineer contributors, see `docs/getting-started.md` for a plain-language walkthrough and `docs/code-reference.md` for the file-by-file technical reference.
 
 ## Tests
 
