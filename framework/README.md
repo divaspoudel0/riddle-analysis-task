@@ -9,17 +9,22 @@ framework/
 ├── pyproject.toml
 ├── README.md
 ├── CONTRIBUTING.md
-├── configs/                          # example run configs (YAML)
-├── tests/                            # pytest suite
+├── configs/                              # example run configs (YAML)
+├── tests/                                # pytest suite
 └── src/
-    └── riddles_framework/            # the installed package
+    └── riddles_framework/                # the installed package
         ├── constants.py
         ├── exceptions.py
         ├── schemas.py
         ├── utils.py
+        ├── community_display.py              # community key → display name mapping
         ├── dataset_loader.py
         ├── prompts.py
-        ├── prompt_templates/         # instruction templates (YAML)
+        ├── prompt_templates/                 # instruction templates (YAML)
+        │   ├── riddle_basic_v1.yaml
+        │   ├── riddle_basic_v2.yaml
+        │   ├── riddle_with_uncertainty_v1.yaml
+        │   └── riddle_with_cultural_context_v1.yaml
         ├── writers.py
         ├── registry.py
         ├── factory.py
@@ -28,7 +33,14 @@ framework/
         ├── yaml_config.py
         ├── model_specs.py
         ├── cli.py
-        └── models/                   # provider adapters
+        └── models/                           # provider adapters
+            ├── base.py                       # Model ABC every adapter implements
+            ├── dummy.py                      # reference adapter, used for smoke tests
+            ├── openai_adapter.py
+            ├── anthropic_adapter.py
+            ├── gemini_adapter.py
+            ├── openrouter_adapter.py
+            └── transformers_local_adapter.py
 ```
 
 ## What this framework does
@@ -84,13 +96,13 @@ These are non-obvious and worth knowing before changing anything:
 
 ## Install
 
-API-only (no torch):
+API-only (no torch). Works for OpenAI, Anthropic, Gemini, and OpenRouter (which uses the OpenAI SDK under the hood):
 
 ```bash
 uv sync
 ```
 
-With local inference (installs torch + transformers):
+With local inference (also installs torch + transformers; needed for the local Hugging Face adapter):
 
 ```bash
 uv sync --extra local

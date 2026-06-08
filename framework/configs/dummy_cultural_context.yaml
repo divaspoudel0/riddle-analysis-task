@@ -1,0 +1,43 @@
+runner_name: vinod
+
+dataset_path: ../data_loading/pilot_dataset/pilot_dataset_v1.jsonl
+dataset_version: pilot_dataset_v1
+
+prompt_template_id: riddle_with_cultural_context
+prompt_template_version: v1
+prompt_language: eng
+riddle_language_presented: source
+is_hint_provided: false
+
+reasoning_mode: null
+search_enabled: false
+response_format: json
+batch_mode: false
+temperature: null
+max_output_tokens: 64
+seed: null
+model_params: {}
+cache_enabled: false
+cache_backend: null
+cache_namespace: null
+cache_dir: null
+api_key_env_var: null
+base_url: null
+runner_version: v1.0.0
+notes: Smoke test for cultural-context substitution using the dummy adapter.
+strict_capability_check: true
+
+model_spec:
+  model_name: Dummy Echo
+  model_id: dummy/echo-v1
+  provider: dummy
+  access_pattern: local
+  provider_model_name: dummy-echo-v1
+  closed_source: false
+  notes: Dummy model for smoke testing
+  capabilities:
+    supports_reasoning: false
+    supports_search: false
+    supports_structured_output: true
+    supports_batch: false
+    supports_seed: false
