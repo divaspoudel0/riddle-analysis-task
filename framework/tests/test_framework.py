@@ -5,6 +5,13 @@ from pathlib import Path
 
 import pytest
 
+from riddles_framework.community_display import (
+    format_community_display,
+    format_country,
+    format_language_name,
+    format_script_iso,
+    format_script_name,
+)
 from riddles_framework.constants import ResponseFormat, RiddleLanguagePresented
 from riddles_framework.dataset_loader import load_benchmark_instances
 from riddles_framework.exceptions import (
@@ -15,6 +22,7 @@ from riddles_framework.factory import create_model
 from riddles_framework.prompts import (
     build_condition_id,
     build_prompt,
+    build_substitutions,
     list_available_templates,
     load_prompt_template,
 )
@@ -392,3 +400,203 @@ def test_refusal_heuristic():
     assert not looks_like_refusal("Paris")
     assert not looks_like_refusal("")
     assert not looks_like_refusal(None)
+
+
+# ---------------------------------------------------------------------------
+# Cultural-context substitution tests
+# ---------------------------------------------------------------------------
+
+
+def test_community_display_curated_lookup():
+    assert format_community_display("tamil_india") == "Tamil, India"
+    assert format_community_display("arabic_morocco") == "Moroccan Arabic, Morocco"
+    assert format_language_name("tamil_india") == "Tamil"
+    assert format_country("tamil_india") == "India"
+
+
+def test_community_display_fallback_for_unknown_community():
+    # Unknown community keys should still render reasonably.
+    assert format_community_display("klingon_qonos") == "Klingon, Qonos"
+    # Bare key with no underscore.
+    assert format_community_display("esperanto") == "Esperanto"
+    # Empty string -> placeholder.
+    assert format_community_display("") == "(unspecified)"
+
+
+def test_build_substitutions_from_instance():
+    inst = BenchmarkInstance.from_dict(sample_dataset_row())
+    subs = build_substitutions(inst)
+    assert subs["language"] == "tam"
+    assert subs["language_name"] == "Tamil"
+    assert subs["community"] == "tamil_india"
+    assert subs["community_display"] == "Tamil, India"
+    assert subs["country"] == "India"
+    assert subs["script_iso"] == "Taml"
+    assert subs["script_name"] == "Tamil script"
+    assert subs["topic"] == "History"
+
+
+def test_build_substitutions_missing_topic_uses_placeholder():
+    row = sample_dataset_row()
+    row["topic"] = None
+    inst = BenchmarkInstance.from_dict(row)
+    subs = build_substitutions(inst)
+    assert subs["topic"] == "(unspecified)"
+
+
+def test_template_with_placeholders_renders_with_cultural_context():
+    inst = BenchmarkInstance.from_dict(sample_dataset_row())
+    template = PromptTemplate(
+        template_id="test",
+        template_version="v1",
+        instruction_text=(
+            "You are solving a cultural riddle from {community_display} "
+            "in {language_name}. Topic: {topic}."
+        ),
+    )
+    cfg = PromptConfig(
+        prompt_language="eng",
+        riddle_language_presented=RiddleLanguagePresented.SOURCE,
+        is_hint_provided=False,
+        response_format=ResponseFormat.FREE_FORM,
+    )
+    prompt = build_prompt(inst, template, cfg)
+    assert "Tamil, India" in prompt
+    assert "Tamil" in prompt
+    assert "History" in prompt
+    # Placeholder syntax should be gone after substitution.
+    assert "{community_display}" not in prompt
+    assert "{language_name}" not in prompt
+    assert "{topic}" not in prompt
+
+
+def test_template_without_placeholders_is_unchanged():
+    """Backward compatibility: existing templates with no placeholders."""
+    inst = BenchmarkInstance.from_dict(sample_dataset_row())
+    template = PromptTemplate(
+        template_id="test",
+        template_version="v1",
+        instruction_text="Solve this riddle.",
+    )
+    cfg = PromptConfig(
+        prompt_language="eng",
+        riddle_language_presented=RiddleLanguagePresented.SOURCE,
+        is_hint_provided=False,
+        response_format=ResponseFormat.FREE_FORM,
+    )
+    prompt = build_prompt(inst, template, cfg)
+    # Legacy RIDDLE: block should be present (no cultural context auto-injected).
+    assert "RIDDLE:" in prompt
+    assert "Solve this riddle." in prompt
+    # No cultural metadata should leak into the prompt when not requested.
+    assert "Tamil, India" not in prompt
+    assert "History" not in prompt
+
+
+def test_template_unknown_placeholder_left_intact():
+    """A template can reference a placeholder we don't support without crashing."""
+    inst = BenchmarkInstance.from_dict(sample_dataset_row())
+    template = PromptTemplate(
+        template_id="test",
+        template_version="v1",
+        instruction_text="Solve this {community_display} riddle. {made_up_placeholder}",
+    )
+    cfg = PromptConfig(
+        prompt_language="eng",
+        riddle_language_presented=RiddleLanguagePresented.SOURCE,
+        is_hint_provided=False,
+        response_format=ResponseFormat.FREE_FORM,
+    )
+    prompt = build_prompt(inst, template, cfg)
+    # Known placeholder substituted.
+    assert "Tamil, India" in prompt
+    # Unknown placeholder left as-is so the template author can spot it.
+    assert "{made_up_placeholder}" in prompt
+
+
+def test_template_using_riddle_text_placeholder_takes_full_control():
+    """When the template uses {riddle_text}, the framework should not prepend RIDDLE:."""
+    inst = BenchmarkInstance.from_dict(sample_dataset_row())
+    template = PromptTemplate(
+        template_id="test",
+        template_version="v1",
+        instruction_text="For {community_display}: \"{riddle_text}\"",
+    )
+    cfg = PromptConfig(
+        prompt_language="eng",
+        riddle_language_presented=RiddleLanguagePresented.SOURCE,
+        is_hint_provided=False,
+        response_format=ResponseFormat.FREE_FORM,
+    )
+    prompt = build_prompt(inst, template, cfg)
+    # Should NOT contain the legacy RIDDLE: header when template uses {riddle_text}.
+    assert "RIDDLE:" not in prompt
+    assert "Tamil, India" in prompt
+
+
+def test_load_cultural_context_template_from_disk():
+    """The shipped riddle_with_cultural_context_v1.yaml should load."""
+    tpl = load_prompt_template("riddle_with_cultural_context", "v1")
+    assert tpl.recommended_response_format == ResponseFormat.JSON
+    assert "{community_display}" in tpl.instruction_text
+    assert "{language_name}" in tpl.instruction_text
+    assert "{script_name}" in tpl.instruction_text
+    assert "{topic}" in tpl.instruction_text
+
+
+# ---------------------------------------------------------------------------
+# Script (ISO 15924) tests
+# ---------------------------------------------------------------------------
+
+
+def test_script_iso_known_communities():
+    assert format_script_iso("tamil_india") == "Taml"
+    assert format_script_iso("arabic_morocco") == "Arab"
+    assert format_script_iso("hungarian_hungary") == "Latn"
+    assert format_script_iso("chinese_china") == "Hans"
+    assert format_script_iso("cantonese_china") == "Hant"
+    assert format_script_iso("russian_russia") == "Cyrl"
+    assert format_script_iso("thai_thailand") == "Thai"
+    assert format_script_iso("sinhala_sri_lanka") == "Sinh"
+
+
+def test_script_iso_unknown_community_returns_empty():
+    """Unknown communities should return empty string so the template
+    author can see the gap rather than getting a fabricated code."""
+    assert format_script_iso("klingon_qonos") == ""
+    assert format_script_iso("") == ""
+
+
+def test_script_name_human_readable():
+    assert format_script_name("arabic_morocco") == "Arabic script"
+    assert format_script_name("tamil_india") == "Tamil script"
+    assert format_script_name("english_usa") == "Latin script"
+    assert format_script_name("russian_russia") == "Cyrillic script"
+    # Unknown -> placeholder, not empty (so prompt prose still reads okay).
+    assert format_script_name("klingon_qonos") == "(unspecified)"
+
+
+def test_template_with_script_placeholder_renders_correctly():
+    """Templates can use {script_name} to disambiguate scripts.
+
+    Specifically Abdellah's case: 'arabic_morocco' should render as
+    'Arabic script' so the model knows not to romanize.
+    """
+    row = sample_dataset_row()
+    row["community"] = "arabic_morocco"
+    row["language"] = "ary"
+    inst = BenchmarkInstance.from_dict(row)
+    template = PromptTemplate(
+        template_id="test",
+        template_version="v1",
+        instruction_text="Riddle from {community_display}, written in {script_name}.",
+    )
+    cfg = PromptConfig(
+        prompt_language="eng",
+        riddle_language_presented=RiddleLanguagePresented.SOURCE,
+        is_hint_provided=False,
+        response_format=ResponseFormat.FREE_FORM,
+    )
+    prompt = build_prompt(inst, template, cfg)
+    assert "Moroccan Arabic, Morocco" in prompt
+    assert "Arabic script" in prompt

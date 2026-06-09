@@ -1,8 +1,8 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-06T14:34:45.067386+00:00
-Total submissions: 37
-Total riddles: 3700
+Generated: 2026-06-08T04:24:57.959419+00:00
+Total submissions: 39
+Total riddles: 3900
 
 ## Purpose
 
@@ -49,6 +49,7 @@ Each line is one riddle as a JSON object. Fields:
 | `belarusian_belarus` | 100 |
 | `bengali_bangladesh` | 100 |
 | `bengali_india` | 100 |
+| `brazilian_portuguese` | 100 |
 | `bugisnese_indonesia` | 100 |
 | `bulgarian_bulgaria` | 100 |
 | `cantonese_china` | 100 |
@@ -64,6 +65,7 @@ Each line is one riddle as a JSON object. Fields:
 | `luganda_uganda` | 100 |
 | `lumasaba_uganda` | 100 |
 | `malayalam_india` | 100 |
+| `marathi_india` | 100 |
 | `mongondow_indonesia` | 100 |
 | `nepali_nepal` | 100 |
 | `persian_iran` | 100 |

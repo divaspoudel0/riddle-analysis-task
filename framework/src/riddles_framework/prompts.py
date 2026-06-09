@@ -5,6 +5,13 @@ from pathlib import Path
 import yaml
 
 from .constants import ResponseFormat, RiddleLanguagePresented
+from .community_display import (
+    format_community_display,
+    format_country,
+    format_language_name,
+    format_script_iso,
+    format_script_name,
+)
 from .exceptions import PromptBuildError, PromptTemplateNotFoundError
 from .schemas import BenchmarkInstance, PromptConfig, PromptTemplate
 
@@ -19,7 +26,12 @@ from .schemas import BenchmarkInstance, PromptConfig, PromptTemplate
 #   template_version: v1
 #   instruction_text: |
 #     ...
-#   recommended_response_format: json   # optional
+#   recommended_response_format: json   # optional, informational only
+#
+# Note: recommended_response_format is loaded onto the PromptTemplate dataclass
+# for documentation purposes only. The runtime response_format is always taken
+# from RunConfig.response_format, never from the template. A template can
+# declare what it was designed for, but the run config wins.
 #
 # Contributors add new templates by dropping a new YAML file; no code change.
 
@@ -155,6 +167,30 @@ def maybe_wrap_instruction_for_response_format(
     return instruction_text
 
 
+def build_substitutions(instance: BenchmarkInstance) -> dict[str, str]:
+    """Build the {placeholder: value} dict consumed by PromptTemplate.render.
+
+    This is the bridge between a dataset row and the cultural-context
+    placeholders a template can opt into. See PromptTemplate.render for
+    the full list of supported placeholders.
+
+    All values are strings. Missing or unset fields use sensible
+    placeholders rather than raising, so templates with optional
+    {topic} don't crash on rows where topic is None.
+    """
+    community = instance.community or ""
+    return {
+        "language": instance.language or "",
+        "language_name": format_language_name(community),
+        "community": community,
+        "community_display": format_community_display(community),
+        "country": format_country(community),
+        "script_iso": format_script_iso(community),
+        "script_name": format_script_name(community),
+        "topic": instance.topic or "(unspecified)",
+    }
+
+
 def build_prompt(
     instance: BenchmarkInstance,
     template: PromptTemplate,
@@ -178,4 +214,8 @@ def build_prompt(
         template_version=template.template_version,
         instruction_text=instruction,
     )
-    return temp_template.render(riddle_text=riddle_text, hint_text=hint_text)
+    return temp_template.render(
+        riddle_text=riddle_text,
+        hint_text=hint_text,
+        substitutions=build_substitutions(instance),
+    )

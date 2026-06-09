@@ -9,17 +9,25 @@ framework/
 ├── pyproject.toml
 ├── README.md
 ├── CONTRIBUTING.md
-├── configs/                          # example run configs (YAML)
-├── tests/                            # pytest suite
+├── configs/                              # example run configs (YAML)
+├── docs/                                 # human-readable docs
+│   ├── getting-started.md                # plain-language guide
+│   └── code-reference.md                 # file-by-file technical reference
+├── tests/                                # pytest suite
 └── src/
-    └── riddles_framework/            # the installed package
+    └── riddles_framework/                # the installed package
         ├── constants.py
         ├── exceptions.py
         ├── schemas.py
         ├── utils.py
+        ├── community_display.py              # community key → display name mapping
         ├── dataset_loader.py
         ├── prompts.py
-        ├── prompt_templates/         # instruction templates (YAML)
+        ├── prompt_templates/                 # instruction templates (YAML)
+        │   ├── riddle_basic_v1.yaml
+        │   ├── riddle_basic_v2.yaml
+        │   ├── riddle_with_uncertainty_v1.yaml
+        │   └── riddle_with_cultural_context_v1.yaml
         ├── writers.py
         ├── registry.py
         ├── factory.py
@@ -28,7 +36,14 @@ framework/
         ├── yaml_config.py
         ├── model_specs.py
         ├── cli.py
-        └── models/                   # provider adapters
+        └── models/                           # provider adapters
+            ├── base.py                       # Model ABC every adapter implements
+            ├── dummy.py                      # reference adapter, used for smoke tests
+            ├── openai_adapter.py
+            ├── anthropic_adapter.py
+            ├── gemini_adapter.py
+            ├── openrouter_adapter.py
+            └── transformers_local_adapter.py
 ```
 
 ## What this framework does
@@ -49,8 +64,10 @@ framework/
 ## Input
 
 ```
-data_loading/pilot_dataset/pilot_dataset_v1.jsonl
+../data_loading/pilot_dataset/pilot_dataset_v1.jsonl
 ```
+
+The pilot dataset is produced by the sibling `data_loading/` package via `build_pilot_dataset.py`. The framework reads it as a finished artifact — it doesn't validate or modify the file. If you need a new build, run that script in `data_loading/` first.
 
 ## Output
 
@@ -84,13 +101,13 @@ These are non-obvious and worth knowing before changing anything:
 
 ## Install
 
-API-only (no torch):
+API-only (no torch). Works for OpenAI, Anthropic, Gemini, and OpenRouter (which uses the OpenAI SDK under the hood):
 
 ```bash
 uv sync
 ```
 
-With local inference (installs torch + transformers):
+With local inference (also installs torch + transformers; needed for the local Hugging Face adapter):
 
 ```bash
 uv sync --extra local
@@ -98,10 +115,16 @@ uv sync --extra local
 
 ## Run
 
-Smoke test with the dummy model:
+Smoke test with the dummy model (no API calls):
 
 ```bash
 uv run python -m riddles_framework.cli --config configs/dummy.yaml
+```
+
+Smoke test with cultural-context substitution (also dummy, no API calls; verifies the placeholder system end-to-end):
+
+```bash
+uv run python -m riddles_framework.cli --config configs/dummy_cultural_context.yaml
 ```
 
 Real provider:
@@ -110,6 +133,8 @@ Real provider:
 export OPENAI_API_KEY=...
 uv run python -m riddles_framework.cli --config configs/openai_gpt55_high.yaml
 ```
+
+For non-engineer contributors, see `docs/getting-started.md` for a plain-language walkthrough and `docs/code-reference.md` for the file-by-file technical reference.
 
 ## Tests
 

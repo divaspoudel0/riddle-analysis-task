@@ -3,3 +3,7 @@ judge/__pycache__/
 judge/*.jsonl
 judge/*.log
 runs/*
+
+# macOS metadata files
+.DS_Store
+**/.DS_Store
