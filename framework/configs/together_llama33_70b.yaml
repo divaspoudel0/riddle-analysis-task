@@ -1,0 +1,50 @@
+runner_name: ram
+
+dataset_path: data_loading/pilot_dataset/pilot_dataset_v1.jsonl
+dataset_version: pilot_dataset_v1
+
+prompt_template_id: riddle_basic
+prompt_template_version: v2
+prompt_language: eng
+riddle_language_presented: source
+is_hint_provided: false
+
+reasoning_mode: null
+search_enabled: false
+response_format: json
+batch_mode: false
+
+temperature: null
+max_output_tokens: 128
+seed: null
+
+model_params: {}
+
+cache_enabled: false
+cache_backend: null
+cache_namespace: null
+cache_dir: null
+
+api_key_env_var: TOGETHER_API_KEY
+base_url: https://api.together.xyz/v1
+
+runner_version: v1.0.0
+notes: llama via together
+strict_capability_check: true
+
+# NOTE: provider_model_name is a placeholder. Replace with a real Together
+# model slug before running.
+model_spec:
+  model_name: Llama 3.3 70B Instruct Turbo
+  model_id: together/llama-3.3-70b-instruct-turbo
+  provider: together
+  access_pattern: together
+  provider_model_name: meta-llama/Llama-3.3-70B-Instruct-Turbo
+  closed_source: false
+  notes: Together-routed model
+  capabilities:
+    supports_reasoning: false
+    supports_search: false
+    supports_structured_output: true
+    supports_batch: false
+    supports_seed: false
