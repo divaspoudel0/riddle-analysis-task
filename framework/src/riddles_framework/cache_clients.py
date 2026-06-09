@@ -81,6 +81,52 @@ def make_openrouter_client(use_cache: bool, **kwargs):
         raise CacheClientError(f"Failed to build OpenRouter client: {exc}") from exc
 
 
+def make_together_client(use_cache: bool, **kwargs):
+    kwargs = _apply_common_cache_kwargs(kwargs)
+    try:
+        if use_cache:
+            raise CacheClientError(
+                "Together caching is not supported; set cache_enabled: false."
+            )
+
+        from openai import OpenAI
+        kwargs.pop("namespace", None)
+        kwargs.pop("cachedir", None)
+        kwargs.pop("batch_size", None)
+
+        base_url = kwargs.get("base_url")
+        if not base_url:
+            raise CacheClientError(
+                "Together client requires base_url in non-cached mode."
+            )
+
+        return OpenAI(**kwargs)
+    except CacheClientError:
+        raise
+    except Exception as exc:
+        raise CacheClientError(f"Failed to build Together client: {exc}") from exc
+
+
+def make_cohere_client(use_cache: bool, **kwargs):
+    kwargs = _apply_common_cache_kwargs(kwargs)
+    try:
+        if use_cache:
+            raise CacheClientError(
+                "Cohere caching is not supported; set cache_enabled: false."
+            )
+
+        from cohere import ClientV2
+        kwargs.pop("namespace", None)
+        kwargs.pop("cachedir", None)
+        kwargs.pop("batch_size", None)
+
+        return ClientV2(**kwargs)
+    except CacheClientError:
+        raise
+    except Exception as exc:
+        raise CacheClientError(f"Failed to build Cohere client: {exc}") from exc
+
+
 def make_transformers_client(use_cache: bool, **kwargs):
     kwargs = _apply_common_cache_kwargs(kwargs)
     try:

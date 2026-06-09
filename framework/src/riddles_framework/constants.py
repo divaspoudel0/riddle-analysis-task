@@ -44,5 +44,6 @@ class Provider(str, Enum):
     XAI = "xai"
     QWEN = "qwen"
     OPENROUTER = "openrouter"
+    TOGETHER = "together"
     LOCAL = "local"
     DUMMY = "dummy"
