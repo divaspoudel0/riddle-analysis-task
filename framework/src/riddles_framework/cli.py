@@ -12,6 +12,7 @@ from .yaml_config import load_run_config_from_yaml
 # Import adapters so registration is available.
 from .models.openai_adapter import OpenAIAdapter
 from .models.anthropic_adapter import AnthropicAdapter
+from .models.cohere_adapter import CohereAdapter
 from .models.gemini_adapter import GeminiAdapter
 from .models.openrouter_adapter import OpenRouterAdapter
 from .models.together_adapter import TogetherAdapter
@@ -25,6 +26,7 @@ def register_builtin_adapters() -> None:
         ("openai:direct_api", lambda spec, cfg: OpenAIAdapter(spec, cfg)),
         ("anthropic:direct_api", lambda spec, cfg: AnthropicAdapter(spec, cfg)),
         ("google:direct_api", lambda spec, cfg: GeminiAdapter(spec, cfg)),
+        ("cohere:direct_api", lambda spec, cfg: CohereAdapter(spec, cfg)),
         ("qwen:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),
         ("xai:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),
         ("openrouter:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),

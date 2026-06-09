@@ -182,6 +182,25 @@ def together_deepseek_v4_pro_spec() -> ModelSpec:
     )
 
 
+def cohere_command_a_spec() -> ModelSpec:
+    return ModelSpec(
+        model_name="Command A",
+        model_id="cohere/command-a-03-2025",
+        provider="cohere",
+        access_pattern="direct_api",
+        provider_model_name="command-a-03-2025",
+        capabilities=ModelCapabilities(
+            supports_reasoning=False,
+            supports_search=False,
+            supports_structured_output=True,
+            supports_batch=False,
+            supports_seed=True,
+        ),
+        closed_source=True,
+        notes="Cohere Command A via direct API",
+    )
+
+
 def local_transformers_spec(model_name: str) -> ModelSpec:
     return ModelSpec(
         model_name=model_name,
