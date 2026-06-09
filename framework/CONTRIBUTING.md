@@ -9,8 +9,9 @@ This document is for contributors adding a new model adapter, a new prompt templ
 - New models -> add an adapter under `src/riddles_framework/models/`
 - New prompts -> drop a YAML file in `src/riddles_framework/prompt_templates/`
 - New provider params (top_p, frequency_penalty, etc.) → use `model_params:` in your run config YAML
+- New docs or guides → add a Markdown file under `docs/`
 
-If you find yourself wanting to edit `runner.py`, please disucss with the team lead
+If you find yourself wanting to edit `runner.py`, please discuss with the team lead.
 
 ## Adding a new provider adapter
 
@@ -61,8 +62,15 @@ Errors should be caught inside `generate` and returned as `GenerationStatus.ERRO
 Open `cli.py` and add a `(key, factory)` entry in `register_builtin_adapters`. Keys are `"{provider}:{access_pattern}"`:
 
 ```python
-("mistral:direct_api", lambda spec, cfg: MistralAdapter(spec, cfg)),
+("newprovider:direct_api", lambda spec, cfg: NewProviderAdapter(spec, cfg)),
 ```
+
+For real working examples, see the existing adapters in `src/riddles_framework/models/`:
+- `openai_adapter.py` — OpenAI direct API
+- `anthropic_adapter.py` — Anthropic direct API, includes extended-thinking handling
+- `gemini_adapter.py` — Google Gemini via `google-genai`
+- `openrouter_adapter.py` — routes any OpenRouter-supported model through the OpenAI SDK; the most general-purpose pattern if your provider exposes an OpenAI-compatible endpoint
+- `transformers_local_adapter.py` — local inference via `transformers.pipeline`
 
 ### 3. Add a YAML config
 
@@ -125,6 +133,8 @@ self.client = make_openai_client(cfg.get("cache_enabled", False), **client_kwarg
 ```
 
 When `cache_enabled` is `false`, you get the raw SDK client. When `true`, you get the CacheSaver-wrapped equivalent. Either way the call surface (`.chat.completions.create(...)`, `.messages.create(...)`, etc.) is the same.
+
+The same pattern applies to the other providers — `make_anthropic_client`, `make_gemini_client`, `make_openrouter_client`, and `make_transformers_client` are all in `cache_clients.py`. If you're adding a new provider that goes through OpenRouter or any OpenAI-compatible endpoint, `make_openrouter_client` already handles it; just pass the right `base_url`.
 
 ## Style notes
 

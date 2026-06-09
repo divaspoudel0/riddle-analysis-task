@@ -7,6 +7,38 @@ from typing import Any
 from .constants import GenerationStatus, ResponseFormat, RiddleLanguagePresented
 
 
+def _safe_format(text: str, subs: dict[str, str]) -> str:
+    """Apply {placeholder} substitutions, leaving unknown ones alone.
+
+    Equivalent to str.format(**subs) but never raises KeyError for
+    placeholders that aren't in `subs`. Used by PromptTemplate.render
+    so templates can declare placeholders the caller doesn't always
+    provide (e.g. a topic placeholder when topic is None).
+    """
+    import string
+
+    formatter = string.Formatter()
+    out: list[str] = []
+    for literal, field_name, format_spec, conversion in formatter.parse(text):
+        if literal:
+            out.append(literal)
+        if field_name is None:
+            continue
+        if field_name in subs:
+            value = subs[field_name]
+            if conversion:
+                value = formatter.convert_field(value, conversion)
+            if format_spec:
+                value = format(value, format_spec)
+            out.append(value)
+        else:
+            # Leave unknown placeholder intact, including any format spec.
+            spec_part = f":{format_spec}" if format_spec else ""
+            conv_part = f"!{conversion}" if conversion else ""
+            out.append("{" + field_name + conv_part + spec_part + "}")
+    return "".join(out)
+
+
 @dataclass
 class BenchmarkInstance:
     riddle_id: str
@@ -105,14 +137,62 @@ class PromptTemplate:
     # the actual response_format used is whatever RunConfig says.
     recommended_response_format: ResponseFormat | None = None
 
-    def render(self, *, riddle_text: str, hint_text: str | None = None) -> str:
+    def render(
+        self,
+        *,
+        riddle_text: str,
+        hint_text: str | None = None,
+        substitutions: dict[str, str] | None = None,
+    ) -> str:
+        """Render the final prompt string.
+
+        Templates can opt in to cultural-context injection by including
+        Python str.format-style placeholders in instruction_text, e.g.:
+
+            instruction_text: |
+              You are solving a cultural riddle from {community_display}
+              (written in {language_name}). The topic is {topic}.
+
+        Supported placeholders (all optional; templates can use any subset):
+            {language}            ISO 639-3 code, e.g. "tam"
+            {language_name}       human-readable language, e.g. "Tamil"
+            {community}           community key, e.g. "tamil_india"
+            {community_display}   curated readable form, e.g. "Tamil, India"
+            {country}             country portion, e.g. "India"
+            {script_iso}          ISO 15924 code, e.g. "Taml"
+            {script_name}         readable script, e.g. "Tamil script"
+            {topic}               riddle topic, or "(unspecified)" if missing
+            {riddle_text}         the riddle text (source or English)
+            {hint_text}           the hint text, or empty string if absent
+
+        Backward compatibility: if a template does NOT use {riddle_text}
+        and {hint_text} placeholders, the framework prepends the legacy
+        RIDDLE:/HINT: blocks the way it always has. This means existing
+        templates without placeholders keep working unchanged.
+        """
+        subs = dict(substitutions or {})
+        subs.setdefault("riddle_text", riddle_text)
+        subs.setdefault("hint_text", hint_text or "")
+
+        # Apply placeholders if the template uses them. Use a safe
+        # substituter that leaves unknown placeholders alone rather than
+        # raising KeyError, so a template using {language} doesn't crash
+        # if a future caller forgets to pass it.
+        instruction = _safe_format(self.instruction_text, subs)
+
+        # If the template author chose to handle {riddle_text} themselves,
+        # skip the legacy RIDDLE:/HINT: prepending entirely — they're in
+        # full control of layout.
+        if "{riddle_text}" in self.instruction_text:
+            return instruction
+
         if hint_text:
             return (
-                f"{self.instruction_text}\n\n"
+                f"{instruction}\n\n"
                 f"RIDDLE:\n{riddle_text}\n\n"
                 f"HINT:\n{hint_text}\n"
             )
-        return f"{self.instruction_text}\n\nRIDDLE:\n{riddle_text}\n"
+        return f"{instruction}\n\nRIDDLE:\n{riddle_text}\n"
 
 
 @dataclass
