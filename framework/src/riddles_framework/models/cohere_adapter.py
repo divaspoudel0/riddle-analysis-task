@@ -66,25 +66,21 @@ class CohereAdapter(Model):
             if model_params:
                 kwargs.update(model_params)
 
-            resp = self.client.chat(**kwargs)
+            # Cohere is accessed via its OpenAI-compatible endpoint, so the
+            # request and response follow the OpenAI chat-completions shape.
+            # This keeps cached (CacheSaver OpenAI wrapper) and non-cached
+            # (openai SDK) paths on a single code path.
+            resp = self.client.chat.completions.create(**kwargs)
 
-            # Cohere V2 returns message.content as a list of typed blocks;
-            # collect only the text blocks (skip thinking/tool blocks).
-            text_parts = []
-            message = getattr(resp, "message", None)
-            for block in getattr(message, "content", None) or []:
-                if getattr(block, "type", None) == "text":
-                    text_parts.append(getattr(block, "text", ""))
+            text = None
+            if getattr(resp, "choices", None):
+                text = getattr(resp.choices[0].message, "content", None)
 
-            text = "\n".join(t for t in text_parts if t).strip() or None
-
-            # Token counts live under usage.tokens (nested), not usage directly.
             usage = getattr(resp, "usage", None)
-            tokens = getattr(usage, "tokens", None) if usage else None
             latency_ms = int((time.time() - start) * 1000)
 
             status = GenerationStatus.SUCCESS
-            if text is None:
+            if text is None or str(text).strip() == "":
                 status = GenerationStatus.EMPTY
             elif looks_like_refusal(text):
                 status = GenerationStatus.REFUSAL
@@ -92,12 +88,15 @@ class CohereAdapter(Model):
             return GenerationResult(
                 raw_response=text,
                 status=status,
-                input_tokens=safe_int(getattr(tokens, "input_tokens", None)) if tokens else None,
-                output_tokens=safe_int(getattr(tokens, "output_tokens", None)) if tokens else None,
+                input_tokens=safe_int(getattr(usage, "prompt_tokens", None)) if usage else None,
+                output_tokens=safe_int(getattr(usage, "completion_tokens", None)) if usage else None,
                 latency_ms=latency_ms,
                 provider_details={
                     "id": getattr(resp, "id", None),
-                    "finish_reason": getattr(resp, "finish_reason", None),
+                    "model": getattr(resp, "model", None),
+                    "finish_reason": getattr(resp.choices[0], "finish_reason", None)
+                    if getattr(resp, "choices", None)
+                    else None,
                 },
             )
         except Exception as exc:

@@ -20,10 +20,10 @@ seed: null
 
 model_params: {}
 
-cache_enabled: false
-cache_backend: null
-cache_namespace: null
-cache_dir: null
+cache_enabled: true
+cache_backend: cachesaver
+cache_namespace: multicultural_riddles/pilot_dataset_v1/together_llama33_70b/source_no_hint/v2
+cache_dir: .cache/cachesaver
 
 api_key_env_var: TOGETHER_API_KEY
 base_url: https://api.together.xyz/v1

@@ -20,10 +20,10 @@ seed: null
 
 model_params: {}
 
-cache_enabled: false
-cache_backend: null
-cache_namespace: null
-cache_dir: null
+cache_enabled: true
+cache_backend: cachesaver
+cache_namespace: multicultural_riddles/smoke_test_5/together_deepseek_v4_pro/source_no_hint/v2
+cache_dir: .cache/cachesaver
 
 api_key_env_var: TOGETHER_API_KEY
 base_url: https://api.together.xyz/v1

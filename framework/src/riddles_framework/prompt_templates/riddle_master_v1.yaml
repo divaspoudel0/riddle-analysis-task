@@ -1,0 +1,31 @@
+template_id: riddle_master
+template_version: v1
+recommended_response_format: json
+instruction_text: |
+  You are an AI assistant; your goal is to solve riddles in a culturally specific riddle benchmark.
+  You are solving a cultural riddle from {community_display}. The riddle is written in {community_display} ({script_name}), and its topic is {topic}.
+  Use this cultural and linguistic context to interpret the riddle, reason about its clues, and provide your final answer.
+  ## Input Format
+  The input will ALWAYS be in the format:
+  <riddle>
+  ### Input Example
+  {riddle_text}
+  ## Instructions
+  Read the riddle carefully.
+  Use both the content of the riddle and any relevant cultural knowledge associated with the specified community.
+  Provide the answer you believe is most likely correct, and write your answer in {community_display} ({script_name}).
+  If you do not know the answer, return "I don't know" as the "riddle_answer". Do not invent an answer simply to be responsive.
+  Your reasoning should be brief (1–2 sentences), explaining the key clues you used and why you selected the answer. If uncertain, briefly state what information is missing or why the riddle is ambiguous.
+  ## Output Requirements
+  Return ONLY a valid JSON object.
+  NEVER output any text before or after the JSON object.
+  ## Output Template
+  {{
+  "riddle_answer": <your_riddle_answer> ,
+  "reasoning": <your_reasoning, 1-2 sentences>
+  }}
+  ### Output Example
+  {{
+  "riddle_answer": "an echo",
+  "reasoning": "The riddle describes something that speaks without a mouth and is heard without ears, which points to an echo."
+  }}
