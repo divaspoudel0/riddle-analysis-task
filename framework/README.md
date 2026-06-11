@@ -101,6 +101,16 @@ These are non-obvious and worth knowing before changing anything:
 
 ## Install
 
+This project uses [`uv`](https://docs.astral.sh/uv/) to manage the environment and dependencies. If you don't have it yet:
+
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
 API-only (no torch). Works for OpenAI, Anthropic, Gemini, and OpenRouter (which uses the OpenAI SDK under the hood):
 
 ```bash
