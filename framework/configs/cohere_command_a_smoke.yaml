@@ -20,10 +20,10 @@ seed: null
 
 model_params: {}
 
-cache_enabled: false
-cache_backend: null
-cache_namespace: null
-cache_dir: null
+cache_enabled: true
+cache_backend: cachesaver
+cache_namespace: multicultural_riddles/smoke_test_5/cohere_command_a/source_no_hint/v2
+cache_dir: .cache/cachesaver
 
 api_key_env_var: COHERE_API_KEY
 base_url: null

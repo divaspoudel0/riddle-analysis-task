@@ -145,28 +145,6 @@ def get_presented_hint_text(
     return instance.riddle_hint
 
 
-def maybe_wrap_instruction_for_response_format(
-    instruction_text: str,
-    response_format: ResponseFormat,
-) -> str:
-    if response_format == ResponseFormat.FREE_FORM:
-        return instruction_text
-
-    if response_format == ResponseFormat.JSON:
-        return (
-            instruction_text
-            + '\nReturn only valid JSON in this format: {"riddle_answer": "your answer"}'
-        )
-
-    if response_format == ResponseFormat.JSON_SCHEMA:
-        return (
-            instruction_text
-            + '\nReturn strict JSON with exactly this schema: {"riddle_answer": "string"}'
-        )
-
-    return instruction_text
-
-
 def build_substitutions(instance: BenchmarkInstance) -> dict[str, str]:
     """Build the {placeholder: value} dict consumed by PromptTemplate.render.
 
@@ -205,16 +183,7 @@ def build_prompt(
         prompt_config.riddle_language_presented,
         prompt_config.is_hint_provided,
     )
-    instruction = maybe_wrap_instruction_for_response_format(
-        template.instruction_text,
-        prompt_config.response_format,
-    )
-    temp_template = PromptTemplate(
-        template_id=template.template_id,
-        template_version=template.template_version,
-        instruction_text=instruction,
-    )
-    return temp_template.render(
+    return template.render(
         riddle_text=riddle_text,
         hint_text=hint_text,
         substitutions=build_substitutions(instance),
