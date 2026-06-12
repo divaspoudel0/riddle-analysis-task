@@ -29,15 +29,19 @@ match("Donald Trump", "Donald Trump")  # -> True
 
 ## LLM-as-a-judge
 
-Scores the same `results.jsonl` with an LLM via OpenRouter, using the judge
-prompt + output schema in `llm_as_a_judge.py`. Needs `OPENROUTER_KEY` in
-`.env`:
+Lenient LLM scoring of the same `results.jsonl` (credits paraphrases /
+transliterations that exact match misses). Reuses the judge prompt + output
+schema from `llm_as_a_judge.py`; sends via the OpenAI SDK with a gpt-mini
+model by default. Needs `OPENAI_API_KEY`:
 
 ```bash
-uv run python -m judge.openrouter_smoke_test \
-  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
+python -m judge.llm_judge_run \
+  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl \
+  --model gpt-5.4-mini
 ```
 
-> Note: `openrouter_smoke_test.py` currently reads a hard-coded Excel workbook
-> instead of a run's `results.jsonl`; point it at the run above (or adapt it to
-> load `results.jsonl`) before running.
+Writes verdicts (same shape as exact-match) to `<run_dir>/llm_judge.jsonl`.
+
+> `llm_as_a_judge.py` also has an OpenRouter path used by
+> `openrouter_smoke_test.py` (needs `OPENROUTER_KEY`), but that runner is
+> hard-coded to a German Excel workbook.
