@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.egg-info/
 .pytest_cache/
-runs/
+runs/*
+!runs/examples/
 .cache/
 .DS_Store
