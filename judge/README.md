@@ -7,16 +7,13 @@ output). For a ready-to-use input, use the committed example run:
 framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
 ```
 
-> Run these commands from the **repository root** (so the `judge` package is
-> importable). Running from `framework/` gives `No module named 'judge'`.
-
 ## Exact-match judge
 
 Deterministic exact match (case- and whitespace-insensitive) of each answer
-against its reference. Pure stdlib — no venv needed:
+against its reference.
 
 ```bash
-python3 -m judge.exact_match_judge \
+uv run python -m judge.exact_match_judge \
   framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
 ```
 
