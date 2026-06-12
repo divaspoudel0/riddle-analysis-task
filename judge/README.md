@@ -10,13 +10,17 @@ uv run python -m judge.exact_match_judge framework/runs/<run_id>/results.jsonl
 ```
 
 It prints a per-riddle ✓/✗ line plus a total, and writes the verdicts to
-`<run_dir>/exact_match.jsonl`:
+`<run_dir>/exact_match.jsonl`. Actual output over the GPT-5.5 smoke run:
 
 ```
-✓ arabic_egypt_politics_002: 'سعد زغلول' vs 'سعد زغلول'
 ✗ arabic_egypt_politics_001: 'ميدان التحرير' vs 'التحرير'
+✓ arabic_egypt_politics_002: 'سعد زغلول' vs 'سعد زغلول'
+✓ arabic_egypt_politics_003: 'محمد نجيب' vs 'محمد نجيب'
+✗ arabic_egypt_politics_004: 'مجلس النواب' vs 'مجلس النواب/مجلس الشعب/البرلمان'
+✗ arabic_egypt_politics_005: 'السفير' vs 'السفير/النائب'
+...
 
-12/25 exact matches
+9/25 exact matches  ->  framework/runs/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/exact_match.jsonl
 ```
 
 As a library:
@@ -26,7 +30,7 @@ from judge import match
 match("Donald Trump", "Donald Trump")  # -> True
 ```
 
-A sample output is checked in at
+The full verdicts from that run are checked in at
 `judge/examples/exact_match_verdicts.sample.jsonl`.
 
 ## LLM-as-a-judge
