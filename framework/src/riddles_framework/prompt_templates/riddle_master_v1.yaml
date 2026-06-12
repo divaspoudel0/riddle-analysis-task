@@ -19,10 +19,11 @@ instruction_text: |
   ## Output Requirements
   Return ONLY a valid JSON object.
   NEVER output any text before or after the JSON object.
+  Do NOT use double quotes (") inside the "riddle_answer" or "reasoning" values, as they will break the JSON. If you need to quote something, use single quotes (') instead.
   ## Output Template
   {{
-  "riddle_answer": <your_riddle_answer> ,
-  "reasoning": <your_reasoning, 1-2 sentences>
+  "riddle_answer": "<your_riddle_answer>",
+  "reasoning": "<your_reasoning_in_1_2_sentences>"
   }}
   ### Output Example
   {{
