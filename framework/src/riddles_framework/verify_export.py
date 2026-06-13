@@ -70,3 +70,67 @@ def run_entry(entry: Entry, output_root: str) -> RunOutcome:
             run_dir = Path(output_root) / run_id
     stderr_tail = "\n".join(proc.stderr.strip().splitlines()[-15:])
     return RunOutcome(returncode=proc.returncode, run_dir=run_dir, stderr_tail=stderr_tail)
+
+
+@dataclass
+class ValidationResult:
+    ok: bool
+    rows: int
+    statuses: dict
+    languages: list
+    tokens_populated: bool
+    problems: list = field(default_factory=list)
+
+
+def validate_run(run_dir: Path) -> ValidationResult:
+    problems: list[str] = []
+
+    for fname in OUTPUT_FILES:
+        if not (run_dir / fname).exists():
+            problems.append(f"missing output file: {fname}")
+
+    results_path = run_dir / "results.jsonl"
+    rows: list[dict] = []
+    if results_path.exists():
+        rows = [json.loads(line) for line in results_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+    if len(rows) != EXPECTED_ROWS:
+        problems.append(f"row count {len(rows)} != expected {EXPECTED_ROWS}")
+
+    languages = sorted({r.get("instance_language") for r in rows if r.get("instance_language")})
+    if set(languages) != EXPECTED_LANGUAGES:
+        problems.append(f"language coverage {languages} != {sorted(EXPECTED_LANGUAGES)}")
+
+    statuses = Counter(r.get("generation_status") for r in rows)
+    tokens_populated = False
+
+    for i, r in enumerate(rows):
+        for fld in REQUIRED_FIELDS:
+            if r.get(fld) in (None, ""):
+                problems.append(f"row {i}: missing/empty required field '{fld}'")
+        status = r.get("generation_status")
+        if status not in VALID_STATUSES:
+            problems.append(f"row {i}: invalid generation_status {status!r}")
+        if status == "success":
+            resp = r.get("raw_response")
+            if not isinstance(resp, str) or not resp.strip():
+                problems.append(f"row {i}: success row has empty raw_response")
+        for tok in ("input_tokens", "output_tokens"):
+            val = r.get(tok)
+            if val is not None:
+                tokens_populated = True
+                if not isinstance(val, int):
+                    problems.append(f"row {i}: {tok} is {type(val).__name__}, expected int or null")
+
+    if len(problems) > 25:
+        extra = len(problems) - 25
+        problems = problems[:25] + [f"... and {extra} more problems"]
+
+    return ValidationResult(
+        ok=not problems,
+        rows=len(rows),
+        statuses=dict(statuses),
+        languages=languages,
+        tokens_populated=tokens_populated,
+        problems=problems,
+    )
