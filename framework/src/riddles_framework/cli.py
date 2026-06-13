@@ -58,9 +58,10 @@ def main() -> None:
         "cache_namespace": run_config.cache_namespace,
         "cache_dir": run_config.cache_dir,
         "cache_backend": run_config.cache_backend,
+        "local_cache_client_mode": run_config.local_cache_client_mode,
         "api_key_env_var": run_config.api_key_env_var,
         "base_url": run_config.base_url,
-        "batch_size": 8 if run_config.batch_mode else None,
+        "model_params": run_config.model_params,
     }
 
     if run_config.model_spec.provider == "dummy":

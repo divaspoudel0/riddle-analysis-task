@@ -18,6 +18,13 @@ def _opt_float(value):
     return float(value)
 
 
+def _local_cache_client_mode(value):
+    mode = value or "sync"
+    if mode not in {"sync", "async"}:
+        raise ConfigError("local_cache_client_mode must be 'sync' or 'async'")
+    return mode
+
+
 def load_run_config_from_yaml(path: str) -> RunConfig:
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
@@ -73,6 +80,9 @@ def load_run_config_from_yaml(path: str) -> RunConfig:
             cache_backend=data.get("cache_backend"),
             cache_namespace=data.get("cache_namespace"),
             cache_dir=data.get("cache_dir"),
+            local_cache_client_mode=_local_cache_client_mode(
+                data.get("local_cache_client_mode")
+            ),
 
             api_key_env_var=data.get("api_key_env_var"),
             base_url=data.get("base_url"),

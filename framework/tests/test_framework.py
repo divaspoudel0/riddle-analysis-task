@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import sys
+import types
+from collections import namedtuple
 from pathlib import Path
 
 import pytest
@@ -12,12 +15,13 @@ from riddles_framework.community_display import (
     format_script_iso,
     format_script_name,
 )
-from riddles_framework.constants import ResponseFormat, RiddleLanguagePresented
+from riddles_framework.constants import GenerationStatus, ResponseFormat, RiddleLanguagePresented
 from riddles_framework.dataset_loader import load_benchmark_instances
 from riddles_framework.exceptions import (
     PromptTemplateNotFoundError,
     UnsupportedConfigurationError,
 )
+from riddles_framework.cache_clients import make_transformers_client
 from riddles_framework.factory import create_model
 from riddles_framework.prompts import (
     build_condition_id,
@@ -37,6 +41,7 @@ from riddles_framework.schemas import (
     RunConfig,
 )
 from riddles_framework.models.dummy import DummyModel
+import riddles_framework.models.transformers_local_adapter as local_adapter_module
 from riddles_framework.utils import looks_like_refusal
 from riddles_framework.yaml_config import load_run_config_from_yaml
 
@@ -225,7 +230,6 @@ def test_dummy_runner_creates_outputs(tmp_path: Path):
     # model_params field should be present (even if empty) for analysis joins.
     assert "model_params" in row
 
-
 def test_runner_rejects_english_with_hint(tmp_path: Path):
     dataset_path = tmp_path / "dataset.jsonl"
     write_jsonl(dataset_path, [sample_dataset_row()])
@@ -296,7 +300,9 @@ def test_model_params_are_threaded_through(tmp_path: Path):
     run_id = runner.run()
 
     row = json.loads(
-        (tmp_path / "runs" / run_id / "results.jsonl").read_text().strip()
+        (tmp_path / "runs" / run_id / "results.jsonl")
+        .read_text(encoding="utf-8")
+        .strip()
     )
     assert row["model_params"] == {"top_p": 0.95, "frequency_penalty": 0.1}
     # The Dummy adapter echoes model_params into provider_details for verification.
@@ -325,6 +331,596 @@ def test_registry_and_factory_dummy():
     assert model.model_id == "dummytest/echo-v1"
 
 
+def _local_spec() -> ModelSpec:
+    return ModelSpec(
+        model_name="Tiny Local",
+        model_id="local/tiny",
+        provider="local",
+        access_pattern="local",
+        provider_model_name="tiny-local-model",
+        capabilities=ModelCapabilities(supports_seed=True),
+        closed_source=False,
+    )
+
+
+class _FakeTokenizer:
+    pad_token_id = None
+    eos_token_id = 0
+    pad_token = None
+    eos_token = "<eos>"
+
+    @classmethod
+    def from_pretrained(cls, model_name: str, **kwargs):
+        assert model_name == "tiny-local-model"
+        return cls()
+
+    def __call__(self, text: str | list[str], **kwargs):
+        if kwargs.get("return_tensors") == "pt":
+            if isinstance(text, list):
+                return {
+                    "input_ids": _FakeTensor([[1, 2, 3], [0, 1, 2]]),
+                    "attention_mask": _FakeTensor([[1, 1, 1], [0, 1, 1]]),
+                }
+            return {"input_ids": _FakeTensor([[1, 2, 3]])}
+        if text == "local answer":
+            return {"input_ids": [10, 11]}
+        if text == "cached answer":
+            return {"input_ids": [12, 13]}
+        if text == "batch answer 1":
+            return {"input_ids": [14, 15, 16]}
+        if text == "batch answer 2":
+            return {"input_ids": [17, 18]}
+        return {"input_ids": [1, 2, 3]}
+
+    def decode(self, token_ids, skip_special_tokens: bool = True):
+        assert skip_special_tokens
+        return "cached answer"
+
+
+class _FakeTensor:
+    def __init__(self, data):
+        self.data = data
+        self.shape = (len(data), len(data[0])) if data and isinstance(data[0], list) else (len(data),)
+        self.ndim = len(self.shape)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return self.data[item]
+        value = self.data[item]
+        return _FakeTensor(value) if isinstance(value, list) else value
+
+    def to(self, device):
+        return self
+
+    def sum(self, dim=None):
+        if dim == 1 and self.ndim == 2:
+            return _FakeTensor([sum(row) for row in self.data])
+        if dim is None:
+            if self.ndim == 2:
+                return sum(sum(row) for row in self.data)
+            return sum(self.data)
+        raise NotImplementedError
+
+    def tolist(self):
+        return self.data
+
+
+def test_local_transformers_adapter_non_cached(monkeypatch):
+    calls: dict[str, object] = {}
+
+    def fake_pipeline(task, *, model, tokenizer, model_kwargs):
+        assert task == "text-generation"
+        assert model == "tiny-local-model"
+        assert isinstance(tokenizer, _FakeTokenizer)
+        calls["model_kwargs"] = model_kwargs
+
+        def run(prompt, **kwargs):
+            calls["prompt"] = prompt
+            calls["kwargs"] = kwargs
+            return [{"generated_text": "local answer"}]
+
+        return run
+
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        pipeline=fake_pipeline,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {
+            "cache_enabled": False,
+            "model_params": {
+                "model_load": {"device_map": "auto", "torch_dtype": "float16"},
+                "tokenizer_load": {"trust_remote_code": True},
+            },
+        },
+    )
+
+    result = adapter.generate(
+        "prompt",
+        temperature=0.7,
+        max_output_tokens=5,
+        seed=123,
+        model_params={"top_p": 0.9},
+    )
+
+    assert result.status == GenerationStatus.SUCCESS
+    assert result.raw_response == "local answer"
+    assert result.input_tokens == 3
+    assert result.output_tokens == 2
+    assert calls["model_kwargs"]["device_map"] == "auto"
+    assert str(calls["model_kwargs"]["torch_dtype"]) == "torch.float16"
+    assert result.provider_details == {
+        "model": "tiny-local-model",
+        "cache_enabled": False,
+        "local_cache_client_mode": None,
+        "cache_client_interface": None,
+        "model_load_params": {
+            "device_map": "auto",
+            "torch_dtype": "torch.float16",
+        },
+        "cache_metadata": None,
+    }
+    assert calls["seed"] == 123
+    assert calls["kwargs"]["max_new_tokens"] == 5
+    assert calls["kwargs"]["temperature"] == 0.7
+    assert calls["kwargs"]["do_sample"] is True
+    assert calls["kwargs"]["top_p"] == 0.9
+    assert "model_load" not in calls["kwargs"]
+    assert "tokenizer_load" not in calls["kwargs"]
+
+
+def test_local_transformers_adapter_non_cached_generate_batch(monkeypatch):
+    calls: dict[str, object] = {}
+
+    def fake_pipeline(task, *, model, tokenizer, model_kwargs):
+        assert task == "text-generation"
+        calls["model_kwargs"] = model_kwargs
+
+        def run(prompts, **kwargs):
+            calls["prompts"] = prompts
+            calls["kwargs"] = kwargs
+            return [
+                [{"generated_text": "batch answer 1"}],
+                [{"generated_text": "batch answer 2"}],
+            ]
+
+        return run
+
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        pipeline=fake_pipeline,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {
+            "cache_enabled": False,
+            "model_params": {
+                "model_load": {"device_map": "auto", "torch_dtype": "float16"},
+            },
+        },
+    )
+
+    results = adapter.generate_batch(
+        ["prompt 1", "prompt 2"],
+        max_output_tokens=5,
+        seed=123,
+        model_params={
+            "top_p": 0.9,
+            "model_load": {"device_map": "auto", "torch_dtype": "float16"},
+        },
+    )
+
+    assert [result.status for result in results] == [
+        GenerationStatus.SUCCESS,
+        GenerationStatus.SUCCESS,
+    ]
+    assert [result.raw_response for result in results] == [
+        "batch answer 1",
+        "batch answer 2",
+    ]
+    assert [result.output_tokens for result in results] == [3, 2]
+    assert calls["prompts"] == ["prompt 1", "prompt 2"]
+    assert calls["kwargs"]["max_new_tokens"] == 5
+    assert calls["kwargs"]["do_sample"] is False
+    assert calls["kwargs"]["top_p"] == 0.9
+    assert "model_load" not in calls["kwargs"]
+    assert str(calls["model_kwargs"]["torch_dtype"]) == "torch.float16"
+    assert results[0].provider_details["batch_count"] == 2
+    assert results[0].provider_details["cache_enabled"] is False
+
+
+def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
+    calls: dict[str, object] = {}
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    Metadata = namedtuple("Metadata", ["cached", "duplicated"])
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls["kwargs"] = kwargs
+            return "cached answer", Metadata(
+                cached=[True],
+                duplicated=[False],
+            )
+
+    class FakeClient:
+        chat = types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=FakeCompletions().create)
+        )
+
+    def fake_make_transformers_client(use_cache, **kwargs):
+        calls["client_kwargs"] = kwargs
+        assert use_cache is True
+        return FakeClient()
+
+    monkeypatch.setattr(
+        local_adapter_module,
+        "make_transformers_client",
+        fake_make_transformers_client,
+    )
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {
+            "cache_enabled": True,
+            "cache_namespace": "test/local",
+            "cache_dir": ".cache/test",
+            "local_cache_client_mode": "sync",
+            "model_params": {
+                "model_load": {"device_map": "auto", "torch_dtype": "float16"},
+            },
+        },
+    )
+
+    result = adapter.generate(
+        "prompt",
+        max_output_tokens=7,
+        seed=456,
+        model_params={
+            "top_k": 20,
+            "model_load": {"device_map": "auto", "torch_dtype": "float16"},
+        },
+    )
+
+    assert result.status == GenerationStatus.SUCCESS
+    assert result.raw_response == "cached answer"
+    assert result.input_tokens == 3
+    assert result.output_tokens == 2
+    assert result.provider_details["cache_enabled"] is True
+    assert result.provider_details["local_cache_client_mode"] == "sync"
+    assert result.provider_details["cache_client_interface"] == "chat"
+    assert result.provider_details["cache_metadata"] == {
+        "cached": [True],
+        "duplicated": [False],
+    }
+    assert calls["seed"] == 456
+    assert calls["client_kwargs"] == {
+        "model_name": "tiny-local-model",
+        "namespace": "test/local",
+        "cache_dir": ".cache/test",
+        "client_mode": "sync",
+        "device_map": "auto",
+        "torch_dtype": calls["client_kwargs"]["torch_dtype"],
+    }
+    assert str(calls["client_kwargs"]["torch_dtype"]) == "torch.float16"
+    assert calls["kwargs"]["max_new_tokens"] == 7
+    assert calls["kwargs"]["do_sample"] is False
+    assert calls["kwargs"]["top_k"] == 20
+    assert "model_load" not in calls["kwargs"]
+    assert calls["kwargs"]["metadata"] is True
+
+
+def test_local_transformers_adapter_cached_uses_documented_chat_interface(monkeypatch):
+    calls: dict[str, object] = {}
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    Metadata = namedtuple("Metadata", ["cached", "duplicated"])
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls["kwargs"] = kwargs
+            return "chat answer", Metadata(cached=[False], duplicated=[False])
+
+    class FakeClient:
+        _riddles_transformers_interface = "chat"
+        chat = types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=FakeCompletions().create)
+        )
+
+    monkeypatch.setattr(
+        local_adapter_module,
+        "make_transformers_client",
+        lambda use_cache, **kwargs: FakeClient(),
+    )
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {"cache_enabled": True},
+    )
+
+    result = adapter.generate("prompt", max_output_tokens=9)
+
+    assert result.status == GenerationStatus.SUCCESS
+    assert result.raw_response == "chat answer"
+    assert result.provider_details["cache_client_interface"] == "chat"
+    assert calls["kwargs"]["messages"] == [{"role": "user", "content": "prompt"}]
+    assert calls["kwargs"]["max_new_tokens"] == 9
+    assert calls["kwargs"]["do_sample"] is False
+    assert calls["kwargs"]["metadata"] is True
+
+
+def test_local_transformers_adapter_cached_uses_installed_generate_interface(monkeypatch):
+    calls: dict[str, object] = {}
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    Metadata = namedtuple("Metadata", ["cached", "duplicated"])
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls["kwargs"] = kwargs
+            return _FakeTensor([[1, 2, 3, 4, 5]]), Metadata(
+                cached=[True],
+                duplicated=[False],
+            )
+
+    class FakeClient:
+        _riddles_transformers_interface = "generate"
+        model = types.SimpleNamespace(model=types.SimpleNamespace(device="cpu"))
+        chat = types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=FakeCompletions().create)
+        )
+
+    monkeypatch.setattr(
+        local_adapter_module,
+        "make_transformers_client",
+        lambda use_cache, **kwargs: FakeClient(),
+    )
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {
+            "cache_enabled": True,
+            "local_cache_client_mode": "sync",
+        },
+    )
+
+    result = adapter.generate(
+        "prompt",
+        max_output_tokens=7,
+        model_params={"top_k": 20},
+    )
+
+    assert result.status == GenerationStatus.SUCCESS
+    assert result.raw_response == "cached answer"
+    assert result.input_tokens == 3
+    assert result.output_tokens == 2
+    assert result.provider_details["cache_client_interface"] == "generate"
+    assert calls["kwargs"]["max_new_tokens"] == 7
+    assert calls["kwargs"]["do_sample"] is False
+    assert calls["kwargs"]["pad_token_id"] == 0
+    assert calls["kwargs"]["top_k"] == 20
+    assert calls["kwargs"]["metadata"] is True
+
+
+def test_local_transformers_adapter_cached_generate_interface_batches(monkeypatch):
+    calls: dict[str, object] = {}
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    Metadata = namedtuple("Metadata", ["cached", "duplicated"])
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls["kwargs"] = kwargs
+            return _FakeTensor([[1, 2, 3, 4, 5], [0, 1, 2, 6, 7]]), Metadata(
+                cached=[False],
+                duplicated=[False],
+            )
+
+    class FakeClient:
+        _riddles_transformers_interface = "generate"
+        model = types.SimpleNamespace(model=types.SimpleNamespace(device="cuda:0"))
+        chat = types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=FakeCompletions().create)
+        )
+
+    monkeypatch.setattr(
+        local_adapter_module,
+        "make_transformers_client",
+        lambda use_cache, **kwargs: FakeClient(),
+    )
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {
+            "cache_enabled": True,
+            "local_cache_client_mode": "sync",
+        },
+    )
+
+    results = adapter.generate_batch(
+        ["prompt 1", "prompt 2"],
+        max_output_tokens=7,
+        model_params={"top_k": 20},
+    )
+
+    assert [result.status for result in results] == [
+        GenerationStatus.SUCCESS,
+        GenerationStatus.SUCCESS,
+    ]
+    assert [result.raw_response for result in results] == [
+        "cached answer",
+        "cached answer",
+    ]
+    assert [result.input_tokens for result in results] == [3, 2]
+    assert calls["kwargs"]["max_new_tokens"] == 7
+    assert calls["kwargs"]["do_sample"] is False
+    assert calls["kwargs"]["pad_token_id"] == 0
+    assert calls["kwargs"]["top_k"] == 20
+    assert calls["kwargs"]["metadata"] is True
+    assert results[0].provider_details["batch_count"] == 2
+    assert results[0].provider_details["cache_client_interface"] == "generate"
+
+
+def test_local_transformers_adapter_cached_uses_async_client(monkeypatch):
+    calls: dict[str, object] = {}
+    fake_transformers = types.SimpleNamespace(
+        AutoTokenizer=_FakeTokenizer,
+        set_seed=lambda seed: calls.setdefault("seed", seed),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    Metadata = namedtuple("Metadata", ["cached", "duplicated"])
+
+    class FakeCompletions:
+        async def create(self, **kwargs):
+            calls["kwargs"] = kwargs
+            return "async answer", Metadata(cached=[True], duplicated=[False])
+
+    class FakeClient:
+        chat = types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=FakeCompletions().create)
+        )
+
+    def fake_make_transformers_client(use_cache, **kwargs):
+        calls["client_kwargs"] = kwargs
+        return FakeClient()
+
+    monkeypatch.setattr(
+        local_adapter_module,
+        "make_transformers_client",
+        fake_make_transformers_client,
+    )
+
+    adapter = local_adapter_module.LocalTransformersAdapter(
+        _local_spec(),
+        {
+            "cache_enabled": True,
+            "local_cache_client_mode": "async",
+        },
+    )
+
+    result = adapter.generate("prompt", max_output_tokens=11)
+
+    assert result.status == GenerationStatus.SUCCESS
+    assert result.raw_response == "async answer"
+    assert calls["client_kwargs"]["client_mode"] == "async"
+    assert result.provider_details["local_cache_client_mode"] == "async"
+    assert result.provider_details["cache_client_interface"] == "chat"
+    assert calls["kwargs"]["max_new_tokens"] == 11
+    assert calls["kwargs"]["metadata"] is True
+
+
+def test_make_transformers_client_cached_uses_sync_hf_wrapper(monkeypatch):
+    calls: dict[str, object] = {}
+
+    class FakeHFTransformers:
+        def __init__(self, *, model_name, **kwargs):
+            calls["model_name"] = model_name
+            calls["kwargs"] = kwargs
+
+    fake_module = types.SimpleNamespace(HFTransformers=FakeHFTransformers)
+    monkeypatch.setitem(sys.modules, "cachesaver.models.transformers", fake_module)
+
+    client = make_transformers_client(
+        True,
+        model_name="tiny-local-model",
+        namespace="test/local",
+        cache_dir=".cache/test",
+        client_mode="sync",
+    )
+
+    assert isinstance(client, FakeHFTransformers)
+    assert calls["model_name"] == "tiny-local-model"
+    assert calls["kwargs"] == {
+        "namespace": "test/local",
+        "cachedir": ".cache/test",
+    }
+    assert client._riddles_transformers_client_mode == "sync"
+    assert client._riddles_transformers_interface == "chat"
+
+
+def test_make_transformers_client_cached_uses_async_hf_wrapper(monkeypatch):
+    calls: dict[str, object] = {}
+
+    class FakeAsyncHFTransformers:
+        def __init__(self, *, model_name, **kwargs):
+            calls["model_name"] = model_name
+            calls["kwargs"] = kwargs
+
+    fake_module = types.SimpleNamespace(AsyncHFTransformers=FakeAsyncHFTransformers)
+    monkeypatch.setitem(sys.modules, "cachesaver.models.transformers", fake_module)
+
+    client = make_transformers_client(
+        True,
+        model_name="tiny-local-model",
+        namespace="test/local",
+        cache_dir=".cache/test",
+        client_mode="async",
+    )
+
+    assert isinstance(client, FakeAsyncHFTransformers)
+    assert calls["model_name"] == "tiny-local-model"
+    assert calls["kwargs"] == {
+        "namespace": "test/local",
+        "cachedir": ".cache/test",
+    }
+    assert client._riddles_transformers_client_mode == "async"
+    assert client._riddles_transformers_interface == "chat"
+
+
+def test_make_transformers_client_cached_sync_falls_back_to_installed_wrapper(monkeypatch):
+    calls: dict[str, object] = {}
+
+    class FakeAutoModelForCausalLM:
+        @classmethod
+        def from_pretrained(cls, model_name, **kwargs):
+            calls["model_name"] = model_name
+            calls["kwargs"] = kwargs
+            return types.SimpleNamespace()
+
+    fake_module = types.SimpleNamespace(AutoModelForCausalLM=FakeAutoModelForCausalLM)
+    monkeypatch.setitem(sys.modules, "cachesaver.models.transformers", fake_module)
+
+    client = make_transformers_client(
+        True,
+        model_name="tiny-local-model",
+        namespace="test/local",
+        cache_dir=".cache/test",
+        client_mode="sync",
+    )
+
+    assert calls["model_name"] == "tiny-local-model"
+    assert calls["kwargs"] == {
+        "namespace": "test/local",
+        "cachedir": ".cache/test",
+    }
+    assert client._riddles_transformers_client_mode == "sync"
+    assert client._riddles_transformers_interface == "generate"
+
+
 def test_yaml_config_loading(tmp_path: Path):
     yaml_path = tmp_path / "config.yaml"
     yaml_path.write_text(
@@ -350,6 +946,7 @@ cache_enabled: false
 cache_backend: null
 cache_namespace: null
 cache_dir: null
+local_cache_client_mode: async
 api_key_env_var: null
 base_url: null
 runner_version: v1.0.0
@@ -384,6 +981,7 @@ model_spec:
     assert cfg.model_params == {"top_p": 0.9}
     # response_format defaults to json now.
     assert cfg.response_format == ResponseFormat.JSON
+    assert cfg.local_cache_client_mode == "async"
 
 
 def test_refusal_heuristic():

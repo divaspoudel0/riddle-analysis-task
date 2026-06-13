@@ -28,8 +28,6 @@ class AnthropicAdapter(Model):
             client_kwargs["namespace"] = cfg.get("cache_namespace")
             if cfg.get("cache_dir"):
                 client_kwargs["cache_dir"] = cfg["cache_dir"]
-            if cfg.get("batch_size"):
-                client_kwargs["batch_size"] = cfg["batch_size"]
 
         self.client = make_anthropic_client(cfg.get("cache_enabled", False), **client_kwargs)
         # Optional override for the thinking budget. Defaults to max_output_tokens // 2 at call time.

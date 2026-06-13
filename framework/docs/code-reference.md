@@ -599,13 +599,23 @@ Wraps OpenAI-compatible API through OpenRouter.
 
 #### `models/transformers_local_adapter.py` — Local Hugging Face Models
 
-Runs models locally via `transformers.pipeline`.
+Runs Hugging Face causal language models locally.
 
 **Key features:**
 
 - Without cache: creates `transformers.pipeline("text-generation", ...)`
-- With cache: uses CacheSaver's HuggingFace client
+- With cache: uses CacheSaver's sync local Transformers wrapper in `sync` mode; uses `AsyncHFTransformers` in `async` mode when that wrapper is available
 - Greedy decoding by default (no sampling unless temperature is set)
+- Loads a matching tokenizer for token counts and cached-output decoding
+- Supports `seed` via `transformers.set_seed`
+- Keep framework `batch_mode: false` for CLI runs unless the runner is extended to call an adapter-level `generate_batch` path
+- Uses `model_params.model_load` for Hugging Face load-time settings such as `device_map: auto` and `torch_dtype: float16`
+
+---
+
+
+
+
 
 ---
 

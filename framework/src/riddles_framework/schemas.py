@@ -241,6 +241,7 @@ class RunConfig:
     cache_backend: str | None = None
     cache_namespace: str | None = None
     cache_dir: str | None = None
+    local_cache_client_mode: str = "sync"
 
     api_key_env_var: str | None = None
     base_url: str | None = None
@@ -285,6 +286,7 @@ class RunMetadata:
     cache_backend: str | None = None
     cache_namespace: str | None = None
     cache_dir: str | None = None
+    local_cache_client_mode: str = "sync"
 
     prompt_template_id: str | None = None
     prompt_template_version: str | None = None
@@ -364,6 +366,7 @@ class InstanceResult:
     cache_enabled: bool = False
     cache_backend: str | None = None
     cache_namespace: str | None = None
+    local_cache_client_mode: str = "sync"
 
     instance_language: str | None = None
     instance_community: str | None = None
