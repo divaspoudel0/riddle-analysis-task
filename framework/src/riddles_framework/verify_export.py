@@ -134,3 +134,100 @@ def validate_run(run_dir: Path) -> ValidationResult:
         tokens_populated=tokens_populated,
         problems=problems,
     )
+
+
+@dataclass
+class EntryResult:
+    entry: Entry
+    skipped_reason: str | None = None
+    outcome: RunOutcome | None = None
+    validation: ValidationResult | None = None
+
+    @property
+    def passed(self) -> bool:
+        if self.skipped_reason is not None:
+            return True
+        if self.outcome is None or self.outcome.returncode != 0:
+            return False
+        return self.validation is not None and self.validation.ok
+
+
+def write_report(results: list[EntryResult], path: Path) -> None:
+    lines: list[str] = []
+    lines.append("# T2.2.5 Cross-language Export Verification")
+    lines.append("")
+    lines.append(f"Dataset: `smoke_test_25` ({EXPECTED_ROWS} rows, "
+                 f"languages: {', '.join(sorted(EXPECTED_LANGUAGES))})")
+    keys = {"COHERE_API_KEY", "TOGETHER_API_KEY"}
+    present = sorted(k for k in keys if os.environ.get(k))
+    lines.append(f"API keys present: {present or 'none'}")
+    lines.append("")
+    lines.append("| Provider | Category | Ran | Rows | Statuses | Languages | Tokens | Export |")
+    lines.append("|---|---|---|---|---|---|---|---|")
+    for r in results:
+        if r.skipped_reason is not None:
+            lines.append(f"| {r.entry.label} | {r.entry.category} | SKIPPED ({r.skipped_reason}) "
+                         f"| - | - | - | - | - |")
+            continue
+        v = r.validation
+        ran = "yes" if (r.outcome and r.outcome.returncode == 0) else "FAILED"
+        rows = v.rows if v else "-"
+        statuses = ", ".join(f"{k}:{n}" for k, n in (v.statuses.items() if v else []))
+        langs = ", ".join(v.languages) if v else "-"
+        tokens = ("yes" if v.tokens_populated else "no") if v else "-"
+        export = "OK" if r.passed else "FAIL"
+        lines.append(f"| {r.entry.label} | {r.entry.category} | {ran} | {rows} "
+                     f"| {statuses} | {langs} | {tokens} | {export} |")
+
+    failures = [r for r in results if not r.passed]
+    if failures:
+        lines.append("")
+        lines.append("## Failures")
+        for r in failures:
+            lines.append(f"### {r.entry.label}")
+            if r.outcome and r.outcome.returncode != 0:
+                lines.append(f"- CLI exited with code {r.outcome.returncode}")
+                if r.outcome.stderr_tail:
+                    lines.append("```")
+                    lines.append(r.outcome.stderr_tail)
+                    lines.append("```")
+            if r.validation:
+                for p in r.validation.problems:
+                    lines.append(f"- {p}")
+    lines.append("")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="T2.2.5 cross-language export verification campaign")
+    parser.add_argument("--report", default="docs/experiments/t225-cross-language-export.md")
+    parser.add_argument("--output-root", default="runs")
+    args = parser.parse_args()
+
+    results: list[EntryResult] = []
+    for entry in MATRIX:
+        reason = should_skip(entry)
+        if reason is not None:
+            print(f"SKIP  {entry.label}: {reason}")
+            results.append(EntryResult(entry=entry, skipped_reason=reason))
+            continue
+        print(f"RUN   {entry.label} ({entry.config})")
+        outcome = run_entry(entry, args.output_root)
+        validation = validate_run(outcome.run_dir) if outcome.run_dir else None
+        res = EntryResult(entry=entry, outcome=outcome, validation=validation)
+        results.append(res)
+        print(f"      -> {'PASS' if res.passed else 'FAIL'}")
+
+    write_report(results, Path(args.report))
+    failed = [r.entry.label for r in results if not r.passed]
+    print(f"\nReport: {args.report}")
+    if failed:
+        print(f"FAILED: {', '.join(failed)}")
+        return 1
+    print("All executed entries passed.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
