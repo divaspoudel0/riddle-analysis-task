@@ -66,24 +66,26 @@ class LocalTransformersAdapter(Model):
 
     def _normalize_model_load_params(self, params: dict[str, Any]) -> dict[str, Any]:
         load_params = dict(params or {})
-        torch_dtype = load_params.get("torch_dtype")
-        if isinstance(torch_dtype, str) and torch_dtype != "auto":
-            import torch
 
-            dtype_map = {
-                "float16": torch.float16,
-                "fp16": torch.float16,
-                "bfloat16": torch.bfloat16,
-                "bf16": torch.bfloat16,
-                "float32": torch.float32,
-                "fp32": torch.float32,
-            }
-            if torch_dtype not in dtype_map:
+        # Transformers 5.x renamed `torch_dtype` to `dtype`; accept the old key as
+        # a deprecated alias so existing configs keep working.
+        if "torch_dtype" in load_params and "dtype" not in load_params:
+            load_params["dtype"] = load_params.pop("torch_dtype")
+        else:
+            load_params.pop("torch_dtype", None)
+
+        dtype = load_params.get("dtype")
+        if isinstance(dtype, str):
+            # Pass the dtype as a string; Transformers resolves it to a torch dtype
+            # internally, so the adapter never needs to import torch.
+            aliases = {"fp16": "float16", "bf16": "bfloat16", "fp32": "float32"}
+            canonical = aliases.get(dtype, dtype)
+            if canonical not in {"auto", "float16", "bfloat16", "float32"}:
                 raise ValueError(
-                    "model_params.model_load.torch_dtype must be one of "
+                    "model_params.model_load.dtype must be one of "
                     "auto, float16, bfloat16, or float32"
                 )
-            load_params["torch_dtype"] = dtype_map[torch_dtype]
+            load_params["dtype"] = canonical
         return load_params
 
     def _generation_model_params(

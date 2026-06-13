@@ -609,7 +609,7 @@ Runs Hugging Face causal language models locally.
 - Loads a matching tokenizer for token counts and cached-output decoding
 - Supports `seed` via `transformers.set_seed`
 - Keep framework `batch_mode: false` for CLI runs unless the runner is extended to call an adapter-level `generate_batch` path
-- Uses `model_params.model_load` for Hugging Face load-time settings such as `device_map: auto` and `torch_dtype: float16`
+- Uses `model_params.model_load` for Hugging Face load-time settings such as `device_map: auto` and `dtype: float16` (the legacy `torch_dtype` key is still accepted)
 
 ---
 

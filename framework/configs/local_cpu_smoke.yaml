@@ -29,7 +29,7 @@ model_params:
   model_load:
     # Force CPU so the smoke test is deterministic and GPU-independent.
     device_map: cpu
-    torch_dtype: float32
+    dtype: float32
 
 cache_enabled: false
 

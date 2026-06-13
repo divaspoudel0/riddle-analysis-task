@@ -405,27 +405,6 @@ class _FakeTensor:
         return self.data
 
 
-class _FakeDtype:
-    def __init__(self, name: str):
-        self._name = name
-
-    def __repr__(self) -> str:
-        return f"torch.{self._name}"
-
-    __str__ = __repr__
-
-
-def _install_fake_torch(monkeypatch) -> None:
-    # The adapter does a real `import torch` to map dtype strings to dtype objects.
-    # Mock it (like `transformers` above) so these tests run without the `local` extra.
-    fake_torch = types.SimpleNamespace(
-        float16=_FakeDtype("float16"),
-        bfloat16=_FakeDtype("bfloat16"),
-        float32=_FakeDtype("float32"),
-    )
-    monkeypatch.setitem(sys.modules, "torch", fake_torch)
-
-
 def test_local_transformers_adapter_non_cached(monkeypatch):
     calls: dict[str, object] = {}
 
@@ -448,7 +427,6 @@ def test_local_transformers_adapter_non_cached(monkeypatch):
         set_seed=lambda seed: calls.setdefault("seed", seed),
     )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
-    _install_fake_torch(monkeypatch)
 
     adapter = local_adapter_module.LocalTransformersAdapter(
         _local_spec(),
@@ -474,7 +452,7 @@ def test_local_transformers_adapter_non_cached(monkeypatch):
     assert result.input_tokens == 3
     assert result.output_tokens == 2
     assert calls["model_kwargs"]["device_map"] == "auto"
-    assert str(calls["model_kwargs"]["torch_dtype"]) == "torch.float16"
+    assert calls["model_kwargs"]["dtype"] == "float16"
     assert result.provider_details == {
         "model": "tiny-local-model",
         "cache_enabled": False,
@@ -482,7 +460,7 @@ def test_local_transformers_adapter_non_cached(monkeypatch):
         "cache_client_interface": None,
         "model_load_params": {
             "device_map": "auto",
-            "torch_dtype": "torch.float16",
+            "dtype": "float16",
         },
         "cache_metadata": None,
     }
@@ -518,7 +496,6 @@ def test_local_transformers_adapter_non_cached_generate_batch(monkeypatch):
         set_seed=lambda seed: calls.setdefault("seed", seed),
     )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
-    _install_fake_torch(monkeypatch)
 
     adapter = local_adapter_module.LocalTransformersAdapter(
         _local_spec(),
@@ -554,7 +531,7 @@ def test_local_transformers_adapter_non_cached_generate_batch(monkeypatch):
     assert calls["kwargs"]["do_sample"] is False
     assert calls["kwargs"]["top_p"] == 0.9
     assert "model_load" not in calls["kwargs"]
-    assert str(calls["model_kwargs"]["torch_dtype"]) == "torch.float16"
+    assert calls["model_kwargs"]["dtype"] == "float16"
     assert results[0].provider_details["batch_count"] == 2
     assert results[0].provider_details["cache_enabled"] is False
 
@@ -566,7 +543,6 @@ def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
         set_seed=lambda seed: calls.setdefault("seed", seed),
     )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
-    _install_fake_torch(monkeypatch)
 
     Metadata = namedtuple("Metadata", ["cached", "duplicated"])
 
@@ -635,9 +611,8 @@ def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
         "cache_dir": ".cache/test",
         "client_mode": "sync",
         "device_map": "auto",
-        "torch_dtype": calls["client_kwargs"]["torch_dtype"],
+        "dtype": "float16",
     }
-    assert str(calls["client_kwargs"]["torch_dtype"]) == "torch.float16"
     assert calls["kwargs"]["max_new_tokens"] == 7
     assert calls["kwargs"]["do_sample"] is False
     assert calls["kwargs"]["top_k"] == 20

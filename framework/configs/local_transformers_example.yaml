@@ -21,7 +21,7 @@ seed: null
 model_params:
   model_load:
     device_map: auto
-    torch_dtype: float16
+    dtype: float16
 
 cache_enabled: true
 cache_backend: cachesaver
