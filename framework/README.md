@@ -129,9 +129,8 @@ Local Hugging Face runs use `configs/local_transformers_example.yaml` as a scaff
 `cache_enabled` to route generation through CacheSaver's local Transformers wrapper.
 Keep framework `batch_mode: false` for local Hugging Face runs unless the
 benchmark runner is extended to call an adapter-level `generate_batch` path.
-Use `local_cache_client_mode: sync` for the available sync CacheSaver
-Transformers wrapper. `async` requires a CacheSaver version that exposes
-`AsyncHFTransformers`.
+Use `local_cache_client_mode: sync`: the pinned CacheSaver (`==0.0.6`) only ships
+a sync local Transformers wrapper, so `async` is not available and will raise.
 For GPU loading, set `model_params.model_load.device_map: auto`; the `local`
 extra installs `accelerate` so Transformers can place weights on GPU.
 For a quick, GPU-independent check that the local adapter works end to end, run
