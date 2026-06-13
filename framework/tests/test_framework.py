@@ -405,6 +405,27 @@ class _FakeTensor:
         return self.data
 
 
+class _FakeDtype:
+    def __init__(self, name: str):
+        self._name = name
+
+    def __repr__(self) -> str:
+        return f"torch.{self._name}"
+
+    __str__ = __repr__
+
+
+def _install_fake_torch(monkeypatch) -> None:
+    # The adapter does a real `import torch` to map dtype strings to dtype objects.
+    # Mock it (like `transformers` above) so these tests run without the `local` extra.
+    fake_torch = types.SimpleNamespace(
+        float16=_FakeDtype("float16"),
+        bfloat16=_FakeDtype("bfloat16"),
+        float32=_FakeDtype("float32"),
+    )
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+
 def test_local_transformers_adapter_non_cached(monkeypatch):
     calls: dict[str, object] = {}
 
@@ -427,6 +448,7 @@ def test_local_transformers_adapter_non_cached(monkeypatch):
         set_seed=lambda seed: calls.setdefault("seed", seed),
     )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+    _install_fake_torch(monkeypatch)
 
     adapter = local_adapter_module.LocalTransformersAdapter(
         _local_spec(),
@@ -496,6 +518,7 @@ def test_local_transformers_adapter_non_cached_generate_batch(monkeypatch):
         set_seed=lambda seed: calls.setdefault("seed", seed),
     )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+    _install_fake_torch(monkeypatch)
 
     adapter = local_adapter_module.LocalTransformersAdapter(
         _local_spec(),
@@ -543,6 +566,7 @@ def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
         set_seed=lambda seed: calls.setdefault("seed", seed),
     )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+    _install_fake_torch(monkeypatch)
 
     Metadata = namedtuple("Metadata", ["cached", "duplicated"])
 
