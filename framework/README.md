@@ -134,6 +134,9 @@ Transformers wrapper. `async` requires a CacheSaver version that exposes
 `AsyncHFTransformers`.
 For GPU loading, set `model_params.model_load.device_map: auto`; the `local`
 extra installs `accelerate` so Transformers can place weights on GPU.
+For a quick, GPU-independent check that the local adapter works end to end, run
+`configs/local_cpu_smoke.yaml` (a small ungated model pinned to CPU); every
+`results.jsonl` row should report `generation_status: success`.
 If `uv run python scripts/check_local_gpu.py` reports `torch.version.cuda: None`,
 the active environment still has CPU-only Torch. Reinstall the CUDA wheel with:
 
