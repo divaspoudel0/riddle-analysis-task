@@ -92,7 +92,13 @@ def validate_run(run_dir: Path) -> ValidationResult:
     results_path = run_dir / "results.jsonl"
     rows: list[dict] = []
     if results_path.exists():
-        rows = [json.loads(line) for line in results_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        for n, line in enumerate(results_path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                problems.append(f"malformed JSON on results.jsonl line {n}")
 
     if len(rows) != EXPECTED_ROWS:
         problems.append(f"row count {len(rows)} != expected {EXPECTED_ROWS}")
@@ -119,7 +125,7 @@ def validate_run(run_dir: Path) -> ValidationResult:
             val = r.get(tok)
             if val is not None:
                 tokens_populated = True
-                if not isinstance(val, int):
+                if not isinstance(val, int) or isinstance(val, bool):
                     problems.append(f"row {i}: {tok} is {type(val).__name__}, expected int or null")
 
     if len(problems) > 25:
@@ -152,12 +158,23 @@ class EntryResult:
         return self.validation is not None and self.validation.ok
 
 
+def _package_version(name: str) -> str:
+    try:
+        from importlib.metadata import version
+
+        return version(name)
+    except Exception:
+        return "n/a"
+
+
 def write_report(results: list[EntryResult], path: Path) -> None:
     lines: list[str] = []
     lines.append("# T2.2.5 Cross-language Export Verification")
     lines.append("")
     lines.append(f"Dataset: `smoke_test_25` ({EXPECTED_ROWS} rows, "
                  f"languages: {', '.join(sorted(EXPECTED_LANGUAGES))})")
+    lines.append(f"Versions: transformers={_package_version('transformers')}, "
+                 f"cachesaver={_package_version('cachesaver')}")
     keys = {"COHERE_API_KEY", "TOGETHER_API_KEY"}
     present = sorted(k for k in keys if os.environ.get(k))
     lines.append(f"API keys present: {present or 'none'}")
