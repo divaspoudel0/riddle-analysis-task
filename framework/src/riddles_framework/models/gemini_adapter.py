@@ -25,7 +25,8 @@ class GeminiAdapter(Model):
             client_kwargs["namespace"] = cfg.get("cache_namespace")
             if cfg.get("cache_dir"):
                 client_kwargs["cache_dir"] = cfg["cache_dir"]
-
+            if cfg.get("batch_size"):
+                client_kwargs["batch_size"] = cfg["batch_size"]
         self.client = make_gemini_client(cfg.get("cache_enabled", False), **client_kwargs)
 
     def generate(

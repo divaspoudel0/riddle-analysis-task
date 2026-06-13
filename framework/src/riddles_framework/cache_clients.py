@@ -20,6 +20,7 @@ def make_openai_client(use_cache: bool, **kwargs):
             from openai import OpenAI
             kwargs.pop("namespace", None)
             kwargs.pop("cachedir", None)
+            kwargs.pop("batch_size", None)
             return OpenAI(**kwargs)
     except Exception as exc:
         raise CacheClientError(f"Failed to build OpenAI client: {exc}") from exc
@@ -35,6 +36,8 @@ def make_anthropic_client(use_cache: bool, **kwargs):
             from anthropic import Anthropic
             kwargs.pop("namespace", None)
             kwargs.pop("cachedir", None)
+            kwargs.pop("batch_size", None)
+
             return Anthropic(**kwargs)
     except Exception as exc:
         raise CacheClientError(f"Failed to build Anthropic client: {exc}") from exc
@@ -50,6 +53,8 @@ def make_gemini_client(use_cache: bool, **kwargs):
             from google import genai
             kwargs.pop("namespace", None)
             kwargs.pop("cachedir", None)
+            kwargs.pop("batch_size", None)
+
             return genai.Client(**kwargs)
     except Exception as exc:
         raise CacheClientError(f"Failed to build Gemini client: {exc}") from exc
@@ -65,6 +70,7 @@ def make_openrouter_client(use_cache: bool, **kwargs):
             from openai import OpenAI
             kwargs.pop("namespace", None)
             kwargs.pop("cachedir", None)
+            kwargs.pop("batch_size", None)
 
             base_url = kwargs.get("base_url")
             if not base_url:
@@ -94,11 +100,14 @@ def make_together_client(use_cache: bool, **kwargs):
                 wrapper_kwargs["namespace"] = kwargs["namespace"]
             if kwargs.get("cachedir") is not None:
                 wrapper_kwargs["cachedir"] = kwargs["cachedir"]
+            if kwargs.get("batch_size") is not None:
+                wrapper_kwargs["batch_size"] = kwargs["batch_size"]
             return Together(**wrapper_kwargs)
 
         from openai import OpenAI
         kwargs.pop("namespace", None)
         kwargs.pop("cachedir", None)
+        kwargs.pop("batch_size", None)
 
         base_url = kwargs.get("base_url")
         if not base_url:
@@ -125,6 +134,7 @@ def make_cohere_client(use_cache: bool, **kwargs):
 
             # The sync OpenAI wrapper takes namespace/cachedir plus OpenAI client
             # kwargs (api_key/base_url); None cache params would clobber its defaults.
+            kwargs.pop("batch_size", None)
             if kwargs.get("namespace") is None:
                 kwargs.pop("namespace", None)
             if kwargs.get("cachedir") is None:
@@ -134,7 +144,7 @@ def make_cohere_client(use_cache: bool, **kwargs):
         from openai import OpenAI
         kwargs.pop("namespace", None)
         kwargs.pop("cachedir", None)
-
+        kwargs.pop("batch_size", None)
         return OpenAI(**kwargs)
     except CacheClientError:
         raise
