@@ -47,3 +47,26 @@ def should_skip(entry: Entry) -> str | None:
     if env_var and not os.environ.get(env_var):
         return f"{env_var} not set"
     return None
+
+
+@dataclass
+class RunOutcome:
+    returncode: int
+    run_dir: Path | None
+    stderr_tail: str
+
+
+def run_entry(entry: Entry, output_root: str) -> RunOutcome:
+    """Invoke the real CLI as a subprocess and locate the produced run directory."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "riddles_framework.cli",
+         "--config", entry.config, "--output-root", output_root],
+        capture_output=True, text=True,
+    )
+    run_dir: Path | None = None
+    for line in proc.stdout.splitlines():
+        if line.startswith("Run complete:"):
+            run_id = line.split("Run complete:", 1)[1].strip()
+            run_dir = Path(output_root) / run_id
+    stderr_tail = "\n".join(proc.stderr.strip().splitlines()[-15:])
+    return RunOutcome(returncode=proc.returncode, run_dir=run_dir, stderr_tail=stderr_tail)
