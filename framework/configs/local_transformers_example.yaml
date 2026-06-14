@@ -1,7 +1,7 @@
 runner_name: mufli
 
-dataset_path: ../data_loading/pilot_dataset/pilot_dataset_v1.jsonl
-dataset_version: pilot_dataset_v1
+dataset_path: ../data_loading/pilot_dataset/smoke_test_25.jsonl
+dataset_version: smoke_test 
 
 prompt_template_id: riddle_master
 prompt_template_version: v1
@@ -12,7 +12,8 @@ is_hint_provided: false
 reasoning_mode: null
 search_enabled: false
 response_format: free_form
-batch_mode: false
+batch_mode: true
+batch_size: 64
 
 temperature: null
 max_output_tokens: 16
@@ -50,5 +51,5 @@ model_spec:
     supports_reasoning: false
     supports_search: false
     supports_structured_output: false
-    supports_batch: false
+    supports_batch: true
     supports_seed: true

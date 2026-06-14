@@ -20,6 +20,7 @@ reasoning_mode: null
 search_enabled: false
 response_format: free_form
 batch_mode: false
+batch_size: 1
 
 temperature: null
 max_output_tokens: 16
@@ -52,5 +53,5 @@ model_spec:
     supports_reasoning: false
     supports_search: false
     supports_structured_output: false
-    supports_batch: false
+    supports_batch: true
     supports_seed: true

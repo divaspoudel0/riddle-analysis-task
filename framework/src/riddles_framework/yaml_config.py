@@ -18,6 +18,15 @@ def _opt_float(value):
     return float(value)
 
 
+def _opt_positive_int(value, *, key: str):
+    if value is None:
+        return None
+    parsed = int(value)
+    if parsed < 1:
+        raise ConfigError(f"{key} must be >= 1 when provided")
+    return parsed
+
+
 def _local_cache_client_mode(value):
     mode = value or "sync"
     if mode not in {"sync", "async"}:
@@ -69,6 +78,7 @@ def load_run_config_from_yaml(path: str) -> RunConfig:
             search_enabled=bool(data.get("search_enabled", False)),
             response_format=ResponseFormat(data.get("response_format", "json")),
             batch_mode=bool(data.get("batch_mode", False)),
+            batch_size=_opt_positive_int(data.get("batch_size"), key="batch_size"),
             # Temperature: only set if the user wrote it; else rely on model default.
             temperature=_opt_float(data.get("temperature")),
             max_output_tokens=int(data.get("max_output_tokens", 256)),

@@ -34,6 +34,7 @@ from riddles_framework.registry import register_model_adapter
 from riddles_framework.runner import BenchmarkRunner
 from riddles_framework.schemas import (
     BenchmarkInstance,
+    GenerationResult,
     ModelCapabilities,
     ModelSpec,
     PromptConfig,
@@ -230,6 +231,7 @@ def test_dummy_runner_creates_outputs(tmp_path: Path):
     # model_params field should be present (even if empty) for analysis joins.
     assert "model_params" in row
 
+
 def test_runner_rejects_english_with_hint(tmp_path: Path):
     dataset_path = tmp_path / "dataset.jsonl"
     write_jsonl(dataset_path, [sample_dataset_row()])
@@ -312,6 +314,98 @@ def test_model_params_are_threaded_through(tmp_path: Path):
     }
 
 
+def test_runner_uses_generate_batch_when_batch_mode_enabled(tmp_path: Path):
+    rows = []
+    for index in range(3):
+        row = sample_dataset_row()
+        row["riddle_id"] = f"riddle_{index}"
+        rows.append(row)
+
+    dataset_path = tmp_path / "dataset.jsonl"
+    write_jsonl(dataset_path, rows)
+
+    spec = ModelSpec(
+        model_name="Batch Local",
+        model_id="local/batch-test",
+        provider="local",
+        access_pattern="local",
+        provider_model_name="batch-test",
+        capabilities=ModelCapabilities(supports_batch=True),
+    )
+
+    class BatchModel(DummyModel):
+        def __init__(self, model_spec):
+            super().__init__(model_spec)
+            self.batches: list[list[str]] = []
+
+        def generate(self, *args, **kwargs):
+            raise AssertionError("runner should call generate_batch in batch mode")
+
+        def generate_batch(self, prompts, **kwargs):
+            self.batches.append(list(prompts))
+            return [
+                GenerationResult(
+                    raw_response=f"batch answer {index}",
+                    status=GenerationStatus.SUCCESS,
+                    provider_details={"batch_size": len(prompts)},
+                )
+                for index, _ in enumerate(prompts)
+            ]
+
+    run_config = RunConfig(
+        model_spec=spec,
+        runner_name="tester",
+        dataset_path=str(dataset_path),
+        dataset_version="test_v1",
+        prompt_template_id="riddle_basic",
+        prompt_template_version="v1",
+        prompt_language="eng",
+        riddle_language_presented=RiddleLanguagePresented.SOURCE,
+        is_hint_provided=False,
+        response_format=ResponseFormat.FREE_FORM,
+        batch_mode=True,
+        batch_size=2,
+    )
+
+    model = BatchModel(spec)
+    template = PromptTemplate(
+        template_id="riddle_basic",
+        template_version="v1",
+        instruction_text="Solve this riddle.",
+    )
+
+    runner = BenchmarkRunner(
+        run_config=run_config,
+        prompt_template=template,
+        model=model,
+        output_root=tmp_path / "runs",
+    )
+    run_id = runner.run()
+
+    assert [len(batch) for batch in model.batches] == [2, 1]
+
+    run_dir = tmp_path / "runs" / run_id
+    results = [
+        json.loads(line)
+        for line in (run_dir / "results.jsonl")
+        .read_text(encoding="utf-8")
+        .strip()
+        .splitlines()
+    ]
+    assert len(results) == 3
+    assert [row["generation_status"] for row in results] == ["success"] * 3
+    assert [row["batch_size"] for row in results] == [2, 2, 2]
+
+    metadata = json.loads((run_dir / "run_metadata.json").read_text(encoding="utf-8"))
+    assert metadata["batch_mode_requested"] is True
+    assert metadata["batch_mode_used"] is True
+    assert metadata["batch_size"] == 2
+
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["batch_mode_used"] is True
+    assert manifest["batch_size"] == 2
+
+
 def test_registry_and_factory_dummy():
     key = "dummytest:local"
 
@@ -338,7 +432,7 @@ def _local_spec() -> ModelSpec:
         provider="local",
         access_pattern="local",
         provider_model_name="tiny-local-model",
-        capabilities=ModelCapabilities(supports_seed=True),
+        capabilities=ModelCapabilities(supports_batch=True, supports_seed=True),
         closed_source=False,
     )
 
@@ -456,6 +550,7 @@ def test_local_transformers_adapter_non_cached(monkeypatch):
     assert result.provider_details == {
         "model": "tiny-local-model",
         "cache_enabled": False,
+        "batch_size": 1,
         "local_cache_client_mode": None,
         "cache_client_interface": None,
         "model_load_params": {
@@ -501,6 +596,7 @@ def test_local_transformers_adapter_non_cached_generate_batch(monkeypatch):
         _local_spec(),
         {
             "cache_enabled": False,
+            "batch_size": 2,
             "model_params": {
                 "model_load": {"device_map": "auto", "torch_dtype": "float16"},
             },
@@ -527,11 +623,13 @@ def test_local_transformers_adapter_non_cached_generate_batch(monkeypatch):
     ]
     assert [result.output_tokens for result in results] == [3, 2]
     assert calls["prompts"] == ["prompt 1", "prompt 2"]
+    assert calls["kwargs"]["batch_size"] == 2
     assert calls["kwargs"]["max_new_tokens"] == 5
     assert calls["kwargs"]["do_sample"] is False
     assert calls["kwargs"]["top_p"] == 0.9
     assert "model_load" not in calls["kwargs"]
     assert calls["model_kwargs"]["dtype"] == "float16"
+    assert results[0].provider_details["batch_size"] == 2
     assert results[0].provider_details["batch_count"] == 2
     assert results[0].provider_details["cache_enabled"] is False
 
@@ -576,6 +674,7 @@ def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
             "cache_enabled": True,
             "cache_namespace": "test/local",
             "cache_dir": ".cache/test",
+            "batch_size": 4,
             "local_cache_client_mode": "sync",
             "model_params": {
                 "model_load": {"device_map": "auto", "torch_dtype": "float16"},
@@ -598,6 +697,7 @@ def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
     assert result.input_tokens == 3
     assert result.output_tokens == 2
     assert result.provider_details["cache_enabled"] is True
+    assert result.provider_details["batch_size"] == 4
     assert result.provider_details["local_cache_client_mode"] == "sync"
     assert result.provider_details["cache_client_interface"] == "chat"
     assert result.provider_details["cache_metadata"] == {
@@ -609,6 +709,7 @@ def test_local_transformers_adapter_cached_uses_cachesaver(monkeypatch):
         "model_name": "tiny-local-model",
         "namespace": "test/local",
         "cache_dir": ".cache/test",
+        "batch_size": 4,
         "client_mode": "sync",
         "device_map": "auto",
         "dtype": "float16",
@@ -698,6 +799,7 @@ def test_local_transformers_adapter_cached_uses_installed_generate_interface(mon
         _local_spec(),
         {
             "cache_enabled": True,
+            "batch_size": 4,
             "local_cache_client_mode": "sync",
         },
     )
@@ -755,6 +857,7 @@ def test_local_transformers_adapter_cached_generate_interface_batches(monkeypatc
         _local_spec(),
         {
             "cache_enabled": True,
+            "batch_size": 2,
             "local_cache_client_mode": "sync",
         },
     )
@@ -779,6 +882,7 @@ def test_local_transformers_adapter_cached_generate_interface_batches(monkeypatc
     assert calls["kwargs"]["pad_token_id"] == 0
     assert calls["kwargs"]["top_k"] == 20
     assert calls["kwargs"]["metadata"] is True
+    assert results[0].provider_details["batch_size"] == 2
     assert results[0].provider_details["batch_count"] == 2
     assert results[0].provider_details["cache_client_interface"] == "generate"
 
@@ -817,6 +921,7 @@ def test_local_transformers_adapter_cached_uses_async_client(monkeypatch):
         _local_spec(),
         {
             "cache_enabled": True,
+            "batch_size": 2,
             "local_cache_client_mode": "async",
         },
     )
@@ -848,6 +953,7 @@ def test_make_transformers_client_cached_uses_sync_hf_wrapper(monkeypatch):
         model_name="tiny-local-model",
         namespace="test/local",
         cache_dir=".cache/test",
+        batch_size=None,
         client_mode="sync",
     )
 
@@ -877,6 +983,7 @@ def test_make_transformers_client_cached_uses_async_hf_wrapper(monkeypatch):
         model_name="tiny-local-model",
         namespace="test/local",
         cache_dir=".cache/test",
+        batch_size=4,
         client_mode="async",
     )
 
@@ -885,6 +992,7 @@ def test_make_transformers_client_cached_uses_async_hf_wrapper(monkeypatch):
     assert calls["kwargs"] == {
         "namespace": "test/local",
         "cachedir": ".cache/test",
+        "batch_size": 4,
     }
     assert client._riddles_transformers_client_mode == "async"
     assert client._riddles_transformers_interface == "chat"
@@ -908,6 +1016,7 @@ def test_make_transformers_client_cached_sync_falls_back_to_installed_wrapper(mo
         model_name="tiny-local-model",
         namespace="test/local",
         cache_dir=".cache/test",
+        batch_size=4,
         client_mode="sync",
     )
 
@@ -915,6 +1024,7 @@ def test_make_transformers_client_cached_sync_falls_back_to_installed_wrapper(mo
     assert calls["kwargs"] == {
         "namespace": "test/local",
         "cachedir": ".cache/test",
+        "batch_size": 4,
     }
     assert client._riddles_transformers_client_mode == "sync"
     assert client._riddles_transformers_interface == "generate"
@@ -936,6 +1046,7 @@ reasoning_mode: null
 search_enabled: false
 response_format: json
 batch_mode: false
+batch_size: 4
 temperature: null
 max_output_tokens: 64
 seed: null
@@ -980,6 +1091,7 @@ model_spec:
     assert cfg.model_params == {"top_p": 0.9}
     # response_format defaults to json now.
     assert cfg.response_format == ResponseFormat.JSON
+    assert cfg.batch_size == 4
     assert cfg.local_cache_client_mode == "async"
 
 

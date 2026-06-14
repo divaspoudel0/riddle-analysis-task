@@ -62,7 +62,7 @@ def main() -> None:
         "api_key_env_var": run_config.api_key_env_var,
         "base_url": run_config.base_url,
         "model_params": run_config.model_params,
-        "batch_size": 8 if run_config.batch_mode else None
+        "batch_size": run_config.batch_size,
     }
 
     if run_config.model_spec.provider == "dummy":

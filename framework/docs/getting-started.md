@@ -592,7 +592,7 @@ export GOOGLE_API_KEY="..."
 export OPENROUTER_API_KEY="sk-or-..."
 ```
 
-**Local Hugging Face models** - no API key needed. Just `uv sync --extra local` first, set `provider_model_name` and `local_cache_client_mode` in `configs/local_transformers_example.yaml`, and make sure you have enough RAM/disk for the model. Keep `batch_mode: false` for CLI runs. For GPU, set `model_params.model_load.device_map: auto`.
+**Local Hugging Face models** - no API key needed. Just `uv sync --extra local` first, set `provider_model_name` and `local_cache_client_mode` in `configs/local_transformers_example.yaml`, and make sure you have enough RAM/disk for the model. Use `batch_mode: true` with `batch_size` for local batch generation, or `batch_mode: false` for serial runs. For GPU, set `model_params.model_load.device_map: auto`.
 
 To make your key persist across shells, add the `export` line to `~/.zshrc` (macOS default) or `~/.bashrc` (Linux).
 

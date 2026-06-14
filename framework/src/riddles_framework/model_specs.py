@@ -212,7 +212,7 @@ def local_transformers_spec(model_name: str) -> ModelSpec:
             supports_reasoning=False,
             supports_search=False,
             supports_structured_output=False,
-            supports_batch=False,
+            supports_batch=True,
             supports_seed=True,
         ),
         closed_source=False,

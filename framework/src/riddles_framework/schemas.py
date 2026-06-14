@@ -223,6 +223,7 @@ class RunConfig:
     # Default to structured output per project guidance.
     response_format: ResponseFormat = ResponseFormat.JSON
     batch_mode: bool = False
+    batch_size: int | None = None
 
     # Temperature is intentionally Optional and defaults to None.
     # Reasoning models (OpenAI o-series, Anthropic thinking, DeepSeek R1) can
@@ -281,6 +282,7 @@ class RunMetadata:
 
     batch_mode_requested: bool = False
     batch_mode_used: bool = False
+    batch_size: int | None = None
 
     cache_enabled: bool = False
     cache_backend: str | None = None
@@ -358,6 +360,7 @@ class InstanceResult:
     reasoning_mode: str | None = None
     search_enabled: bool = False
     response_format: str = ResponseFormat.JSON.value
+    batch_size: int | None = None
     temperature: float | None = None
     max_output_tokens: int = 256
     seed: int | None = None

@@ -16,6 +16,7 @@ class LocalTransformersAdapter(Model):
     def __init__(self, spec: ModelSpec, cfg: dict) -> None:
         super().__init__(spec)
         self.use_cache = cfg.get("cache_enabled", False)
+        self.batch_size = cfg.get("batch_size") or 1
         self.cache_client_mode = cfg.get("local_cache_client_mode", "sync")
         if self.cache_client_mode not in {"sync", "async"}:
             raise ValueError("local_cache_client_mode must be 'sync' or 'async'")
@@ -39,6 +40,7 @@ class LocalTransformersAdapter(Model):
             client_kwargs: dict[str, Any] = {
                 "model_name": self.provider_model_name,
                 "client_mode": self.cache_client_mode,
+                "batch_size": self.batch_size,
                 **self.model_load_params,
             }
             if cfg.get("cache_namespace") is not None:
@@ -296,6 +298,7 @@ class LocalTransformersAdapter(Model):
         details = {
             "model": self.provider_model_name,
             "cache_enabled": self.use_cache,
+            "batch_size": self.batch_size,
             "local_cache_client_mode": self.cache_client_mode
             if self.client is not None
             else None,
@@ -431,6 +434,7 @@ class LocalTransformersAdapter(Model):
         pipe_kwargs: dict[str, Any] = {
             "max_new_tokens": max_output_tokens,
             "return_full_text": False,
+            "batch_size": self.batch_size,
         }
         if temperature is not None:
             pipe_kwargs["temperature"] = temperature
@@ -526,6 +530,7 @@ class LocalTransformersAdapter(Model):
                 provider_details={
                     "model": self.provider_model_name,
                     "cache_enabled": self.use_cache,
+                    "batch_size": self.batch_size,
                     "local_cache_client_mode": self.cache_client_mode
                     if self.client is not None
                     else None,
