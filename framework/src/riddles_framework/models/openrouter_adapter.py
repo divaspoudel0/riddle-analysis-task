@@ -28,7 +28,6 @@ class OpenRouterAdapter(Model):
                 client_kwargs["cache_dir"] = cfg["cache_dir"]
             if cfg.get("batch_size"):
                 client_kwargs["batch_size"] = cfg["batch_size"]
-
         self.client = make_openrouter_client(cfg.get("cache_enabled", False), **client_kwargs)
 
     def generate(

@@ -37,6 +37,7 @@ def make_anthropic_client(use_cache: bool, **kwargs):
             kwargs.pop("namespace", None)
             kwargs.pop("cachedir", None)
             kwargs.pop("batch_size", None)
+
             return Anthropic(**kwargs)
     except Exception as exc:
         raise CacheClientError(f"Failed to build Anthropic client: {exc}") from exc
@@ -53,6 +54,7 @@ def make_gemini_client(use_cache: bool, **kwargs):
             kwargs.pop("namespace", None)
             kwargs.pop("cachedir", None)
             kwargs.pop("batch_size", None)
+
             return genai.Client(**kwargs)
     except Exception as exc:
         raise CacheClientError(f"Failed to build Gemini client: {exc}") from exc
@@ -131,8 +133,7 @@ def make_cohere_client(use_cache: bool, **kwargs):
             from cachesaver.models.openai import OpenAI
 
             # The sync OpenAI wrapper takes namespace/cachedir plus OpenAI client
-            # kwargs (api_key/base_url); it manages batch_size itself, and None
-            # cache params would clobber its defaults.
+            # kwargs (api_key/base_url); None cache params would clobber its defaults.
             kwargs.pop("batch_size", None)
             if kwargs.get("namespace") is None:
                 kwargs.pop("namespace", None)
@@ -144,7 +145,6 @@ def make_cohere_client(use_cache: bool, **kwargs):
         kwargs.pop("namespace", None)
         kwargs.pop("cachedir", None)
         kwargs.pop("batch_size", None)
-
         return OpenAI(**kwargs)
     except CacheClientError:
         raise
@@ -156,9 +156,70 @@ def make_transformers_client(use_cache: bool, **kwargs):
     kwargs = _apply_common_cache_kwargs(kwargs)
     try:
         if use_cache:
-            from cachesaver.models.transformers import HFTransformers
-            return HFTransformers(**kwargs)
+            from cachesaver.models import transformers as cache_transformers
+
+            client_mode = kwargs.pop("client_mode", "sync")
+            if client_mode not in {"sync", "async"}:
+                raise CacheClientError(
+                    "HF Transformers client_mode must be 'sync' or 'async'."
+                )
+
+            model_name = kwargs.pop("model_name", None)
+            if not model_name:
+                raise CacheClientError(
+                    "HF Transformers client requires model_name in cached mode."
+                )
+
+            kwargs = {
+                key: value
+                for key, value in kwargs.items()
+                if value is not None
+            }
+
+            class_name = (
+                "AsyncHFTransformers"
+                if client_mode == "async"
+                else "HFTransformers"
+            )
+            client_cls = getattr(cache_transformers, class_name, None)
+            if client_cls is not None:
+                client = client_cls(
+                    model_name=model_name,
+                    **kwargs,
+                )
+                try:
+                    client._riddles_transformers_client_mode = client_mode
+                    client._riddles_transformers_interface = "chat"
+                except Exception:
+                    pass
+                return client
+
+            if client_mode == "sync" and hasattr(cache_transformers, "AutoModelForCausalLM"):
+                client = cache_transformers.AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    **kwargs,
+                )
+                try:
+                    client._riddles_transformers_client_mode = "sync"
+                    client._riddles_transformers_interface = "generate"
+                except Exception:
+                    pass
+                return client
+
+            if client_mode == "async":
+                raise CacheClientError(
+                    "CacheSaver transformers module does not expose "
+                    "AsyncHFTransformers, so local_cache_client_mode='async' "
+                    "is not available with this CacheSaver version."
+                )
+
+            raise CacheClientError(
+                "CacheSaver transformers module exposes neither HFTransformers "
+                "nor the sync AutoModelForCausalLM compatibility wrapper."
+            )
         else:
             return None
+    except CacheClientError:
+        raise
     except Exception as exc:
         raise CacheClientError(f"Failed to build HF Transformers client: {exc}") from exc

@@ -123,6 +123,26 @@ With local inference (also installs torch + transformers; needed for the local H
 uv sync --extra local
 ```
 
+Local Hugging Face runs use `configs/local_transformers_example.yaml` as a scaffold. Set
+`model_spec.provider_model_name` to the Hugging Face model id you want to run, keep
+`response_format: free_form` unless the model is known to return valid JSON, and enable
+`cache_enabled` to route generation through CacheSaver's local Transformers wrapper.
+Set `batch_mode: true` and choose `batch_size` to run local generation through
+the adapter-level `generate_batch` path; keep `batch_mode: false` for serial runs.
+Use `local_cache_client_mode: sync`: the pinned CacheSaver (`==0.0.6`) only ships
+a sync local Transformers wrapper, so `async` is not available and will raise.
+For GPU loading, set `model_params.model_load.device_map: auto`; the `local`
+extra installs `accelerate` so Transformers can place weights on GPU.
+For a quick, GPU-independent check that the local adapter works end to end, run
+`configs/local_cpu_smoke.yaml` (a small ungated model pinned to CPU); every
+`results.jsonl` row should report `generation_status: success`.
+If `uv run python scripts/check_local_gpu.py` reports `torch.version.cuda: None`,
+the active environment still has CPU-only Torch. Reinstall the CUDA wheel with:
+
+```bash
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130 --reinstall-package torch
+```
+
 ## Run
 
 Smoke test with the dummy model (no API calls):

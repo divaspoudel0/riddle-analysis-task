@@ -223,6 +223,7 @@ class RunConfig:
     # Default to structured output per project guidance.
     response_format: ResponseFormat = ResponseFormat.JSON
     batch_mode: bool = False
+    batch_size: int | None = None
 
     # Temperature is intentionally Optional and defaults to None.
     # Reasoning models (OpenAI o-series, Anthropic thinking, DeepSeek R1) can
@@ -241,6 +242,7 @@ class RunConfig:
     cache_backend: str | None = None
     cache_namespace: str | None = None
     cache_dir: str | None = None
+    local_cache_client_mode: str = "sync"
 
     api_key_env_var: str | None = None
     base_url: str | None = None
@@ -280,11 +282,13 @@ class RunMetadata:
 
     batch_mode_requested: bool = False
     batch_mode_used: bool = False
+    batch_size: int | None = None
 
     cache_enabled: bool = False
     cache_backend: str | None = None
     cache_namespace: str | None = None
     cache_dir: str | None = None
+    local_cache_client_mode: str = "sync"
 
     prompt_template_id: str | None = None
     prompt_template_version: str | None = None
@@ -356,6 +360,7 @@ class InstanceResult:
     reasoning_mode: str | None = None
     search_enabled: bool = False
     response_format: str = ResponseFormat.JSON.value
+    batch_size: int | None = None
     temperature: float | None = None
     max_output_tokens: int = 256
     seed: int | None = None
@@ -364,6 +369,7 @@ class InstanceResult:
     cache_enabled: bool = False
     cache_backend: str | None = None
     cache_namespace: str | None = None
+    local_cache_client_mode: str = "sync"
 
     instance_language: str | None = None
     instance_community: str | None = None
