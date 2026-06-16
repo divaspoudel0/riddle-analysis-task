@@ -30,10 +30,18 @@ class Entry:
     label: str
     category: str  # dummy | local | api | aggregator
     config: str    # path relative to framework/
+    # Per-row condition fields the run must record (verifies T2.2.1 functionalities).
+    expect: dict = field(default_factory=dict)
 
 
 MATRIX = [
     Entry("dummy", "dummy", "configs/campaign/dummy_smoke25.yaml"),
+    Entry("dummy-json", "dummy", "configs/campaign/dummy_smoke25_json.yaml",
+          expect={"response_format": "json"}),
+    Entry("dummy-english", "dummy", "configs/campaign/dummy_smoke25_english.yaml",
+          expect={"riddle_language_presented": "english"}),
+    Entry("dummy-hint", "dummy", "configs/campaign/dummy_smoke25_hint.yaml",
+          expect={"is_hint_provided": True}),
     Entry("local-hf", "local", "configs/local_cpu_smoke.yaml"),
     Entry("cohere-api", "api", "configs/campaign/cohere_smoke25.yaml"),
     Entry("together-aggregator", "aggregator", "configs/campaign/together_smoke25.yaml"),
@@ -82,7 +90,8 @@ class ValidationResult:
     problems: list = field(default_factory=list)
 
 
-def validate_run(run_dir: Path) -> ValidationResult:
+def validate_run(run_dir: Path, expect: dict | None = None) -> ValidationResult:
+    expect = expect or {}
     problems: list[str] = []
 
     for fname in OUTPUT_FILES:
@@ -127,6 +136,9 @@ def validate_run(run_dir: Path) -> ValidationResult:
                 tokens_populated = True
                 if not isinstance(val, int) or isinstance(val, bool):
                     problems.append(f"row {i}: {tok} is {type(val).__name__}, expected int or null")
+        for fld, want in expect.items():
+            if r.get(fld) != want:
+                problems.append(f"row {i}: {fld}={r.get(fld)!r} != expected {want!r}")
 
     if len(problems) > 25:
         extra = len(problems) - 25
@@ -179,12 +191,13 @@ def write_report(results: list[EntryResult], path: Path) -> None:
     present = sorted(k for k in keys if os.environ.get(k))
     lines.append(f"API keys present: {present or 'none'}")
     lines.append("")
-    lines.append("| Provider | Category | Ran | Rows | Statuses | Languages | Tokens | Export |")
-    lines.append("|---|---|---|---|---|---|---|---|")
+    lines.append("| Provider | Category | Condition | Ran | Rows | Statuses | Languages | Tokens | Export |")
+    lines.append("|---|---|---|---|---|---|---|---|---|")
     for r in results:
+        cond = ", ".join(f"{k}={v}" for k, v in r.entry.expect.items()) or "baseline"
         if r.skipped_reason is not None:
-            lines.append(f"| {r.entry.label} | {r.entry.category} | SKIPPED ({r.skipped_reason}) "
-                         f"| - | - | - | - | - |")
+            lines.append(f"| {r.entry.label} | {r.entry.category} | {cond} "
+                         f"| SKIPPED ({r.skipped_reason}) | - | - | - | - | - |")
             continue
         v = r.validation
         ran = "yes" if (r.outcome and r.outcome.returncode == 0) else "FAILED"
@@ -193,7 +206,7 @@ def write_report(results: list[EntryResult], path: Path) -> None:
         langs = ", ".join(v.languages) if v else "-"
         tokens = ("yes" if v.tokens_populated else "no") if v else "-"
         export = "OK" if r.passed else "FAIL"
-        lines.append(f"| {r.entry.label} | {r.entry.category} | {ran} | {rows} "
+        lines.append(f"| {r.entry.label} | {r.entry.category} | {cond} | {ran} | {rows} "
                      f"| {statuses} | {langs} | {tokens} | {export} |")
 
     failures = [r for r in results if not r.passed]
@@ -231,7 +244,7 @@ def main() -> int:
             continue
         print(f"RUN   {entry.label} ({entry.config})")
         outcome = run_entry(entry, args.output_root)
-        validation = validate_run(outcome.run_dir) if outcome.run_dir else None
+        validation = validate_run(outcome.run_dir, expect=entry.expect) if outcome.run_dir else None
         res = EntryResult(entry=entry, outcome=outcome, validation=validation)
         results.append(res)
         print(f"      -> {'PASS' if res.passed else 'FAIL'}")
