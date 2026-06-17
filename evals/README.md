@@ -160,6 +160,3 @@ python -m evals.llm_judge_run \
 
 Writes verdicts (same shape as the heuristic match) to `<run_dir>/llm_judge.jsonl`.
 
-> `llm_as_a_judge.py` also has an OpenRouter path used by
-> `openrouter_smoke_test.py` (needs `OPENROUTER_KEY`), but that runner is
-> hard-coded to a German Excel workbook.
