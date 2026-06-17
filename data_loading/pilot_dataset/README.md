@@ -1,8 +1,8 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-17T05:34:22.557251+00:00
-Total submissions: 43
-Total riddles: 4300
+Generated: 2026-06-17T06:23:27.130598+00:00
+Total submissions: 44
+Total riddles: 4400
 
 ## Purpose
 
@@ -40,51 +40,52 @@ Each line is one riddle as a JSON object. Fields:
 
 ## Coverage
 
-| Community              | Riddles |
-| ---------------------- | ------- |
-| `arabic_egypt`         | 100     |
-| `arabic_morocco`       | 100     |
-| `arabic_sudan`         | 100     |
-| `arabic_syria`         | 100     |
-| `belarusian_belarus`   | 100     |
-| `bengali_bangladesh`   | 100     |
-| `bengali_india`        | 100     |
-| `brazilian_portuguese` | 100     |
-| `bugisnese_indonesia`  | 100     |
-| `bulgarian_bulgaria`   | 100     |
-| `cantonese_china`      | 100     |
-| `chinese_china`        | 100     |
-| `dutch_netherlands`    | 100     |
-| `english_canada`       | 100     |
-| `english_usa`          | 100     |
-| `french_france`        | 100     |
-| `german_germany`       | 100     |
-| `hungarian_hungary`    | 100     |
-| `indonesian_indonesia` | 100     |
-| `italian_italy`        | 100     |
-| `konkani_india`        | 100     |
-| `luganda_uganda`       | 100     |
-| `lumasaba_uganda`      | 100     |
-| `malayalam_india`      | 100     |
-| `marathi_india`        | 100     |
-| `mongondow_indonesia`  | 100     |
-| `nepali_nepal`         | 100     |
-| `persian_iran`         | 100     |
-| `polish_poland`        | 100     |
-| `portuguese_portugal`  | 100     |
-| `russian_russia`       | 100     |
-| `serbian_serbia`       | 100     |
-| `sinhala_sri_lanka`    | 100     |
-| `spanish_argentina`    | 100     |
-| `spanish_cuba`         | 100     |
-| `spanish_peru`         | 100     |
-| `swahili_kenya`        | 100     |
-| `tamil_india`          | 100     |
-| `telugu_india`         | 100     |
-| `thai_thailand`        | 100     |
-| `urdu_pakistan`        | 100     |
-| `uzbek_uzbekistan`     | 100     |
-| `yoruba_nigeria`       | 100     |
+| Community                  | Riddles |
+| -------------------------- | ------- |
+| `arabic_egypt`             | 100     |
+| `arabic_morocco`           | 100     |
+| `arabic_sudan`             | 100     |
+| `arabic_syria`             | 100     |
+| `belarusian_belarus`       | 100     |
+| `bengali_bangladesh`       | 100     |
+| `bengali_india`            | 100     |
+| `brazilian_portuguese`     | 100     |
+| `bugisnese_indonesia`      | 100     |
+| `bulgarian_bulgaria`       | 100     |
+| `cantonese_china`          | 100     |
+| `chinese_china`            | 100     |
+| `chinese_simplified_china` | 100     |
+| `dutch_netherlands`        | 100     |
+| `english_canada`           | 100     |
+| `english_usa`              | 100     |
+| `french_france`            | 100     |
+| `german_germany`           | 100     |
+| `hungarian_hungary`        | 100     |
+| `indonesian_indonesia`     | 100     |
+| `italian_italy`            | 100     |
+| `konkani_india`            | 100     |
+| `luganda_uganda`           | 100     |
+| `lumasaba_uganda`          | 100     |
+| `malayalam_india`          | 100     |
+| `marathi_india`            | 100     |
+| `mongondow_indonesia`      | 100     |
+| `nepali_nepal`             | 100     |
+| `persian_iran`             | 100     |
+| `polish_poland`            | 100     |
+| `portuguese_portugal`      | 100     |
+| `russian_russia`           | 100     |
+| `serbian_serbia`           | 100     |
+| `sinhala_sri_lanka`        | 100     |
+| `spanish_argentina`        | 100     |
+| `spanish_cuba`             | 100     |
+| `spanish_peru`             | 100     |
+| `swahili_kenya`            | 100     |
+| `tamil_india`              | 100     |
+| `telugu_india`             | 100     |
+| `thai_thailand`            | 100     |
+| `urdu_pakistan`            | 100     |
+| `uzbek_uzbekistan`         | 100     |
+| `yoruba_nigeria`           | 100     |
 
 ## Design decisions
 
@@ -131,7 +132,7 @@ uv run python build_pilot_dataset.py                  # consolidate
 
 ## Versioning
 
-- **v0** (this build): 43 communities, 4300 riddles. Submission window
+- **v0** (this build): 44 communities, 4400 riddles. Submission window
   closed 16 June 2026. Used as the pilot dataset for initial benchmark
   framework testing. Includes `raw_template_fields` for forward
   compatibility; Analysis team consumes canonical fields only.

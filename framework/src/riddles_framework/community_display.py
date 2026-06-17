@@ -39,6 +39,7 @@ COMMUNITY_DISPLAY: dict[str, str] = {
     "bulgarian_bulgaria": "Bulgarian, Bulgaria",
     "cantonese_china": "Cantonese, China",
     "chinese_china": "Mandarin Chinese, China",
+    "chinese_simplified_china": "Mandarin Chinese (Simplified), China",
     "dutch_netherlands": "Dutch, Netherlands",
     "english_canada": "English, Canada",
     "english_usa": "English, United States",
@@ -168,6 +169,7 @@ COMMUNITY_TO_SCRIPT_ISO: dict[str, str] = {
     # East / Southeast Asia
     "cantonese_china": "Hant",      # Traditional Han (HK/Macau)
     "chinese_china": "Hans",        # Simplified Han (mainland)
+    "chinese_simplified_china": "Hans",  # Explicitly Simplified Han
     "thai_thailand": "Thai",
     # Persian
     "persian_iran": "Arab",         # Persian alphabet, Arabic script family
