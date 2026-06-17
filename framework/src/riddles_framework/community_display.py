@@ -39,7 +39,9 @@ COMMUNITY_DISPLAY: dict[str, str] = {
     "bulgarian_bulgaria": "Bulgarian, Bulgaria",
     "cantonese_china": "Cantonese, China",
     "chinese_china": "Mandarin Chinese, China",
+    "chinese_simplified_china": "Mandarin Chinese (Simplified), China",
     "dutch_netherlands": "Dutch, Netherlands",
+    "english_canada": "English, Canada",
     "english_usa": "English, United States",
     "french_france": "French, France",
     "german_germany": "German, Germany",
@@ -60,7 +62,10 @@ COMMUNITY_DISPLAY: dict[str, str] = {
     "portuguese_portugal": "Portuguese, Portugal",
     "runyankole_uganda": "Runyankole, Uganda",
     "russian_russia": "Russian, Russia",
+    "serbian_serbia": "Serbian, Serbia",
     "sinhala_sri_lanka": "Sinhala, Sri Lanka",
+    "spanish_argentina": "Spanish, Argentina",
+    "spanish_cuba": "Spanish, Cuba",
     "spanish_peru": "Spanish, Peru",
     "swahili_kenya": "Swahili, Kenya",
     "tamil_india": "Tamil, India",
@@ -164,6 +169,7 @@ COMMUNITY_TO_SCRIPT_ISO: dict[str, str] = {
     # East / Southeast Asia
     "cantonese_china": "Hant",      # Traditional Han (HK/Macau)
     "chinese_china": "Hans",        # Simplified Han (mainland)
+    "chinese_simplified_china": "Hans",  # Explicitly Simplified Han
     "thai_thailand": "Thai",
     # Persian
     "persian_iran": "Arab",         # Persian alphabet, Arabic script family
@@ -171,10 +177,12 @@ COMMUNITY_TO_SCRIPT_ISO: dict[str, str] = {
     "belarusian_belarus": "Cyrl",
     "bulgarian_bulgaria": "Cyrl",
     "russian_russia": "Cyrl",
+    "serbian_serbia": "Cyrl",        # Serbian uses Cyrillic in Serbia (Latin also used)
     # Latin-script languages (explicit so the prompt is informative)
     "brazilian_portuguese": "Latn",
     "bugisnese_indonesia": "Latn",  # contemporary Buginese; Lontara script is rare in modern usage
     "dutch_netherlands": "Latn",
+    "english_canada": "Latn",
     "english_usa": "Latn",
     "french_france": "Latn",
     "german_germany": "Latn",
@@ -188,6 +196,8 @@ COMMUNITY_TO_SCRIPT_ISO: dict[str, str] = {
     "polish_poland": "Latn",
     "portuguese_portugal": "Latn",
     "runyankole_uganda": "Latn",
+    "spanish_argentina": "Latn",
+    "spanish_cuba": "Latn",
     "spanish_peru": "Latn",
     "swahili_kenya": "Latn",
     "uzbek_uzbekistan": "Latn",    # current official script in Uzbekistan (Cyrl also exists)

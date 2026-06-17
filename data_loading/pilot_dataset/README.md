@@ -1,8 +1,8 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-10T16:53:19.875713+00:00
-Total submissions: 42
-Total riddles: 4200
+Generated: 2026-06-17T06:23:27.130598+00:00
+Total submissions: 44
+Total riddles: 4400
 
 ## Purpose
 
@@ -14,76 +14,78 @@ Schema follows the Analysis team's canonical instance schema.
 
 Each line is one riddle as a JSON object. Fields:
 
-| Field | Type | Description |
-|---|---|---|
-| `instance_result_id` | string (UUID v4) | Unique per row |
-| `riddle_id` | string | Stable structured ID: `{community}_{topic}_{number}` |
-| `created_at` | ISO 8601 | When this dataset was built |
-| `source_row_number` | int | Original row number in contributor's spreadsheet |
-| `language` | string (ISO 639-2/3) | Language code, per project metadata spec |
-| `community` | string | Community token (e.g. `tamil_india`) |
-| `topic` | string | Topic name as submitted |
-| `is_wildcard` | bool | True if topic is community-specific, not one of the 8 standard topics |
-| `riddle_original` | string | Riddle text in source language |
-| `riddle_english` | string | English translation |
-| `reference_answer_original` | string | Reference answer in source language |
-| `reference_answer_english` | string | Reference answer in English |
-| `riddle_hint` | string or null | Optional hint |
-| `riddle_note` | string or null | Optional comment about region/generation specificity |
-| `author_credit` | string or null | Submitter name |
-| `human_validator_name` | string or null | Person who scored the human answer |
-| `human_answer_original` | string or null | Human evaluator's answer attempt |
-| `human_answer_score` | string or null | 0-2 rating (raw label from spreadsheet) |
-| `human_answer_comment` | string or null | Comment on the human answer |
-| `row_status` | string | `"valid"` for all rows in v1 |
-| `raw_template_fields` | object | Original column names → values, for any field not in canonical schema. Dropped in v2. |
+| Field                       | Type                 | Description                                                                           |
+| --------------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| `instance_result_id`        | string (UUID v4)     | Unique per row                                                                        |
+| `riddle_id`                 | string               | Stable structured ID: `{community}_{topic}_{number}`                                  |
+| `created_at`                | ISO 8601             | When this dataset was built                                                           |
+| `source_row_number`         | int                  | Original row number in contributor's spreadsheet                                      |
+| `language`                  | string (ISO 639-2/3) | Language code, per project metadata spec                                              |
+| `community`                 | string               | Community token (e.g. `tamil_india`)                                                  |
+| `topic`                     | string               | Topic name as submitted                                                               |
+| `is_wildcard`               | bool                 | True if topic is community-specific, not one of the 8 standard topics                 |
+| `riddle_original`           | string               | Riddle text in source language                                                        |
+| `riddle_english`            | string               | English translation                                                                   |
+| `reference_answer_original` | string               | Reference answer in source language                                                   |
+| `reference_answer_english`  | string               | Reference answer in English                                                           |
+| `riddle_hint`               | string or null       | Optional hint                                                                         |
+| `riddle_note`               | string or null       | Optional comment about region/generation specificity                                  |
+| `author_credit`             | string or null       | Submitter name                                                                        |
+| `human_validator_name`      | string or null       | Person who scored the human answer                                                    |
+| `human_answer_original`     | string or null       | Human evaluator's answer attempt                                                      |
+| `human_answer_score`        | string or null       | 0-2 rating (raw label from spreadsheet)                                               |
+| `human_answer_comment`      | string or null       | Comment on the human answer                                                           |
+| `row_status`                | string               | `"valid"` for all rows in v1                                                          |
+| `raw_template_fields`       | object               | Original column names → values, for any field not in canonical schema. Dropped in v2. |
 
 ## Coverage
 
-| Community | Riddles |
-|---|---|
-| `arabic_egypt` | 100 |
-| `arabic_morocco` | 100 |
-| `arabic_sudan` | 100 |
-| `arabic_syria` | 100 |
-| `belarusian_belarus` | 100 |
-| `bengali_bangladesh` | 100 |
-| `bengali_india` | 100 |
-| `brazilian_portuguese` | 100 |
-| `bugisnese_indonesia` | 100 |
-| `bulgarian_bulgaria` | 100 |
-| `cantonese_china` | 100 |
-| `chinese_china` | 100 |
-| `dutch_netherlands` | 100 |
-| `english_canada` | 100 |
-| `english_usa` | 100 |
-| `french_france` | 100 |
-| `german_germany` | 100 |
-| `hungarian_hungary` | 100 |
-| `indonesian_indonesia` | 100 |
-| `italian_italy` | 100 |
-| `konkani_india` | 100 |
-| `luganda_uganda` | 100 |
-| `lumasaba_uganda` | 100 |
-| `malayalam_india` | 100 |
-| `marathi_india` | 100 |
-| `mongondow_indonesia` | 100 |
-| `nepali_nepal` | 100 |
-| `persian_iran` | 100 |
-| `polish_poland` | 100 |
-| `portuguese_portugal` | 100 |
-| `russian_russia` | 100 |
-| `sinhala_sri_lanka` | 100 |
-| `spanish_argentina` | 100 |
-| `spanish_cuba` | 100 |
-| `spanish_peru` | 100 |
-| `swahili_kenya` | 100 |
-| `tamil_india` | 100 |
-| `telugu_india` | 100 |
-| `thai_thailand` | 100 |
-| `urdu_pakistan` | 100 |
-| `uzbek_uzbekistan` | 100 |
-| `yoruba_nigeria` | 100 |
+| Community                  | Riddles |
+| -------------------------- | ------- |
+| `arabic_egypt`             | 100     |
+| `arabic_morocco`           | 100     |
+| `arabic_sudan`             | 100     |
+| `arabic_syria`             | 100     |
+| `belarusian_belarus`       | 100     |
+| `bengali_bangladesh`       | 100     |
+| `bengali_india`            | 100     |
+| `brazilian_portuguese`     | 100     |
+| `bugisnese_indonesia`      | 100     |
+| `bulgarian_bulgaria`       | 100     |
+| `cantonese_china`          | 100     |
+| `chinese_china`            | 100     |
+| `chinese_simplified_china` | 100     |
+| `dutch_netherlands`        | 100     |
+| `english_canada`           | 100     |
+| `english_usa`              | 100     |
+| `french_france`            | 100     |
+| `german_germany`           | 100     |
+| `hungarian_hungary`        | 100     |
+| `indonesian_indonesia`     | 100     |
+| `italian_italy`            | 100     |
+| `konkani_india`            | 100     |
+| `luganda_uganda`           | 100     |
+| `lumasaba_uganda`          | 100     |
+| `malayalam_india`          | 100     |
+| `marathi_india`            | 100     |
+| `mongondow_indonesia`      | 100     |
+| `nepali_nepal`             | 100     |
+| `persian_iran`             | 100     |
+| `polish_poland`            | 100     |
+| `portuguese_portugal`      | 100     |
+| `russian_russia`           | 100     |
+| `serbian_serbia`           | 100     |
+| `sinhala_sri_lanka`        | 100     |
+| `spanish_argentina`        | 100     |
+| `spanish_cuba`             | 100     |
+| `spanish_peru`             | 100     |
+| `swahili_kenya`            | 100     |
+| `tamil_india`              | 100     |
+| `telugu_india`             | 100     |
+| `thai_thailand`            | 100     |
+| `urdu_pakistan`            | 100     |
+| `uzbek_uzbekistan`         | 100     |
+| `yoruba_nigeria`           | 100     |
 
 ## Design decisions
 
@@ -130,9 +132,15 @@ uv run python build_pilot_dataset.py                  # consolidate
 
 ## Versioning
 
-- **v1** (this version): includes `raw_template_fields` for forward
-  compatibility. Analysis team consumes canonical fields; data preserved
-  for review.
-- **v2** (planned): drops `raw_template_fields` after Analysis confirms
-  the mapping is complete. May parse `human_answer_score` to int and
-  reconcile the 0-2 vs 0-3 scoring scale mismatch.
+- **v0** (this build): 44 communities, 4400 riddles. Submission window
+  closed 16 June 2026. Used as the pilot dataset for initial benchmark
+  framework testing. Includes `raw_template_fields` for forward
+  compatibility; Analysis team consumes canonical fields only.
+- **v1** (in progress): Submission window 17–26 June 2026. Additional
+  communities being collected. Will be built and validated once the
+  window closes.
+- **Combined release** (planned): v0 and v1 merged into a single dataset
+  and released on HuggingFace (private, Cohere Labs Community org).
+  This combined dataset will be used for the full benchmark run.
+  At that point `raw_template_fields` will be dropped, `human_answer_score`
+  parsed to int, and the 0-2 vs 0-3 scoring scale reconciled.

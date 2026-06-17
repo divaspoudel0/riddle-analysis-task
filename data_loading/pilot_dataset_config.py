@@ -61,6 +61,7 @@ LANGUAGE_TO_ISO_639_2 = {
     "runyankole": "nyn",           # alt spelling of runyankore
     "runyankore": "nyn",
     "russian": "rus",
+    "serbian": "srp",
     "sinhala": "sin",
     "spanish": "spa",
     "sudanese": "apd",             # legacy alias; new filenames use arabic_sudan
@@ -92,6 +93,7 @@ ISO_TO_SCRIPT_FAMILY = {
     "bel": "cyrillic",
     "bul": "cyrillic",
     "rus": "cyrillic",
+    "srp": "cyrillic",
     # Brahmic family — each Indic script gets its own family
     "ben": "bengali",
     "hin": "devanagari",
