@@ -2,27 +2,37 @@
 
 Reuses the provider-agnostic pieces of ``llm_as_a_judge`` (the judge system
 prompt, the output schema, and the message builder) but sends the request
-through the OpenAI SDK with a small "gpt-mini" model by default — so it can
-run with an ``OPENAI_API_KEY`` (no OpenRouter key required).
+through Google's OpenAI-compatible Gemini endpoint with a small Flash-Lite
+model by default — so it can run with a ``GEMINI_API_KEY``.
 
-    python -m judge.llm_judge_run framework/runs/examples/<run_id>/results.jsonl
-    python -m judge.llm_judge_run <results.jsonl> --model gpt-5.4-mini --limit 5
+    python -m evals.llm_judge_run framework/runs/examples/<run_id>/results.jsonl
+    python -m evals.llm_judge_run <results.jsonl> --model gemini-2.5-flash-lite --limit 5
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
-from judge.exact_match_judge import candidate_answer
-from judge.llm_as_a_judge import (
+from evals.llm_as_a_judge import (
     JUDGE_OUTPUT_SCHEMA,
     build_judge_messages,
 )
 
-DEFAULT_MODEL = "gpt-5.4-mini"
+DEFAULT_MODEL = "gemini-2.5-flash-lite"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+
+def candidate_answer(row) -> str:
+    """Pull `riddle_answer` out of a framework results row."""
+    raw = row.get("raw_response") or ""
+    try:
+        return str(json.loads(raw).get("riddle_answer", "") or "")
+    except Exception:
+        return str(raw)
 
 
 def riddle_from_row(row) -> str:
@@ -65,9 +75,9 @@ def parse_verdict(content: str) -> dict:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="LLM judge over a run's results.jsonl (OpenAI / gpt-mini)")
+    parser = argparse.ArgumentParser(description="LLM judge over a run's results.jsonl (Gemini Flash-Lite)")
     parser.add_argument("results", help="Path to a framework run's results.jsonl")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"OpenAI model (default: {DEFAULT_MODEL})")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Gemini model (default: {DEFAULT_MODEL})")
     parser.add_argument("--limit", type=int, default=None, help="Judge only the first N rows")
     parser.add_argument("--max-output-tokens", type=int, default=2048,
                         help="Token budget (reasoning models need headroom)")
@@ -78,8 +88,12 @@ def main(argv=None) -> int:
     if not results_path.exists():
         parser.error(f"results file not found: {results_path}")
 
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        parser.error("GEMINI_API_KEY is not set")
+
     from openai import OpenAI  # imported here so --help works without the SDK
-    client = OpenAI()
+    client = OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
 
     rows = [json.loads(line) for line in results_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     if args.limit is not None:
@@ -96,7 +110,7 @@ def main(argv=None) -> int:
                 resp = client.chat.completions.create(
                     model=args.model,
                     messages=messages,
-                    max_completion_tokens=args.max_output_tokens,
+                    max_tokens=args.max_output_tokens,
                     response_format={
                         "type": "json_schema",
                         "json_schema": {

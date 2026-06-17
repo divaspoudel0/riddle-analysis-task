@@ -1,9 +1,12 @@
 .env
-judge/__pycache__/
-judge/*.jsonl
-judge/*.log
+evals/__pycache__/
+evals/*.jsonl
+evals/*.log
 runs/*
 
 # macOS metadata files
 .DS_Store
 **/.DS_Store
+
+# Editor / IDE
+.vscode/

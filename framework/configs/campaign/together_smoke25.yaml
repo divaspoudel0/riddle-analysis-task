@@ -8,7 +8,6 @@ riddle_language_presented: source
 is_hint_provided: false
 reasoning_mode: null
 search_enabled: false
-response_format: free_form
 batch_mode: false
 temperature: null
 max_output_tokens: 16
