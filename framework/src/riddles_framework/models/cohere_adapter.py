@@ -33,6 +33,37 @@ class CohereAdapter(Model):
 
         self.client = make_cohere_client(cfg.get("cache_enabled", False), **client_kwargs)
 
+        # Concurrent generate_batch: a plain (thread-safe) client that reads/writes
+        # the CacheSaver diskcache directly — CacheSaver's wrapper deadlocks under
+        # threads. Cohere's OpenAI-compatible endpoint is the default base_url.
+        from openai import OpenAI as _OpenAI
+        self._plain_client = _OpenAI(
+            api_key=api_key,
+            base_url=cfg.get("base_url") or "https://api.cohere.ai/compatibility/v1",
+        )
+        self._cache_dir = cfg.get("cache_dir") if cfg.get("cache_enabled", False) else None
+
+    def generate_batch(
+        self,
+        prompts: list[str],
+        *,
+        temperature: float | None = None,
+        max_output_tokens: int = 256,
+        seed: int | None = None,
+        reasoning_mode: str | None = None,
+        search_enabled: bool = False,
+        response_format: str = "json",
+        model_params: dict[str, Any] | None = None,
+    ) -> list[GenerationResult]:
+        from .concurrent_batch import openai_compatible_generate_batch
+        return openai_compatible_generate_batch(
+            prompts=prompts, plain_client=self._plain_client,
+            provider_model_name=self.provider_model_name, cache_dir=self._cache_dir,
+            max_output_tokens=max_output_tokens, response_format=response_format,
+            temperature=temperature, seed=seed, model_params=model_params,
+            token_param="max_tokens",
+        )
+
     def generate(
         self,
         prompt: str,

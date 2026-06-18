@@ -11,7 +11,8 @@ is_hint_provided: false
 
 reasoning_mode: null
 search_enabled: false
-batch_mode: false
+batch_mode: true
+batch_size: 12
 
 temperature: null
 max_output_tokens: 4096
@@ -43,5 +44,5 @@ model_spec:
     supports_reasoning: false
     supports_search: false
     supports_structured_output: false
-    supports_batch: false
+    supports_batch: true
     supports_seed: true

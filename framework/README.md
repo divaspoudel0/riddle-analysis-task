@@ -37,6 +37,7 @@ framework/
         │   └── README.md
         └── models/                           # provider adapters
             ├── base.py                       # Model ABC every adapter implements
+            ├── concurrent_batch.py           # concurrent generate_batch (batch_mode)
             ├── dummy.py                      # reference adapter, used for smoke tests
             ├── openai_adapter.py
             ├── anthropic_adapter.py
@@ -169,23 +170,25 @@ For non-engineer contributors, see `docs/getting-started.md` for a plain-languag
 
 ### Getting results faster and cheaper
 
-The runner sends requests serially. To get a run's results much faster (and
-cheaper, via offline Batch APIs) — fill the cache first, then run the CLI
-normally for instant cache hits — use the `batch` package:
+The runner sends requests serially. Three faster paths (all share one cache, so
+results are interchangeable with a normal `cache_enabled` run):
 
 ```bash
-# OpenAI-compatible providers (Cohere, OpenRouter, Together): N concurrent calls
+# 1. Concurrency inside a normal run — set in the config (Cohere / OpenRouter):
+#      batch_mode: true   batch_size: 12   (capabilities.supports_batch: true)
+uv run python -m riddles_framework.cli --config <cfg>
+
+# 2. Pre-fill the cache concurrently, then run (OpenAI-compatible providers):
 uv run python -m riddles_framework.batch.fill --config <cfg> --workers 12
+uv run python -m riddles_framework.cli --config <cfg>          # instant cache hits
 
-# OpenAI / Anthropic / Gemini: provider Batch APIs (offline, cheaper)
+# 3. Offline Batch API, ~50% cheaper (OpenAI / Anthropic / Gemini):
 uv run python -m riddles_framework.batch.fill --config <cfg> --backend batch
-
-# then the normal run reads everything from cache
 uv run python -m riddles_framework.cli --config <cfg>
 ```
 
 See [`src/riddles_framework/batch/README.md`](src/riddles_framework/batch/README.md)
-for backends, flags, per-provider cache formats, and test status.
+for the full guide: provider support, flags, cache formats, and test status.
 
 ## Tests
 
