@@ -76,7 +76,7 @@ def load_run_config_from_yaml(path: str) -> RunConfig:
             is_hint_provided=bool(data["is_hint_provided"]),
             reasoning_mode=data.get("reasoning_mode"),
             search_enabled=bool(data.get("search_enabled", False)),
-            response_format=ResponseFormat(data.get("response_format", "json")),
+            response_format=ResponseFormat(data.get("response_format", "free_form")),
             batch_mode=bool(data.get("batch_mode", False)),
             batch_size=_opt_positive_int(data.get("batch_size"), key="batch_size"),
             # Temperature: only set if the user wrote it; else rely on model default.

@@ -18,7 +18,6 @@ is_hint_provided: false
 
 reasoning_mode: null
 search_enabled: false
-response_format: free_form
 batch_mode: false
 batch_size: 1
 

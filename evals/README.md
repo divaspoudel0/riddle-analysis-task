@@ -1,9 +1,40 @@
+# Evals
+
+This package scores a benchmark run's `results.jsonl` (the framework's output).
+It bundles two complementary evaluators:
+
+- **Reference-answer heuristic evaluator** (`reference_heuristic_judge.py`) — a
+  small, deterministic checker. No LLM call. Matches the model's answer against
+  the source-language reference answer.
+- **LLM-as-a-judge** (`llm_judge_run.py` + `llm_as_a_judge.py`) — lenient LLM
+  scoring that credits paraphrases / transliterations the deterministic match
+  misses.
+
+## Quick start
+
+Both evaluators take a framework run's `results.jsonl`. Use the committed
+example run as a ready-to-use input. Run from the repository root:
+
+```bash
+# Deterministic heuristic match (no LLM, no API key)
+python evals/reference_heuristic_judge.py \
+  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
+
+# LLM-as-a-judge (needs GEMINI_API_KEY)
+python -m evals.llm_judge_run \
+  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl \
+  --model gemini-2.5-flash-lite
+```
+
+See the per-evaluator sections below for inputs, outputs, and options.
+
+---
+
 # Reference-Answer Heuristic Evaluator
 
-This script is a small, deterministic checker for riddle benchmark results. It
-does not call an LLM. It reads model outputs from a `results.jsonl` file,
-extracts the model's answer, compares it with the source-language reference
-answer, and writes a per-riddle score file plus a short summary.
+This script reads model outputs from a `results.jsonl` file, extracts the
+model's answer, compares it with the source-language reference answer, and
+writes a per-riddle score file plus a short summary. It does not call an LLM.
 
 Run it from the repository root:
 
@@ -111,3 +142,21 @@ python evals/reference_heuristic_judge.py results.jsonl --out-dir evals/outputs/
 python evals/reference_heuristic_judge.py results.jsonl --limit 100
 python evals/reference_heuristic_judge.py results.jsonl --quiet
 ```
+
+---
+
+# LLM-as-a-judge
+
+Lenient LLM scoring of the same `results.jsonl` (credits paraphrases /
+transliterations that exact match misses). Reuses the judge prompt + output
+schema from `llm_as_a_judge.py`; sends via Google's OpenAI-compatible Gemini
+endpoint with `gemini-2.5-flash-lite` by default. Needs `GEMINI_API_KEY`:
+
+```bash
+python -m evals.llm_judge_run \
+  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl \
+  --model gemini-2.5-flash-lite
+```
+
+Writes verdicts (same shape as the heuristic match) to `<run_dir>/llm_judge.jsonl`.
+

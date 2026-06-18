@@ -1,7 +1,0 @@
-template_id: riddle_basic
-template_version: v2
-recommended_response_format: json
-instruction_text: |
-  Solve the following cultural riddle.
-  Return your answer as a single short phrase.
-  If you are not certain, do your best — but be concise.

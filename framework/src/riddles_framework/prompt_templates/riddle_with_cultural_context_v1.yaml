@@ -1,9 +1,0 @@
-template_id: riddle_with_cultural_context
-template_version: v1
-recommended_response_format: json
-instruction_text: |
-  You are solving a cultural riddle from {community_display}.
-  The riddle is written in {language_name} ({script_name}), and the topic is {topic}.
-
-  Please answer the riddle. If you are not certain, do your best, but
-  it is better to honestly say you do not know than to guess.

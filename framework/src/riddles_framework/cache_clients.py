@@ -10,6 +10,50 @@ def _apply_common_cache_kwargs(kwargs: dict) -> dict:
     return cleaned
 
 
+def _build_cohere_cache_client(namespace, cachedir, **client_kwargs):
+    """CacheSaver client for Cohere's OpenAI-compatible endpoint.
+
+    CacheSaver's stock OpenAI model always sends ``n=request.n`` on every
+    request (``cachesaver/models/openai.py``). Cohere's compatibility endpoint
+    rejects the ``n`` parameter outright (HTTP 422 "n is not supported"), so we
+    subclass the model to omit it — mirroring how CacheSaver's Gemini/Anthropic
+    wrappers strip ``n``. Safe because the benchmark only ever requests one
+    completion per prompt (n == 1); a merged duplicate (n > 1) can't be served
+    by Cohere anyway and raises a clear error.
+    """
+    from copy import deepcopy
+
+    from cachesaver.models.openai import OpenAIModel
+    from cachesaver.models.wrapper import SyncWrapper, openai_chat_adapter
+    from cachesaver.typedefs import Response
+
+    class _CohereOpenAIModel(OpenAIModel):
+        async def request(self, request):
+            if request.n != 1:
+                raise CacheClientError(
+                    "Cohere's OpenAI-compatible endpoint does not support n > 1 "
+                    f"(got n={request.n})."
+                )
+            response = await self.aclient.chat.completions.create(
+                *request.args, **request.kwargs
+            )
+            flattened = []
+            for choice in response.choices:
+                response_copy = deepcopy(response)
+                response_copy.choices = [choice]
+                flattened.append(response_copy)
+            return Response(data=flattened)
+
+    return SyncWrapper(
+        model=_CohereOpenAIModel(**client_kwargs),
+        namespace=namespace if namespace is not None else "default",
+        cachedir=cachedir if cachedir is not None else "./cache",
+        batch_size=1,
+        response_adapter=openai_chat_adapter,
+        timeout=None,
+    )
+
+
 def make_openai_client(use_cache: bool, **kwargs):
     kwargs = _apply_common_cache_kwargs(kwargs)
     try:
@@ -130,16 +174,12 @@ def make_cohere_client(use_cache: bool, **kwargs):
         kwargs["base_url"] = "https://api.cohere.ai/compatibility/v1"
     try:
         if use_cache:
-            from cachesaver.models.openai import OpenAI
-
-            # The sync OpenAI wrapper takes namespace/cachedir plus OpenAI client
-            # kwargs (api_key/base_url); None cache params would clobber its defaults.
+            # Use a Cohere-specific CacheSaver model that omits the `n` parameter
+            # (Cohere's compat endpoint rejects it); see _build_cohere_cache_client.
             kwargs.pop("batch_size", None)
-            if kwargs.get("namespace") is None:
-                kwargs.pop("namespace", None)
-            if kwargs.get("cachedir") is None:
-                kwargs.pop("cachedir", None)
-            return OpenAI(**kwargs)
+            namespace = kwargs.pop("namespace", None)
+            cachedir = kwargs.pop("cachedir", None)
+            return _build_cohere_cache_client(namespace, cachedir, **kwargs)
 
         from openai import OpenAI
         kwargs.pop("namespace", None)

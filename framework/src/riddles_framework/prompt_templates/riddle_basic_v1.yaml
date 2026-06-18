@@ -1,6 +1,0 @@
-template_id: riddle_basic
-template_version: v1
-recommended_response_format: free_form
-instruction_text: |
-  Solve the following cultural riddle.
-  Give only the final answer, ideally in 1 to 4 words.

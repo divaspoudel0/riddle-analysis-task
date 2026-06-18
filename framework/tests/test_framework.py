@@ -136,16 +136,10 @@ def test_condition_id():
     assert cid == "source_no_hint"
 
 
-def test_load_prompt_template_v1():
-    tpl = load_prompt_template("riddle_basic", "v1")
-    assert tpl.template_id == "riddle_basic"
+def test_load_prompt_template_master():
+    tpl = load_prompt_template("riddle_master", "v1")
+    assert tpl.template_id == "riddle_master"
     assert tpl.template_version == "v1"
-    assert "Solve" in tpl.instruction_text
-    assert tpl.recommended_response_format == ResponseFormat.FREE_FORM
-
-
-def test_load_prompt_template_v2_structured():
-    tpl = load_prompt_template("riddle_basic", "v2")
     assert tpl.recommended_response_format == ResponseFormat.JSON
 
 
@@ -156,8 +150,7 @@ def test_load_prompt_template_missing_raises():
 
 def test_list_available_templates_includes_shipped_ones():
     available = list_available_templates()
-    assert ("riddle_basic", "v1") in available
-    assert ("riddle_basic", "v2") in available
+    assert ("riddle_master", "v1") in available
 
 
 def _dummy_spec() -> ModelSpec:
@@ -1089,7 +1082,7 @@ model_spec:
     assert cfg.temperature is None
     # model_params loads through.
     assert cfg.model_params == {"top_p": 0.9}
-    # response_format defaults to json now.
+    # response_format is parsed when explicitly set (default is free_form).
     assert cfg.response_format == ResponseFormat.JSON
     assert cfg.batch_size == 4
     assert cfg.local_cache_client_mode == "async"
@@ -1241,16 +1234,6 @@ def test_template_using_riddle_text_placeholder_takes_full_control():
     # Should NOT contain the legacy RIDDLE: header when template uses {riddle_text}.
     assert "RIDDLE:" not in prompt
     assert "Tamil, India" in prompt
-
-
-def test_load_cultural_context_template_from_disk():
-    """The shipped riddle_with_cultural_context_v1.yaml should load."""
-    tpl = load_prompt_template("riddle_with_cultural_context", "v1")
-    assert tpl.recommended_response_format == ResponseFormat.JSON
-    assert "{community_display}" in tpl.instruction_text
-    assert "{language_name}" in tpl.instruction_text
-    assert "{script_name}" in tpl.instruction_text
-    assert "{topic}" in tpl.instruction_text
 
 
 # ---------------------------------------------------------------------------

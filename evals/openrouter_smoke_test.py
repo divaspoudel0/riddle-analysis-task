@@ -9,7 +9,7 @@ from urllib import error, request
 
 import pandas as pd
 
-from judge.llm_as_a_judge import (
+from evals.llm_as_a_judge import (
     TARGET_MODELS,
     build_judge_messages,
     build_openrouter_payload,
