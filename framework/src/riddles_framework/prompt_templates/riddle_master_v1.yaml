@@ -6,9 +6,11 @@ instruction_text: |
   You are solving a cultural riddle from {community_display}. The riddle is written in {community_display} ({script_name}), and its topic is {topic}.
   Use this cultural and linguistic context to interpret the riddle, reason about its clues, and provide your final answer.
   ## Input Format
-  The input will ALWAYS be in the format:
-  <riddle>
+  The riddle is provided as plain text on the line(s) following a `RIDDLE:` marker:
+  RIDDLE:
+  <the riddle text>
   ### Input Example
+  RIDDLE:
   I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?
   ## Instructions
   Read the riddle carefully.
