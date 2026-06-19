@@ -51,7 +51,7 @@ model_spec:
 Then run the CLI normally — no extra step:
 
 ```bash
-uv run python -m riddles_framework.cli --config configs/campaign_5lang/cohere_tiny_aya.yaml
+uv run python -m riddles_framework.cli --config configs/benchmark_v0/cohere_tiny_aya.yaml
 ```
 
 Implemented in `models/concurrent_batch.py` + the `generate_batch` overrides in
@@ -64,10 +64,10 @@ selected by provider (override with `--backend`):
 
 ```bash
 # OpenAI-compatible -> concurrent real-time (threadpool)
-python -m riddles_framework.batch.fill --config configs/campaign_5lang/cohere_tiny_aya.yaml --workers 12
+python -m riddles_framework.batch.fill --config configs/benchmark_v0/cohere_tiny_aya.yaml --workers 12
 
 # OpenAI / Anthropic / Gemini -> provider Batch API (offline, ~50% cheaper)
-python -m riddles_framework.batch.fill --config configs/campaign_5lang/gpt55_high.yaml --backend batch
+python -m riddles_framework.batch.fill --config configs/benchmark_v0/gpt55_high.yaml --backend batch
 
 # count misses without making any calls
 python -m riddles_framework.batch.fill --config <cfg> --dry-run
