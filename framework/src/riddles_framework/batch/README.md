@@ -112,15 +112,9 @@ Flags: `--backend auto|threadpool|batch`, `--workers N` (threadpool concurrency)
 
 ## Test status
 
-- `cache_compat`, `threadpool`, `fill` — unit-tested; cache round-trip and
-  hit-detection verified against real run caches.
-- `batch_mode` concurrency (`concurrent_batch` + Cohere/OpenRouter) — mock-tested
-  (order, concurrency, cache read/write, no deadlock) and **live via the CLI**
-  (Cohere, 10/10 success, `batch_mode_used: true`). OpenRouter shares the path.
-- `openai_batch` / `anthropic_batch` / `gemini_batch` — **validated live** end-to-
-  end on a small slice (submit → poll → download → write-back → verified hits):
-  OpenAI `gpt-5.5` 10/10, Anthropic `claude-haiku-4-5` 5/5, Gemini
-  `gemini-3.1-pro-preview` 5/5.
-- `gemini_batch` was validated against **google-genai 2.8.0**; that SDK's batch
-  surface changes between versions — re-check `batches.create` /
-  `dest.inlined_responses` if you upgrade.
+- `cache_compat`, `threadpool`, `fill`, `batch_mode` concurrency — unit/mock-tested.
+- All four real-call paths validated live end-to-end on a small slice: `batch_mode`
+  (Cohere), and the Batch APIs (OpenAI / Anthropic / Gemini).
+- Gemini matches responses by per-request metadata, not order (Gemini doesn't
+  guarantee inline ordering); validated against google-genai 2.8.0 — re-check its
+  batch surface if you upgrade.
