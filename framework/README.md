@@ -24,10 +24,7 @@ framework/
         ├── dataset_loader.py
         ├── prompts.py
         ├── prompt_templates/                 # instruction templates (YAML)
-        │   ├── riddle_basic_v1.yaml
-        │   ├── riddle_basic_v2.yaml
-        │   ├── riddle_with_uncertainty_v1.yaml
-        │   └── riddle_with_cultural_context_v1.yaml
+        │   └── riddle_master_v1.yaml
         ├── writers.py
         ├── registry.py
         ├── factory.py
@@ -36,13 +33,18 @@ framework/
         ├── yaml_config.py
         ├── model_specs.py
         ├── cli.py
+        ├── batch/                            # faster & cheaper results (concurrent + Batch APIs)
+        │   └── README.md
         └── models/                           # provider adapters
             ├── base.py                       # Model ABC every adapter implements
+            ├── concurrent_batch.py           # concurrent generate_batch (batch_mode)
             ├── dummy.py                      # reference adapter, used for smoke tests
             ├── openai_adapter.py
             ├── anthropic_adapter.py
             ├── gemini_adapter.py
+            ├── cohere_adapter.py
             ├── openrouter_adapter.py
+            ├── together_adapter.py
             └── transformers_local_adapter.py
 ```
 
@@ -165,6 +167,28 @@ uv run python -m riddles_framework.cli --config configs/openai_gpt55_high.yaml
 ```
 
 For non-engineer contributors, see `docs/getting-started.md` for a plain-language walkthrough and `docs/code-reference.md` for the file-by-file technical reference.
+
+### Getting results faster and cheaper
+
+The runner sends requests serially. Three faster paths (all share one cache, so
+results are interchangeable with a normal `cache_enabled` run):
+
+```bash
+# 1. Concurrency inside a normal run — set in the config (Cohere / OpenRouter):
+#      batch_mode: true   batch_size: 12   (capabilities.supports_batch: true)
+uv run python -m riddles_framework.cli --config <cfg>
+
+# 2. Pre-fill the cache concurrently, then run (OpenAI-compatible providers):
+uv run python -m riddles_framework.batch.fill --config <cfg> --workers 12
+uv run python -m riddles_framework.cli --config <cfg>          # instant cache hits
+
+# 3. Offline Batch API, ~50% cheaper (OpenAI / Anthropic / Gemini):
+uv run python -m riddles_framework.batch.fill --config <cfg> --backend batch
+uv run python -m riddles_framework.cli --config <cfg>
+```
+
+See [`src/riddles_framework/batch/README.md`](src/riddles_framework/batch/README.md)
+for the full guide: provider support, flags, cache formats, and test status.
 
 ## Tests
 

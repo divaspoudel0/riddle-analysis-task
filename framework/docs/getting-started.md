@@ -270,6 +270,13 @@ When caching is enabled:
 
 **How it works:** Each adapter can use a "CacheSaver" version of the client that intercepts calls and checks the cache first.
 
+**Getting results faster and cheaper:** the runner sends requests one at a time.
+To get a run's results much faster — concurrently, or via the providers' offline
+Batch APIs (OpenAI / Anthropic / Gemini, which are also ~50% cheaper) — fill the
+cache first, then run normally for instant cache hits:
+`python -m riddles_framework.batch.fill --config <cfg>`. See
+[`../src/riddles_framework/batch/README.md`](../src/riddles_framework/batch/README.md).
+
 ---
 
 ### 9. The Writers (`writers.py`)
