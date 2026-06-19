@@ -101,8 +101,10 @@ def fill_openai_compatible(
             try:
                 fut.result()
                 filled += 1
-            except Exception:
+            except Exception as exc:  # noqa: BLE001
                 errors += 1
+                if errors <= 5:   # surface the first few; avoid log spam at scale
+                    print(f"[fill] error: {exc}", flush=True)
             if progress:
                 progress(done, len(misses))
 

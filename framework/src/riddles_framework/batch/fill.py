@@ -32,6 +32,29 @@ OPENAI_COMPATIBLE = {"cohere", "openrouter", "qwen", "xai", "together", "openai"
 BATCH_PROVIDERS = {"openai", "google", "anthropic"}
 
 
+def _build_cache_key(prompt: str, rc, provider: str, model: str) -> str:
+    """Canonical CacheSaver key for a prompt, mirroring the fill backends.
+
+    Single source of truth so `--dry-run` miss counts match what the actual fill
+    (openai_batch / threadpool / concurrent_batch / gemini_batch) would key on.
+    OpenAI uses `max_completion_tokens`; other OpenAI-compatible providers use
+    `max_tokens`; Gemini keys on `{model, contents}`.
+    """
+    from .cache_compat import gemini_request_key, openai_request_key
+
+    if provider == "google":
+        return gemini_request_key({"model": model, "contents": prompt})
+    tok = "max_completion_tokens" if provider == "openai" else "max_tokens"
+    body = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        tok: rc.max_output_tokens,
+    }
+    if rc.response_format.value == "json":
+        body["response_format"] = {"type": "json_object"}
+    return openai_request_key(body)
+
+
 def _build_prompts(rc) -> list[str]:
     template = load_prompt_template(rc.prompt_template_id, rc.prompt_template_version)
     instances = load_benchmark_instances(rc.dataset_path)
@@ -71,16 +94,9 @@ def main(argv=None) -> int:
           f"backend={backend} cache_dir={cache_dir}")
 
     if args.dry_run:
-        from .cache_compat import cache_lookup, gemini_request_key, openai_request_key
-        def kw(pr):
-            if provider == "google":
-                return {"model": model, "contents": pr}, gemini_request_key
-            tok = "max_completion_tokens" if provider == "openai" else "max_tokens"
-            body = {"model": model, "messages": [{"role": "user", "content": pr}], tok: rc.max_output_tokens}
-            if rf == "json":
-                body["response_format"] = {"type": "json_object"}
-            return body, openai_request_key
-        miss = sum(1 for pr in prompts if not (lambda b, f: cache_lookup(cache_dir, f(b)))(*kw(pr)))
+        from .cache_compat import cache_lookup
+        miss = sum(1 for pr in prompts
+                   if not cache_lookup(cache_dir, _build_cache_key(pr, rc, provider, model)))
         print(f"[fill] dry-run: {miss} misses, {len(prompts)-miss} already cached")
         return 0
 
