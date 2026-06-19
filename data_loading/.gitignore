@@ -10,6 +10,8 @@ reports/
 *.csv
 *.log
 
-# Exception: the pilot_dataset/ directory and its contents are checked in.
+# Exception: the dataset directories and their contents are checked in.
 !pilot_dataset/
 !pilot_dataset/**
+!v0_dataset/
+!v0_dataset/**
