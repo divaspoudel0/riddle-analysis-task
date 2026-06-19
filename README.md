@@ -93,6 +93,10 @@ Output: `framework/runs/<run_id>/results.jsonl`. See the
 
 ### 4. (Optional) Score the results
 
+> **Not required to complete your task.** The LLM-as-a-judge calls a paid model
+> (it spends credits), so feel free to skip scoring — just upload your raw
+> `results.jsonl` (step 5). The heuristic evaluator below is free (no LLM).
+
 From the **repo root**, point an evaluator at a run's `results.jsonl`:
 
 ```bash
