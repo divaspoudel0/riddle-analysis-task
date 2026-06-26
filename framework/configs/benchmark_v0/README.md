@@ -10,6 +10,8 @@ Runs four models over
 | `gemini_pro.yaml` | Gemini Pro | google / direct_api | `GEMINI_API_KEY` |
 | `cohere_tiny_aya.yaml` | Cohere Tiny-Aya (`tiny-aya-global`) | cohere / direct_api | `COHERE_API_KEY` |
 | `gemma4_openrouter.yaml` | Gemma 4 (open weights) | openrouter / openrouter | `OPENROUTER_API_KEY` |
+| `qwen3.5_vllm.yaml` | Qwen 3.5 (vLLM) | `OPENAI_API_KEY` (Placeholder) |
+
 
 These are **example configs** — treat them as templates: edit the model
 ids/keys, change the condition, or add your own config for any model. All four
@@ -33,6 +35,8 @@ run, edit its `*.yaml`:
    | `gemini_pro.yaml` | `gemini-3.1-pro-preview` | `GEMINI_API_KEY` |
    | `cohere_tiny_aya.yaml` | `tiny-aya-global` | `COHERE_API_KEY` |
    | `gemma4_openrouter.yaml` | `google/gemma-4-31b-it` | `OPENROUTER_API_KEY` |
+   | `qwen3.5_vllm.yaml` | `Qwen/Qwen3.5-0.8B` | `OPENAI_API_KEY` (Placeholder) |
+
 
 2. **Export the API key** named by that config's `api_key_env_var` (above).
 
