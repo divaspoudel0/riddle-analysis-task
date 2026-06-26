@@ -51,6 +51,7 @@ ids/keys, or drop in your own `<name>.yaml`). The examples:
 | `gemini_pro.yaml` | Gemini Pro | `GEMINI_API_KEY` |
 | `cohere_tiny_aya.yaml` | Cohere Tiny-Aya | `COHERE_API_KEY` |
 | `gemma4_openrouter.yaml` | Gemma 4 (OpenRouter) | `OPENROUTER_API_KEY` |
+| `qwen3.5_vllm.yaml` | Qwen 3.5 (vLLM) | `OPENAI_API_KEY` (Placeholder) |
 
 > ⚠️ The shipped configs use **placeholder** model ids. Before a real run, set
 > each config's `model_spec.provider_model_name` to a real id and export its API
