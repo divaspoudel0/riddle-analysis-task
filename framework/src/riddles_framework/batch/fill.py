@@ -32,6 +32,26 @@ OPENAI_COMPATIBLE = {"cohere", "openrouter", "qwen", "xai", "together", "openai"
 BATCH_PROVIDERS = {"openai", "google", "anthropic"}
 
 
+def _openai_extra_body(rc) -> dict:
+    """OpenAI request kwargs shared by batch fill and dry-run cache keys.
+
+    Keep this in sync with models/openai_adapter.py so Batch API cache entries
+    match the normal runner's CacheSaver keys.
+    """
+    extra = {}
+    if rc.temperature is not None:
+        extra["temperature"] = rc.temperature
+    if rc.seed is not None:
+        extra["seed"] = rc.seed
+    if rc.reasoning_mode:
+        extra["reasoning_effort"] = rc.reasoning_mode
+    if rc.search_enabled:
+        extra["web_search"] = True
+    if rc.model_params:
+        extra.update(rc.model_params)
+    return extra
+
+
 def _build_cache_key(prompt: str, rc, provider: str, model: str) -> str:
     """Canonical CacheSaver key for a prompt, mirroring the fill backends.
 
@@ -52,6 +72,8 @@ def _build_cache_key(prompt: str, rc, provider: str, model: str) -> str:
     }
     if rc.response_format.value == "json":
         body["response_format"] = {"type": "json_object"}
+    if provider == "openai":
+        body.update(_openai_extra_body(rc))
     return openai_request_key(body)
 
 
@@ -123,7 +145,8 @@ def main(argv=None) -> int:
         out = run_openai_batch(
             prompts=prompts, model=model, cache_dir=cache_dir, api_key=api_key,
             base_url=rc.base_url, max_output_tokens=rc.max_output_tokens,
-            response_format=rf, poll_seconds=args.poll,
+            response_format=rf, extra_body=_openai_extra_body(rc),
+            poll_seconds=args.poll,
         )
     elif provider == "anthropic":
         from .anthropic_batch import run_anthropic_batch
