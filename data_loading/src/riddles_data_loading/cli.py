@@ -7,13 +7,12 @@ from pathlib import Path
 from typing import Any
 
 from riddles_data_loading.config import (
-    DEFAULT_DATA_DIR,
-    DEFAULT_DRIVE_FOLDER_URL,
     DEFAULT_REFERENCE_FILENAME,
     DEFAULT_REFERENCE_GID,
     DEFAULT_REFERENCE_SHEET_ID,
-    DEFAULT_REPORT_DIR,
+    DEFAULT_RUN_BATCH,
     DEFAULT_SHEET_NAME,
+    RUN_BATCHES,
     ValidationConfig,
 )
 from riddles_data_loading.downloader import (
@@ -61,8 +60,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Load reference and submission workbooks from a local folder.",
     )
-    parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
-    parser.add_argument("--report-dir", type=Path, default=DEFAULT_REPORT_DIR)
+    parser.add_argument(
+        "--run-batch",
+        choices=sorted(RUN_BATCHES),
+        default=DEFAULT_RUN_BATCH,
+        help=(
+            "Submission batch to download and validate. Selects the Drive folder, "
+            "data directory, and report directory for that batch unless those are "
+            "passed explicitly. Defaults to v0."
+        ),
+    )
+    parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument("--report-dir", type=Path, default=None)
     parser.add_argument(
         "--jsonl-dir",
         type=Path,
@@ -93,7 +102,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--sheet-id", default=DEFAULT_REFERENCE_SHEET_ID)
     parser.add_argument("--gid", default=DEFAULT_REFERENCE_GID)
-    parser.add_argument("--folder-url", default=DEFAULT_DRIVE_FOLDER_URL)
+    parser.add_argument("--folder-url", default=None)
     parser.add_argument("--quiet", action="store_true", help="Reduce download output.")
     return parser
 
@@ -104,7 +113,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run(args: argparse.Namespace) -> int:
-    data_dir = args.local_folder or args.data_dir
+    batch = RUN_BATCHES[args.run_batch]
+    data_dir = args.local_folder or args.data_dir or batch["data_dir"]
+    report_dir = args.report_dir or batch["report_dir"]
+    folder_url = args.folder_url or batch["folder_url"]
     reference_path = args.reference_file or data_dir / args.reference_filename
     should_download = (
         not args.local_folder
@@ -125,7 +137,7 @@ def run(args: argparse.Namespace) -> int:
         print("Downloading submitted workbooks...")
         download_submission_folder(
             data_dir,
-            folder_url=args.folder_url,
+            folder_url=folder_url,
             force=args.redownload,
             quiet=args.quiet,
         )
@@ -149,8 +161,8 @@ def run(args: argparse.Namespace) -> int:
         expected_rows=args.expected_rows,
         require_ten_per_topic=not args.allow_topic_count_mismatch,
     )
-    jsonl_dir = args.jsonl_dir or args.report_dir / "jsonl"
-    passed_jsonl_dir = args.passed_jsonl_dir or args.report_dir / "passed_jsonl"
+    jsonl_dir = args.jsonl_dir or report_dir / "jsonl"
+    passed_jsonl_dir = args.passed_jsonl_dir or report_dir / "passed_jsonl"
     _clear_jsonl_outputs(jsonl_dir)
     _clear_jsonl_outputs(passed_jsonl_dir)
     full_results: list[dict[str, Any]] = []
@@ -184,8 +196,8 @@ def run(args: argparse.Namespace) -> int:
         full_results.append({"file": str(workbook_path), "result": result})
         summary_rows.append(summarize_result(workbook_path, result))
 
-    csv_path, json_path = write_reports(full_results, summary_rows, args.report_dir)
-    feedback_path = write_contributor_feedback(summary_rows, args.report_dir)
+    csv_path, json_path = write_reports(full_results, summary_rows, report_dir)
+    feedback_path = write_contributor_feedback(summary_rows, report_dir)
     _print_run_summary(summary_rows, csv_path, json_path, feedback_path, jsonl_dir, passed_jsonl_dir)
 
     return 0 if all(row["passed"] for row in summary_rows) else 1

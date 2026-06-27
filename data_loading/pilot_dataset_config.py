@@ -30,6 +30,7 @@ LANGUAGE_TO_ISO_639_2 = {
     "arabic_syria": "apc",         # North Levantine Arabic
 
     # ----- Simple keys (first-token lookup) -----
+    "assamese": "asm",            # Assamese (Bengali-Assamese script)
     "belarusian": "bel",
     "bengali": "ben",
     "brazilian": "por",            # Brazilian Portuguese (no separate 639-3 code)
@@ -70,8 +71,11 @@ LANGUAGE_TO_ISO_639_2 = {
     "tamil": "tam",
     "telugu": "tel",
     "thai": "tha",
+    "tunisian": "aeb",           # Tunisian Arabic (639-3); first-token key is unambiguous
+    "ukrainian": "ukr",
     "urdu": "urd",
     "uzbek": "uzb",
+    "vietnamese": "vie",
     "yoruba": "yor",
 }
 
@@ -85,6 +89,7 @@ ISO_TO_SCRIPT_FAMILY = {
     "apd": "arabic",
     "apc": "arabic",
     "ary": "arabic",
+    "aeb": "arabic",
     "urd": "arabic",
     # Han (Chinese characters)
     "yue": "han",
@@ -94,7 +99,9 @@ ISO_TO_SCRIPT_FAMILY = {
     "bul": "cyrillic",
     "rus": "cyrillic",
     "srp": "cyrillic",
+    "ukr": "cyrillic",
     # Brahmic family — each Indic script gets its own family
+    "asm": "bengali",             # Assamese shares the Bengali Unicode block
     "ben": "bengali",
     "hin": "devanagari",
     "kan": "kannada",
@@ -112,6 +119,7 @@ ISO_TO_SCRIPT_FAMILY = {
     # Sinhala has its own Unicode block; script detector returns "unknown"
     # for it, so we skip the explicit mapping (no false warnings)
     # Yoruba uses Latin script with diacritics — covered by DEFAULT_SCRIPT_FAMILY
+    # Vietnamese uses Latin script with diacritics — covered by DEFAULT_SCRIPT_FAMILY
     # Latin-script (everything else defaults to this)
 }
 
