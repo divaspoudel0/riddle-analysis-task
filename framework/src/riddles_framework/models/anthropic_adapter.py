@@ -57,19 +57,25 @@ class AnthropicAdapter(Model):
 
             # Anthropic extended thinking requires temperature=1, and the
             # thinking budget must leave room for visible answer tokens.
+            # UPDATE: extended reasoning no longer supported, now adaptive high effort thinking;
+            # no longer take temperature and budget parameters
             if reasoning_mode:
-                budget_tokens = self.thinking_budget_tokens
-                if budget_tokens is None:
-                    budget_tokens = max(1, max_output_tokens // 2)
+            #    budget_tokens = self.thinking_budget_tokens
+            #    if budget_tokens is None:
+            #        budget_tokens = max(1, max_output_tokens // 2)
 
                 kwargs["thinking"] = {
-                    "type": "enabled",
-                    "budget_tokens": budget_tokens,
+            #        "type": "enabled",
+                     "type": "adaptive",
+            #        "budget_tokens": budget_tokens,
                 }
-                kwargs["temperature"] = 1
-            elif temperature is not None:
-                kwargs["temperature"] = temperature
-
+                kwargs["output_config"] = {
+                     "effort": "high",
+                }
+            #    kwargs["temperature"] = 1
+                kwargs.pop("temperature", None)
+            #elif temperature is not None:
+            #    kwargs["temperature"] = temperature
             # Merge arbitrary user-supplied model params LAST.
             if model_params:
                 kwargs.update(model_params)
