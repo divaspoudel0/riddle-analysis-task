@@ -74,7 +74,8 @@ class AnthropicAdapter(Model):
                 }
             #    kwargs["temperature"] = 1
                 kwargs.pop("temperature", None)
-            # UPDATE: added to call web search tool
+            # UPDATE: added to call web search tool, tool call needs to be forced or else
+            # model tends to not use the search tool at all
             elif search_enabled:
                 kwargs["tools"] = [
                     {
@@ -82,6 +83,9 @@ class AnthropicAdapter(Model):
                         "name": "web_search",
                     }
                 ]
+                kwargs["tool_choice"] = {
+                    "type": "any"
+                    }  # forces at least one tool cal
                 if temperature is not None:
                     kwargs["temperature"] = temperature
             elif temperature is not None:
@@ -120,6 +124,7 @@ class AnthropicAdapter(Model):
                     "thinking_enabled": bool(reasoning_mode),
                     "thinking_budget_tokens": budget_tokens if reasoning_mode else None,
                     "search_enabled": bool(search_enabled),
+                    "search_requests": getattr(getattr(usage, "server_tool_use", None), "web_search_requests", None),
                 },
             )
         except Exception as exc:
