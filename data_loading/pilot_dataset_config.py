@@ -161,6 +161,7 @@ SCHEMA_FIELD_ORDER = [
     "source_row_number",
     "language",
     "community",
+    "run_batch",
     "topic",
     "is_wildcard",
     "riddle_original",

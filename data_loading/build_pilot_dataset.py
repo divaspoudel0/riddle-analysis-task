@@ -18,6 +18,7 @@ Outputs:
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import unicodedata
@@ -39,7 +40,17 @@ from pilot_dataset_config import (
 # Paths
 # ---------------------------------------------------------------------------
 HERE = Path(__file__).parent
-PASSED_JSONL_DIR = HERE / "reports" / "passed_jsonl"
+
+# Each run batch has its own validated output directory. The build reads
+# from these in order; when a community appears in more than one batch the
+# later batch wins (a corrected v0 community re-submitted in v1 is bumped to
+# v1, so a v1-only eval run correctly re-runs it).
+RUN_BATCH_DIRS = {
+    "v0": HERE / "reports" / "passed_jsonl",
+    "v1": HERE / "reports_v1" / "passed_jsonl",
+}
+DEFAULT_BATCH_ORDER = ["v0", "v1"]
+
 OUTPUT_DIR = HERE / "pilot_dataset"
 OUTPUT_FILE = OUTPUT_DIR / "pilot_dataset_v1.jsonl"
 README_FILE = OUTPUT_DIR / "README.md"
@@ -162,6 +173,7 @@ def transform_record(
     community: str,
     language_iso: str,
     created_at: str,
+    run_batch: str,
 ) -> dict:
     """Convert one raw JSONL record into a canonical-schema record."""
     # Pull renamed fields
@@ -196,6 +208,7 @@ def transform_record(
         "source_row_number": number_int,
         "language": language_iso,
         "community": community,
+        "run_batch": run_batch,
         "topic": topic,
         "is_wildcard": is_wildcard_topic(topic),
         "riddle_original": canonical.get("riddle_original"),
@@ -250,71 +263,99 @@ def script_check(records: list[dict], community: str, primary_iso: str) -> str |
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def main() -> None:
-    if not PASSED_JSONL_DIR.exists():
-        raise SystemExit(
-            f"Passed JSONL directory not found: {PASSED_JSONL_DIR}\n"
-            f"Run `uv run python validate_submissions.py` first."
-        )
-
-    OUTPUT_DIR.mkdir(exist_ok=True)
+def main(batches: list[str], output_dir: Path) -> None:
     created_at = datetime.now(timezone.utc).isoformat()
 
-    all_records: list[dict] = []
-    per_community_counts: dict[str, int] = {}
+    # community -> {records, run_batch, language, count}. Later batch overrides.
+    community_data: dict[str, dict] = {}
     warnings: list[str] = []
 
-    jsonl_files = sorted(PASSED_JSONL_DIR.glob("*.jsonl"))
-    print(f"Found {len(jsonl_files)} passing submissions.\n")
-
-    for jsonl_path in jsonl_files:
-        community = parse_community_from_filename(jsonl_path.name)
-        try:
-            language_iso = map_language(community)
-        except ValueError as exc:
-            warnings.append(f"   {community}: {exc}")
+    for batch in batches:
+        passed_dir = RUN_BATCH_DIRS.get(batch)
+        if passed_dir is None:
+            raise SystemExit(
+                f"Unknown batch {batch!r}. Known batches: {list(RUN_BATCH_DIRS)}"
+            )
+        if not passed_dir.exists():
+            print(f"  [skip] batch {batch}: {passed_dir} not found")
             continue
 
-        # Read raw records
-        raw_records = []
-        with jsonl_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    raw_records.append(json.loads(line))
-
-        # Transform
-        transformed = [
-            transform_record(r, community, language_iso, created_at)
-            for r in raw_records
-        ]
-
-        # Script-family sanity check
-        warning = script_check(raw_records, community, language_iso)
-        if warning:
-            warnings.append(warning)
-
-        all_records.extend(transformed)
-        per_community_counts[community] = len(transformed)
+        jsonl_files = sorted(passed_dir.glob("*.jsonl"))
         print(
-            f"  {community:<35} {language_iso:<8} "
-            f"{len(transformed):>4} riddles"
+            f"Batch {batch}: {len(jsonl_files)} passing submissions "
+            f"({passed_dir.relative_to(HERE)})"
         )
 
-    # Write output
-    with OUTPUT_FILE.open("w", encoding="utf-8") as f:
+        for jsonl_path in jsonl_files:
+            community = parse_community_from_filename(jsonl_path.name)
+            try:
+                language_iso = map_language(community)
+            except ValueError as exc:
+                warnings.append(f"   {community}: {exc}")
+                continue
+
+            raw_records = []
+            with jsonl_path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        raw_records.append(json.loads(line))
+
+            transformed = [
+                transform_record(r, community, language_iso, created_at, batch)
+                for r in raw_records
+            ]
+
+            warning = script_check(raw_records, community, language_iso)
+            if warning:
+                warnings.append(warning)
+
+            if community in community_data:
+                print(
+                    f"    [override] {community}: re-submitted in {batch}, "
+                    f"replacing batch {community_data[community]['run_batch']}"
+                )
+
+            community_data[community] = {
+                "records": transformed,
+                "run_batch": batch,
+                "language": language_iso,
+                "count": len(transformed),
+            }
+
+    if not community_data:
+        raise SystemExit(
+            "No passing submissions found in any batch. "
+            "Run `uv run python validate_submissions.py` first."
+        )
+
+    # Flatten in deterministic community order
+    all_records: list[dict] = []
+    per_community_counts: dict[str, int] = {}
+    for community in sorted(community_data):
+        data = community_data[community]
+        all_records.extend(data["records"])
+        per_community_counts[community] = data["count"]
+
+    output_dir.mkdir(exist_ok=True)
+    out_file = output_dir / OUTPUT_FILE.name
+    with out_file.open("w", encoding="utf-8") as f:
         for record in all_records:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-    # Write README
-    write_readme(per_community_counts, len(all_records), created_at)
+    write_readme(community_data, len(all_records), created_at, batches)
+    registry_path = write_registry(
+        community_data, batches, created_at, output_dir, len(all_records)
+    )
 
-    # Report
     print()
-    print(f"Consolidated {len(per_community_counts)} submissions, "
-          f"{len(all_records)} riddles.")
-    print(f"   Output:  {OUTPUT_FILE.relative_to(HERE)}")
-    print(f"   README:  {README_FILE.relative_to(HERE)}")
+    print(
+        f"Consolidated {len(per_community_counts)} communities, "
+        f"{len(all_records)} riddles across batches: {', '.join(batches)}."
+    )
+    print(f"   Output:   {out_file.relative_to(HERE)}")
+    print(f"   README:   {README_FILE.relative_to(HERE)}")
+    print(f"   Registry: {registry_path.relative_to(HERE)}")
 
     if warnings:
         print()
@@ -326,20 +367,36 @@ def main() -> None:
         print("No language-script mismatches detected.")
 
 
-def write_readme(counts: dict[str, int], total: int, created_at: str) -> None:
+def write_readme(
+    community_data: dict[str, dict],
+    total: int,
+    created_at: str,
+    batches: list[str],
+) -> None:
     """Document the pilot dataset for downstream consumers."""
     lines = [
         "# Pilot Dataset v1",
         "",
         f"Generated: {created_at}",
-        f"Total submissions: {len(counts)}",
+        f"Total submissions: {len(community_data)}",
         f"Total riddles: {total}",
+        f"Run batches: {', '.join(batches)}",
+        "",
+        "> **Naming note.** The `v1` in the filename `pilot_dataset_v1.jsonl` is the",
+        "> dataset *schema* version; it becomes v2 when `raw_template_fields` is",
+        "> dropped. The `v1` in the `run_batch` field is a *collection round*, the",
+        "> second wave of communities. These are separate axes. To evaluate only the",
+        "> newly added communities, select by `run_batch` (via the registry), not by",
+        "> the filename. See Versioning below.",
         "",
         "## Purpose",
         "",
         "First consolidated dataset for the framework team (T2.2.1).",
         "Includes only submissions that passed all validator blocking checks.",
         "Schema follows the Analysis team's canonical instance schema.",
+        "Combines all run batches into one dataset; each riddle is tagged with",
+        "its `run_batch` so evaluation runs can target only new or changed",
+        "communities. See Versioning below.",
         "",
         "## Schema",
         "",
@@ -353,6 +410,7 @@ def write_readme(counts: dict[str, int], total: int, created_at: str) -> None:
         "| `source_row_number` | int | Original row number in contributor's spreadsheet |",
         "| `language` | string (ISO 639-2/3) | Language code, per project metadata spec |",
         "| `community` | string | Community token (e.g. `tamil_india`) |",
+        "| `run_batch` | string | Submission batch this community entered or was last changed in (`v0`, `v1`, ...). Internal; dropped from the HuggingFace release. |",
         "| `topic` | string | Topic name as submitted |",
         "| `is_wildcard` | bool | True if topic is community-specific, not one of the 8 standard topics |",
         "| `riddle_original` | string | Riddle text in source language |",
@@ -371,11 +429,12 @@ def write_readme(counts: dict[str, int], total: int, created_at: str) -> None:
         "",
         "## Coverage",
         "",
-        "| Community | Riddles |",
-        "|---|---|",
+        "| Community | Batch | Riddles |",
+        "|---|---|---|",
     ]
-    for community, count in sorted(counts.items()):
-        lines.append(f"| `{community}` | {count} |")
+    for community in sorted(community_data):
+        data = community_data[community]
+        lines.append(f"| `{community}` | {data['run_batch']} | {data['count']} |")
 
     lines += [
         "",
@@ -418,11 +477,35 @@ def write_readme(counts: dict[str, int], total: int, created_at: str) -> None:
         "",
         "```bash",
         "cd data_loading",
-        "uv run python validate_submissions.py --no-download   # produce passed_jsonl/",
-        "uv run python build_pilot_dataset.py                  # consolidate",
+        "# validate each batch into its own reports directory",
+        "uv run python validate_submissions.py --run-batch v0 --no-download",
+        "uv run python validate_submissions.py --run-batch v1 --no-download",
+        "# combine all batches into the dataset + registry",
+        "uv run python build_pilot_dataset.py",
+        "# or build a single batch:",
+        "uv run python build_pilot_dataset.py --batches v1",
         "```",
         "",
         "## Versioning",
+        "",
+        "Two independent version axes. Do not conflate them.",
+        "",
+        "### Run batches",
+        "",
+        "Communities are grouped into run batches: `v0` is the original",
+        "collection, `v1` the next round, and so on. Every riddle carries a",
+        "`run_batch` tag, and the build also writes `submission_registry.yaml`,",
+        "a per-community manifest of language, run_batch, and riddle count.",
+        "",
+        "The registry is the source of truth for delta evaluation runs. Model",
+        "runs are self-funded, so teams should not re-pay to evaluate communities",
+        "they already ran. The evaluation tooling reads the registry to target a",
+        "batch: run `v1` alone to cover only the new and corrected communities,",
+        "or run all batches when bringing a new model online. A community that is",
+        "corrected and re-submitted in a later batch is bumped to that batch, so",
+        "a delta run correctly re-runs it.",
+        "",
+        "### Schema versions",
         "",
         "- **v1** (this version): includes `raw_template_fields` for forward",
         "  compatibility. Analysis team consumes canonical fields; data preserved",
@@ -435,5 +518,70 @@ def write_readme(counts: dict[str, int], total: int, created_at: str) -> None:
     README_FILE.write_text("\n".join(lines), encoding="utf-8")
 
 
+def write_registry(
+    community_data: dict[str, dict],
+    batches: list[str],
+    created_at: str,
+    output_dir: Path,
+    total_riddles: int,
+) -> Path:
+    """Write the submission registry YAML: the source of truth for delta runs.
+
+    One entry per community with its language code, run batch, and riddle
+    count. The eval CLI reads this to resolve which communities belong to a
+    given batch, so a v1-only run can skip the v0 communities that were
+    already evaluated. Regenerated on every build; do not hand-edit.
+    """
+    registry_path = output_dir / "submission_registry.yaml"
+    lines = [
+        "# Auto-generated by build_pilot_dataset.py. Do not edit by hand.",
+        "# Source of truth for run-batch delta runs: the eval CLI reads this to",
+        "# decide which communities to run for a given batch. Rerun the build to",
+        "# regenerate.",
+        "metadata:",
+        f"  generated: {created_at}",
+        f"  batches: [{', '.join(batches)}]",
+        f"  total_communities: {len(community_data)}",
+        f"  total_riddles: {total_riddles}",
+        "communities:",
+    ]
+    for community in sorted(community_data):
+        data = community_data[community]
+        lines.append(f"  {community}:")
+        lines.append(f"    language: {data['language']}")
+        lines.append(f"    run_batch: {data['run_batch']}")
+        lines.append(f"    riddles: {data['count']}")
+    registry_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return registry_path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Build the combined pilot dataset from one or more run batches. "
+            "Batches are read in order; a later batch overrides an earlier one "
+            "for the same community."
+        )
+    )
+    parser.add_argument(
+        "--batches",
+        nargs="+",
+        choices=list(RUN_BATCH_DIRS),
+        default=DEFAULT_BATCH_ORDER,
+        help=(
+            "Run batches to include, in precedence order (later wins). "
+            f"Default: {' '.join(DEFAULT_BATCH_ORDER)}."
+        ),
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=OUTPUT_DIR,
+        help="Directory for the built dataset (default: pilot_dataset/).",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.batches, args.output_dir)
