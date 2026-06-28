@@ -74,8 +74,18 @@ class AnthropicAdapter(Model):
                 }
             #    kwargs["temperature"] = 1
                 kwargs.pop("temperature", None)
-            #elif temperature is not None:
-            #    kwargs["temperature"] = temperature
+            # UPDATE: added to call web search tool
+            elif search_enabled:
+                kwargs["tools"] = [
+                    {
+                        "type": "web_search_20260209",
+                        "name": "web_search",
+                    }
+                ]
+                if temperature is not None:
+                    kwargs["temperature"] = temperature
+            elif temperature is not None:
+                kwargs["temperature"] = temperature
             # Merge arbitrary user-supplied model params LAST.
             if model_params:
                 kwargs.update(model_params)
@@ -109,6 +119,7 @@ class AnthropicAdapter(Model):
                     "stop_reason": getattr(resp, "stop_reason", None),
                     "thinking_enabled": bool(reasoning_mode),
                     "thinking_budget_tokens": budget_tokens if reasoning_mode else None,
+                    "search_enabled": bool(search_enabled),
                 },
             )
         except Exception as exc:
