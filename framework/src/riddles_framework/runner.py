@@ -226,6 +226,7 @@ class BenchmarkRunner:
                 cache_namespace=self.run_config.cache_namespace,
                 instance_language=instance.language,
                 instance_community=instance.community,
+                instance_run_batch=instance.run_batch,
                 instance_topic=instance.topic,
                 reference_answer_original=instance.reference_answer_original,
                 reference_answer_english=instance.reference_answer_english,
@@ -267,6 +268,7 @@ class BenchmarkRunner:
             cache_namespace=self.run_config.cache_namespace,
             instance_language=instance.language,
             instance_community=instance.community,
+            instance_run_batch=instance.run_batch,
             instance_topic=instance.topic,
             reference_answer_original=instance.reference_answer_original,
             reference_answer_english=instance.reference_answer_english,
@@ -280,7 +282,10 @@ class BenchmarkRunner:
         run_dir = self.output_root / run_id
         writer = RunWriter(run_dir)
 
-        instances = load_benchmark_instances(self.run_config.dataset_path)
+        instances = load_benchmark_instances(
+            self.run_config.dataset_path,
+            run_batches=self.run_config.run_batches,
+        )
 
         metadata = RunMetadata(
             run_id=run_id,
@@ -295,6 +300,7 @@ class BenchmarkRunner:
             access_pattern=self.model.access_pattern,
             dataset_version=self.run_config.dataset_version,
             total_instances=len(instances),
+            run_batches=self.run_config.run_batches,
             batch_mode_requested=self.run_config.batch_mode,
             batch_mode_used=False,
             cache_enabled=self.run_config.cache_enabled,
@@ -428,6 +434,7 @@ class BenchmarkRunner:
                 "status": "completed",
                 "model_name": self.model.model_name,
                 "model_id": self.model.model_id,
+                "run_batches": metadata.run_batches,
                 "total_instances": metadata.total_instances,
                 "completed_instances": metadata.completed_instances,
                 "skipped_instances": metadata.skipped_instances,

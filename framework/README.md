@@ -168,6 +168,26 @@ uv run python -m riddles_framework.cli --config configs/openai_gpt55_high.yaml
 
 For non-engineer contributors, see `docs/getting-started.md` for a plain-language walkthrough and `docs/code-reference.md` for the file-by-file technical reference.
 
+### Running a single batch
+
+The pilot dataset is tagged by submission batch (`run_batch`: `v0`, `v1`, ...).
+To evaluate only the communities from one batch, pass `--run-batch`:
+
+```bash
+# only the v1 communities (e.g. a model already run on v0)
+uv run python -m riddles_framework.cli --config <cfg> --run-batch v1
+
+# the full set (e.g. a new model) — omit the flag
+uv run python -m riddles_framework.cli --config <cfg>
+```
+
+This complements the cache rather than replacing it. A warm cache already
+avoids re-paying for prompts a model has seen; `--run-batch` additionally
+skips processing the other batches entirely, which is faster and writes a
+`results.jsonl` scoped to just those communities. It can also be set in the
+config as `run_batches: [v1]`; the CLI flag overrides it. The selected batches
+are recorded in each run's `run_metadata.json` and `manifest.json`.
+
 ### Getting results faster and cheaper
 
 The runner sends requests serially. Three faster paths (all share one cache, so
