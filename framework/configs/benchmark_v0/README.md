@@ -10,11 +10,11 @@ Runs four models over
 | `gemini_pro.yaml` | Gemini Pro | google / direct_api | `GEMINI_API_KEY` |
 | `cohere_tiny_aya.yaml` | Cohere Tiny-Aya (`tiny-aya-global`) | cohere / direct_api | `COHERE_API_KEY` |
 | `gemma4_openrouter.yaml` | Gemma 4 (open weights) | openrouter / openrouter | `OPENROUTER_API_KEY` |
-| `qwen3.5_vllm.yaml` | Qwen 3.5 (vLLM) | `OPENAI_API_KEY` (Placeholder) |
+| `qwen3.5_vllm.yaml` | Qwen 3.5 (vLLM) | vllm / direct_api |`OPENAI_API_KEY` (Placeholder) |
 
 
 These are **example configs** — treat them as templates: edit the model
-ids/keys, change the condition, or add your own config for any model. All four
+ids/keys, change the condition, or add your own config for any model. All five
 share the same run condition for comparability: prompt `riddle_master` v1,
 English prompt, source-language riddle, no hint, `max_output_tokens: 4096`. JSON
 output is prompt-driven (the `riddle_master` prompt asks for a JSON object), so
