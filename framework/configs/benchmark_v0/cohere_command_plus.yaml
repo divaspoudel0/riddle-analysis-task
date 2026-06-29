@@ -22,11 +22,11 @@ model_params: {}
 
 cache_enabled: true
 cache_backend: cachesaver
-cache_namespace: multicultural_riddles/pilot_dataset_v1/tiny_aya_global/source_no_hint/master_v1
+cache_namespace: multicultural_riddles/pilot_dataset_v1/command-a-plus/source_no_hint/master_v1
 cache_dir: .cache/cachesaver
 
 api_key_env_var: COHERE_API_KEY
-base_url: https://api.cohere.com/v2/chat
+base_url: null
 
 runner_version: v1.0.0
 notes: Cohere Command A Plus (version 05-2026) via Cohere API
