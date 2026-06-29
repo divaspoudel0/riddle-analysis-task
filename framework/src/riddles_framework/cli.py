@@ -17,7 +17,7 @@ from .models.gemini_adapter import GeminiAdapter
 from .models.openrouter_adapter import OpenRouterAdapter
 from .models.together_adapter import TogetherAdapter
 from .models.transformers_local_adapter import LocalTransformersAdapter
-
+from .models.vllm_adapter import VLLMAdapter
 
 def register_builtin_adapters() -> None:
     # Ignore duplicate registration on repeated CLI usage in same process.
@@ -32,6 +32,7 @@ def register_builtin_adapters() -> None:
         ("openrouter:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),
         ("together:together", lambda spec, cfg: TogetherAdapter(spec, cfg)),
         ("local:local", lambda spec, cfg: LocalTransformersAdapter(spec, cfg)),
+        ("vllm:direct_api", lambda spec, cfg: VLLMAdapter(spec, cfg)),
     ]:
         try:
             register_model_adapter(key, factory)

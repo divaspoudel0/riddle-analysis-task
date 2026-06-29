@@ -244,6 +244,7 @@ Instead of hardcoding "use OpenAI adapter for OpenAI," the framework keeps a reg
 "xai:openrouter"        → OpenRouterAdapter
 "openrouter:openrouter" → OpenRouterAdapter
 "local:local"           → LocalTransformersAdapter
+"vllm:vllm"             → VLLMAdapter
 ```
 
 When you say `provider: openai` and `access_pattern: direct_api`, it looks up the right adapter in the registry.
