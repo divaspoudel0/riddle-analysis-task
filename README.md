@@ -14,6 +14,7 @@ results.**
 | [`data_loading/`](data_loading/) | Validate contributor submissions and build the pilot dataset(s) | [readme](data_loading/pilot_dataset/README.md) |
 | [`framework/`](framework/) | Run models over a dataset and write per-riddle results | [readme](framework/README.md) |
 | [`evals/`](evals/) | Score a run's results — deterministic heuristic + LLM-as-a-judge | [readme](evals/README.md) |
+| [`analysis/`](analysis/) | Analysis MultiCulture Riddles and Run Results— generates data and figures for publications | [readme](analysis/README.md) |
 
 ## The data
 
