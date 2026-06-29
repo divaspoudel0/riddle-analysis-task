@@ -9,8 +9,8 @@ Run batches: v0, v1
 > dataset *schema* version; it becomes v2 when `raw_template_fields` is
 > dropped. The `v1` in the `run_batch` field is a *collection round*, the
 > second wave of communities. These are separate axes. To evaluate only the
-> newly added communities, select by `run_batch` (via the registry), not by
-> the filename. See Versioning below.
+> newly added communities, select by `run_batch` (the eval CLI's
+> `--run-batch` flag), not by the filename. See Versioning below.
 
 ## Purpose
 
@@ -163,13 +163,14 @@ collection, `v1` the next round, and so on. Every riddle carries a
 `run_batch` tag, and the build also writes `submission_registry.yaml`,
 a per-community manifest of language, run_batch, and riddle count.
 
-The registry is the source of truth for delta evaluation runs. Model
-runs are self-funded, so teams should not re-pay to evaluate communities
-they already ran. The evaluation tooling reads the registry to target a
-batch: run `v1` alone to cover only the new and corrected communities,
-or run all batches when bringing a new model online. A community that is
+The registry is the human-readable manifest of which community is in
+which batch. Model runs are self-funded, so teams should not re-pay to
+evaluate communities they already ran. Each riddle carries its
+`run_batch`, and the eval CLI filters on it: pass `--run-batch v1` to
+cover only the new and corrected communities, or omit the flag to run
+all batches when bringing a new model online. A community that is
 corrected and re-submitted in a later batch is bumped to that batch, so
-a delta run correctly re-runs it.
+a `--run-batch v1` run correctly re-runs it.
 
 ### Schema versions
 
