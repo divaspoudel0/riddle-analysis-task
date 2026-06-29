@@ -108,6 +108,9 @@ def make_openrouter_client(use_cache: bool, **kwargs):
     kwargs = _apply_common_cache_kwargs(kwargs)
     try:
         if use_cache:
+            # CacheSaver's sync OpenRouter wrapper hardcodes batch_size=1 and
+            # forwards **client_kwargs to AsyncOpenAI, which rejects batch_size.
+            kwargs.pop("batch_size", None)
             from cachesaver.models.openrouter import OpenRouter
             return OpenRouter(**kwargs)
         else:
