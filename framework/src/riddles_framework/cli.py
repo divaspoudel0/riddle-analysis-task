@@ -44,11 +44,28 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Multicultural Riddles Benchmark Framework")
     parser.add_argument("--config", required=True, help="Path to YAML run config")
     parser.add_argument("--output-root", default="runs", help="Output directory for runs")
+    parser.add_argument(
+        "--run-batch",
+        dest="run_batches",
+        nargs="+",
+        default=None,
+        metavar="BATCH",
+        help=(
+            "Run only these submission batches, e.g. --run-batch v1, or "
+            "--run-batch v0 v1. Overrides run_batches in the config. "
+            "Default: run all batches in the dataset."
+        ),
+    )
     args = parser.parse_args()
 
     register_builtin_adapters()
 
     run_config = load_run_config_from_yaml(args.config)
+    if args.run_batches is not None:
+        run_config.run_batches = args.run_batches
+    if run_config.run_batches is not None:
+        print(f"Run-batch filter: {run_config.run_batches}")
+
     prompt_template = load_prompt_template(
         run_config.prompt_template_id,
         run_config.prompt_template_version,

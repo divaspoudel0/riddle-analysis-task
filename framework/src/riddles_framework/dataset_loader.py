@@ -7,7 +7,10 @@ from .exceptions import DatasetValidationError
 from .schemas import BenchmarkInstance
 
 
-def load_benchmark_instances(jsonl_path: str | Path) -> list[BenchmarkInstance]:
+def load_benchmark_instances(
+    jsonl_path: str | Path,
+    run_batches: list[str] | None = None,
+) -> list[BenchmarkInstance]:
     path = Path(jsonl_path)
     if not path.exists():
         raise DatasetValidationError(f"Dataset file not found: {path}")
@@ -33,6 +36,24 @@ def load_benchmark_instances(jsonl_path: str | Path) -> list[BenchmarkInstance]:
                 raise DatasetValidationError(f"Duplicate riddle_id: {inst.riddle_id}")
             seen_ids.add(inst.riddle_id)
             instances.append(inst)
+
+    if run_batches is not None:
+        wanted = set(run_batches)
+        tagged = [i for i in instances if i.run_batch is not None]
+        if not tagged:
+            raise DatasetValidationError(
+                f"run_batches filter {sorted(wanted)} requested, but no rows in "
+                f"{path} carry a run_batch tag. This dataset predates run-batch "
+                "tagging; rebuild it with the current build_pilot_dataset.py."
+            )
+        filtered = [i for i in instances if i.run_batch in wanted]
+        if not filtered:
+            available = sorted({i.run_batch for i in tagged if i.run_batch})
+            raise DatasetValidationError(
+                f"No instances matched run_batches {sorted(wanted)}. "
+                f"Available batches in {path.name}: {available}."
+            )
+        instances = filtered
 
     instances.sort(
         key=lambda x: (

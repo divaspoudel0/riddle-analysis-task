@@ -64,6 +64,13 @@ def load_run_config_from_yaml(path: str) -> RunConfig:
         if not isinstance(model_params, dict):
             raise ConfigError("model_params must be a mapping if provided")
 
+        run_batches = data.get("run_batches")
+        if run_batches is not None:
+            if not isinstance(run_batches, list) or not all(
+                isinstance(b, str) for b in run_batches
+            ):
+                raise ConfigError("run_batches must be a list of strings if provided")
+
         return RunConfig(
             model_spec=spec,
             runner_name=data["runner_name"],
@@ -79,6 +86,7 @@ def load_run_config_from_yaml(path: str) -> RunConfig:
             response_format=ResponseFormat(data.get("response_format", "free_form")),
             batch_mode=bool(data.get("batch_mode", False)),
             batch_size=_opt_positive_int(data.get("batch_size"), key="batch_size"),
+            run_batches=run_batches,
             # Temperature: only set if the user wrote it; else rely on model default.
             temperature=_opt_float(data.get("temperature")),
             max_output_tokens=int(data.get("max_output_tokens", 256)),
