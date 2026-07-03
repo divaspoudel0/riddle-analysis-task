@@ -22,16 +22,20 @@ first, always.**
 ## Steps
 
 1. Build the pilot dataset (skip if already current):
+
    ```
    cd data_loading
    uv run python build_pilot_dataset.py
    ```
+
    Expect 49 communities, 4900 riddles. These grow with new releases.
 
 2. Export to HuggingFace format:
+
    ```
    uv run python export_huggingface.py
    ```
+
    Produces `hf_export/data/test-00000-of-00001.parquet` and `hf_export/README.md`.
    Expect 49 communities, 43 languages, release_version v0:4400 v1:500.
 
@@ -41,6 +45,7 @@ first, always.**
    "Credits to confirm" below.
 
 4. Push privately (creates the repo as private if it does not exist):
+
    ```
    export HF_TOKEN=...        # your write token, this shell only
    uv run python push_huggingface.py
@@ -84,22 +89,11 @@ fields.
 - JSON nulls become pandas NaN; the export turns them into real nulls, never the
   literal string "nan".
 
-## Credits to confirm before public release
-
-- `konkani_india`: confirm names with prerana rane (one cell joined two names
-  with no separator).
-- `spanish_cuba`: "Popular Proverbs" is a source, not a person; decide keep or
-  drop with the Cuban contributors.
-- `tamil_india`: shows "Vinod"; use full name if wanted.
-
-Fix these in the source sheets, then rebuild and re-export so data and card
-always agree.
-
 ## Who can run this
 
 Operator needs repo write access and HF org access. Natural backups: Chiffon
 Nguyen (schema and analysis), Tenney Hu (benchmarking and runs). Madeline Smith
-holds HF org access and can grant it to a successor.
+holds HF org access and can grant it.
 
 ## Repo
 
