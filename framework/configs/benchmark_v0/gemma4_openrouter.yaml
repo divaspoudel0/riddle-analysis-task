@@ -1,6 +1,6 @@
 runner_name: benchmark_v0
 
-dataset_path: ../data_loading/v0_dataset/pilot_dataset_v1.jsonl
+dataset_path: ../data_loading/pilot_dataset/pilot_dataset_v1.jsonl
 dataset_version: pilot_dataset_v1
 
 prompt_template_id: riddle_master
