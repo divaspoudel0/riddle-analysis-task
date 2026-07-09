@@ -135,7 +135,7 @@ Find your assigned task ID in the
    you **complete** your assigned task.
 2. **Name your files `ID_model-name`** — `ID` must match the one listed for you
    in the sheet (e.g. `07_gpt-5.5`).
-3. **Upload `results.jsonl`** — from `framework/runs/<run_id>/results.jsonl`.
+3. **Upload `results.jsonl`** and **`run_config.json`** in a folder — from `framework/runs/<run_id>/`.
 4. **Upload the cache too** (encouraged — CacheSaver makes runs reproducible):
    compress the cache folder and upload it:
    ```bash
