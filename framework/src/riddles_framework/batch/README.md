@@ -8,12 +8,12 @@ interchangeable with a normal `cache_enabled` run.
 
 | You want… | Providers | How |
 | --- | --- | --- |
-| **Concurrency inside a normal run** | Cohere, OpenRouter (OpenAI-compatible) | set `batch_mode: true` + `batch_size: N` in the config |
-| **Pre-fill the cache concurrently**, then run | Cohere, OpenRouter, Together | `python -m riddles_framework.batch.fill --workers N` |
+| **Concurrency inside a normal run** | Cohere, vLLM and OpenRouter (OpenAI-compatible) | set `batch_mode: true` + `batch_size: N` in the config |
+| **Pre-fill the cache concurrently**, then run | Cohere, vLLM, OpenRouter, Together | `python -m riddles_framework.batch.fill --workers N` |
 | **Offline Batch API (~50% cheaper)** | OpenAI, Anthropic, Gemini | `python -m riddles_framework.batch.fill --backend batch` |
 
 Concurrency gives an **N× speedup** bounded by the provider's rate limit. The
-Batch APIs are offline (minutes–hours) but cheaper and high-throughput. Cohere
+Batch APIs are offline (minutes–hours) but cheaper and high-throughput. Cohere, vLLM
 and OpenRouter have **no chat Batch API**, so concurrency is their fast path.
 
 ## How it works (shared foundation)

@@ -27,7 +27,7 @@ from ..schemas import PromptConfig
 from ..yaml_config import load_run_config_from_yaml
 
 # Providers reached over an OpenAI-compatible chat endpoint (use threadpool).
-OPENAI_COMPATIBLE = {"cohere", "openrouter", "qwen", "xai", "together", "openai"}
+OPENAI_COMPATIBLE = {"cohere", "openrouter", "qwen", "xai", "together", "openai", "vllm"}
 # Providers with a native Batch API and a distinct cache entry format.
 BATCH_PROVIDERS = {"openai", "google", "anthropic"}
 
@@ -159,6 +159,13 @@ def main(argv=None) -> int:
         out = run_gemini_batch(
             prompts=prompts, model=model, cache_dir=cache_dir, api_key=api_key,
             poll_seconds=args.poll,
+        )
+    elif provider == "vllm":
+        from .vllm_batch import run_vllm_batch
+        out = run_vllm_batch(
+            prompts=prompts, model=model, cache_dir=cache_dir, api_key=api_key,
+            base_url=rc.base_url, max_output_tokens=rc.max_output_tokens,
+            response_format=rf, extra_body=_openai_extra_body(rc),
         )
     else:
         p.error(f"no Batch API backend for provider {provider!r}")
