@@ -33,8 +33,8 @@ Each line is one riddle (source + English text, reference answers, topic,
 community, run batch, optional hint). See the
 [dataset README](data_loading/pilot_dataset/README.md) for the full schema.
 
-> To evaluate only the communities added in a later round, pass `--run-batch v1`
-> to the framework CLI; omit it to run the full set.
+> To evaluate only the communities added in a later round, pass `--run-batch v1` 
+> to both the framework CLI and `riddles_framework.batch.fill`; omit it to run the full set.
 > See [`framework/README.md`](framework/README.md).
 
 ---
