@@ -54,6 +54,9 @@ ROW_COLUMNS = [
 
 _FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 _ANSWER_RE = re.compile(r'"riddle_answer"\s*:\s*"((?:[^"\\]|\\.)*)"')
+# Amazon Nova Micro emits pseudo-JSON with single-quoted values:
+#   { "riddle_answer": 'القاهرة', "reasoning": '...' }
+_ANSWER_SQ_RE = re.compile(r'"riddle_answer"\s*:\s*\'(.*?)\'\s*,')
 
 
 def extract_answer(raw_response: object) -> tuple[str | None, str]:
@@ -83,6 +86,10 @@ def extract_answer(raw_response: object) -> tuple[str | None, str]:
         except (json.JSONDecodeError, ValueError):
             ans = m.group(1).strip()
         return (ans or None), "regex"
+    m = _ANSWER_SQ_RE.search(cleaned)
+    if m:
+        ans = m.group(1).strip()
+        return (ans or None), "regex_single_quote"
     return None, "unparsed"
 
 
