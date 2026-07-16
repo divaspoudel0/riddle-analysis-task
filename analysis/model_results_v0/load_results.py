@@ -222,8 +222,24 @@ def main() -> None:
     evals_dir = Path(__file__).resolve().parents[2] / "evals" / "outputs"
     if evals_dir.is_dir():
         judge = load_judge_outputs(evals_dir)
+        # A judge output folder is named after ONE run_id, but resumed runs
+        # carry multiple run_ids in a single results file. Map judge folders
+        # to source folders via run_id, then join on (source_folder,
+        # riddle_id), which is unique per folder.
+        run_to_folder = (
+            df[["run_id", "source_folder"]]
+            .drop_duplicates()
+            .set_index("run_id")["source_folder"]
+        )
+        judge["source_folder"] = judge["run_id"].map(run_to_folder)
+        unmapped = judge["source_folder"].isna()
+        if unmapped.any():
+            skipped = judge.loc[unmapped, "run_id"].nunique()
+            judge = judge[~unmapped]
+            print(f"  (ignored {skipped} judge folders not matching any loaded run)")
+        judge = judge.drop(columns=["run_id"])
         before = len(df)
-        df = df.merge(judge, on=["run_id", "riddle_id"], how="left")
+        df = df.merge(judge, on=["source_folder", "riddle_id"], how="left")
         assert len(df) == before, "judge merge changed row count, join key not unique"
         missing = df["judge_score"].isna().sum()
         print(f"\nJudge outputs merged from {evals_dir}")

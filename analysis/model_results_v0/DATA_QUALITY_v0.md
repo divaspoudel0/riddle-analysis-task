@@ -21,7 +21,7 @@ unparsed = response present but no answer extractable (mostly reasoning that nev
 | Gemini 2.5 Flash Lite | 4400 | 0 | 4 | 2 | 1129 | 3 |
 | Gemma 4 31B IT | 4400 | 0 | 1 | 0 | 1275 | 19 |
 | Mistral Large 3 | 4400 | 0 | 0 | 0 | 1308 | 0 |
-| OLMo-3-32B-Think | 4400 | 0 | 407 | 393 | 246 | 56 |
+| OLMo-3-32B-Think | 4400 | 0 | 407 | 393 | 407 | 102 |
 | Qwen-SEA-LION-v4.5-27B-IT | 4400 | 45 | 447 | 445 | 1100 | 17 |
 | Qwen/Qwen3.5-0.8B | 4400 | 0 | 8 | 0 | 14 | 6 |
 | Qwen3.5 27B | 4400 | 0 | 1 | 1 | 892 | 34 |
@@ -30,7 +30,7 @@ unparsed = response present but no answer extractable (mostly reasoning that nev
 | Tiny-Aya global | 4400 | 0 | 6 | 6 | 226 | 0 |
 | Tiny-Aya water | 4400 | 0 | 18 | 18 | 204 | 0 |
 | claude-opus-4-7 [none] | 4400 | 83 | 0 | 0 | 2006 | 13 |
-| claude-opus-4-7 [thinking] | 4400 | 94 | 0 | 0 | 160 | 29 |
+| claude-opus-4-7 [thinking] | 4400 | 94 | 0 | 0 | 2211 | 148 |
 | deepseek-v4-pro | 4400 | 1 | 3 | 3 | 1981 | 60 |
 | deepseek-v4-pro-thinking | 4400 | 69 | 4 | 2 | 2169 | 30 |
 | gemini-3.1-pro-preview | 4400 | 0 | 90 | 90 | 2783 | 76 |
