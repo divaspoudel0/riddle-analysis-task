@@ -36,6 +36,8 @@ EXCLUDED_FOLDERS: dict[str, str] = {
 
 # Columns copied through from each results.jsonl row.
 ROW_COLUMNS = [
+    "instance_id",
+    "run_id",
     "riddle_id",
     "condition_id",
     "riddle_language_presented",
@@ -49,6 +51,8 @@ ROW_COLUMNS = [
     "model_id",
     "reasoning_mode",
     "generation_status",
+    "input_tokens",
+    "output_tokens",
     "raw_response",
 ]
 
@@ -164,6 +168,45 @@ def build_frame(runs_dir: Path) -> pd.DataFrame:
     return full
 
 
+def load_judge_outputs(evals_outputs_dir: Path) -> pd.DataFrame:
+    """Load heuristic judge outputs from evals/outputs/<run_id>/ folders.
+
+    The judge writes one folder per run_id; rows key on riddle_id, which is
+    unique within a run (one condition in v0). Join key: (run_id, riddle_id).
+    """
+    frames = []
+    for folder in sorted(p for p in evals_outputs_dir.iterdir() if p.is_dir()):
+        match_path = folder / "heuristic_match.jsonl"
+        if not match_path.exists():
+            continue
+        rows = []
+        with open(match_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                r = json.loads(line)
+                rows.append(
+                    {
+                        "run_id": folder.name,
+                        "riddle_id": r.get("riddle_id"),
+                        "judge_candidate": r.get("candidate"),
+                        "judge_parse_status": r.get("parse_status"),
+                        "judge_match": r.get("match"),
+                        "judge_match_type": r.get("match_type"),
+                        "judge_score": r.get("score"),
+                        "judge_verdict": r.get("verdict"),
+                    }
+                )
+        frames.append(pd.DataFrame(rows))
+    if not frames:
+        return pd.DataFrame(
+            columns=["run_id", "riddle_id", "judge_candidate", "judge_parse_status",
+                     "judge_match", "judge_match_type", "judge_score", "judge_verdict"]
+        )
+    return pd.concat(frames, ignore_index=True)
+
+
 def main() -> None:
     runs_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("data/responses_v0")
     out_path = (
@@ -176,6 +219,18 @@ def main() -> None:
     print(f"Loading runs from {runs_dir}")
     df = build_frame(runs_dir)
 
+    evals_dir = Path(__file__).resolve().parents[2] / "evals" / "outputs"
+    if evals_dir.is_dir():
+        judge = load_judge_outputs(evals_dir)
+        before = len(df)
+        df = df.merge(judge, on=["run_id", "riddle_id"], how="left")
+        assert len(df) == before, "judge merge changed row count, join key not unique"
+        missing = df["judge_score"].isna().sum()
+        print(f"\nJudge outputs merged from {evals_dir}")
+        print(f"  rows without judge score: {missing}")
+    else:
+        print(f"\nNo judge outputs at {evals_dir}, skipping merge")
+
     print("\nSummary")
     print(f"  rows: {len(df)}")
     print(f"  models: {df['model_display'].nunique()}")
@@ -183,6 +238,9 @@ def main() -> None:
     print(f"  conditions: {df['condition_id'].nunique()}")
     print("\nParse status counts:")
     print(df["answer_parse_status"].value_counts().to_string())
+    if "judge_verdict" in df.columns:
+        print("\nJudge verdict counts:")
+        print(df["judge_verdict"].value_counts(dropna=False).to_string())
     print("\nRows per model:")
     print(df["model_display"].value_counts().to_string())
 
