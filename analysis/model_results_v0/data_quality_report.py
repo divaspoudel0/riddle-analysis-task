@@ -92,6 +92,10 @@ def build_report(df: pd.DataFrame, version: str) -> str:
         "- v0: Qwen-SEA-LION and OLMo-3-32B-Think spill reasoning and "
         "truncate before answering on a subset of rows; treated as genuine "
         "no-answers.",
+        "- v0: judge abstention detection (NO_ANSWER_PHRASES_RAW) covers ~6 of "
+        "30+ benchmark languages; honest-uncertainty rates are lower bounds. "
+        "Raised with Abdellah 19 Jul 2026; rerun scoring once the phrase list "
+        "is extended.",
         "",
     ]
     return "\n".join(lines)

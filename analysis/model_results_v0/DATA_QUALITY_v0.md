@@ -1,6 +1,6 @@
 # Data quality report: v0 model runs
 
-Generated 2026-07-16 by data_quality_report.py. Do not edit by hand; rerun the script.
+Generated 2026-07-19 by data_quality_report.py. Do not edit by hand; rerun the script.
 
 Rows: 105600, models: 24, communities: 44, conditions: 1
 
@@ -49,3 +49,4 @@ Threshold: models with more than 5% of rows empty or unparsed.
 - v0: Command A+ July 13 rerun fixed earlier empty responses (404s) but 1,122 of its 1,136 unparsed rows hit the 4,096 token budget mid-reasoning; kept as-is for v0, scored as format failures, flagged to leads 15 Jul 2026.
 - v0: Amazon Nova Micro emits pseudo-JSON with single-quoted values; handled in load_results.extract_answer.
 - v0: Qwen-SEA-LION and OLMo-3-32B-Think spill reasoning and truncate before answering on a subset of rows; treated as genuine no-answers.
+- v0: judge abstention detection (NO_ANSWER_PHRASES_RAW) covers ~6 of 30+ benchmark languages; honest-uncertainty rates are lower bounds. Raised with Abdellah 19 Jul 2026; rerun scoring once the phrase list is extended.
