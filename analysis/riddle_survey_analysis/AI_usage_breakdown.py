@@ -41,9 +41,9 @@ def ai_usage_breakdown():
         ax.text(bar.get_x()+ bar.get_width()/2, v+0.3, str(v), ha='center', fontsize=12, fontweight="bold")
 
     ax.annotate(
-            f"Testing ({test_c} is the\n most common AI use",
+            f"Testing ({test_c} is the\n most common AI use)",
             xy=(0,test_c), xytext=(1.25, test_c-5),
-            arrowprops= dict(arrowstyle="->", color=PALETTE["vermillion"]), color= PALETTE["vermillion"],fontsize=9
+            arrowprops= dict(arrowstyle="->", color=PALETTE["vermillion"]), color= PALETTE["black"],fontsize=9
         )
 
     save_figure(fig, FIGURES_DIR/"ai_usage")
