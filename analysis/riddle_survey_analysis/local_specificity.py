@@ -23,10 +23,10 @@ def calculate_local_specificity():
         "Many require specialized, older, or niche knowledge":"Niche/specialized"
 
     }
-    labels= short_label_map.values()
+    labels= [short_label_map.values()]
     counts= df["local_specificity"].dropna().value_counts()
-    vals= [counts.get(l,0) for l in short_label_map.keys()]
-    ordered= sorted(zip(short_label_map.values(),vals), key=lambda x: -x[1])
+    vals= [counts.get(l,0) for l in short_label_map]
+    ordered= sorted(zip(labels,vals), key=lambda x: -x[1])
 
     labs,vs= zip(*ordered)
 
