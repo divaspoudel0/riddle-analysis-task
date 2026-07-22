@@ -59,6 +59,7 @@ Writes `DATA_QUALITY_v0.md`. Per version: pass <parquet> <out.md> <version>.
     ../.venv/bin/python figures/leaderboard.py
     ../.venv/bin/python figures/heatmap_topic.py
     ../.venv/bin/python figures/heatmap_community.py
+    ../.venv/bin/python figures/heatmap_community_condensed.py
     ../.venv/bin/python figures/failure_modes.py
     ../.venv/bin/python figures/search_delta.py
 
