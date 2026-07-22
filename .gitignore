@@ -10,3 +10,6 @@ runs/*
 
 # Editor / IDE
 .vscode/
+.DS_Store
+evals/outputs/
+analysis/__pycache__/
