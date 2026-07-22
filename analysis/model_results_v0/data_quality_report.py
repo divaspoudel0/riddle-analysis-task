@@ -46,6 +46,7 @@ def build_report(df: pd.DataFrame, version: str) -> str:
     ]
 
     has_judge = "judge_verdict" in df.columns
+    has_category = "eval_category" in df.columns
     for model, g in df.groupby("model_display"):
         empty = (g.answer_parse_status == "empty").sum()
         unparsed = g.answer_parse_status == "unparsed"
@@ -54,8 +55,11 @@ def build_report(df: pd.DataFrame, version: str) -> str:
         ).sum()
         correct = (g.judge_verdict == "correct").sum() if has_judge else "-"
         unknown = (g.judge_verdict == "unknown").sum() if has_judge else "-"
+        label = model
+        if has_category and g.eval_category.iloc[0] == "search_enabled":
+            label = f"{model} (search-enabled, separate category)"
         lines.append(
-            f"| {model} | {len(g)} | {empty} | {unparsed.sum()} | "
+            f"| {label} | {len(g)} | {empty} | {unparsed.sum()} | "
             f"{truncated} | {correct} | {unknown} |"
         )
 
@@ -96,6 +100,26 @@ def build_report(df: pd.DataFrame, version: str) -> str:
         "30+ benchmark languages; honest-uncertainty rates are lower bounds. "
         "Raised with Abdellah 19 Jul 2026; rerun scoring once the phrase list "
         "is extended.",
+        "- v0: follow-up audit (22 Jul 2026) found zero non-English abstention "
+        "phrases in v0 responses. Models abstain in English even when riddles "
+        "are presented in other languages, so the language-coverage caveat "
+        "above is softer than first feared: English-only detection appears to "
+        "capture v0 abstentions in practice.",
+        "- v0: 639 answers are literal prompt-template echoes "
+        "(530 `<your_riddle_answer>`, 25 `<answer>`, 84 `...`), concentrated "
+        "in three runs: OLMo-3-32B-Think (519), Qwen-SEA-LION-v4.5-27B-IT "
+        "(88), Command A+ (32). 635 scored incorrect, 4 leaked through as "
+        "correct. These are format failures, not knowledge failures; because "
+        "they cluster in two or three runs they depress those models' "
+        "leaderboard rows specifically. Rerun judge + loader once Abdellah's "
+        "placeholder-handling PR lands (~630 rows reclassify).",
+        "- v0: GPT5.5-search (03_gpt-5.5-search, added 22 Jul 2026) ran with "
+        "web search enabled. It is a SEPARATE evaluation category "
+        "(eval_category=search_enabled in the tidy frame): open-web "
+        "retrieval is not comparable to closed-book recall, so figures mark "
+        "it with a distinct marker and a '(search)' label suffix. "
+        "Clean run (4,400/4,400 parsed JSON), 49.7% raw match, below both "
+        "closed-book GPT5.5 variants; flag to leads.",
         "",
     ]
     return "\n".join(lines)

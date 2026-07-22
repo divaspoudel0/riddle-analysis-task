@@ -20,7 +20,13 @@ _HERE = Path(__file__).resolve()
 sys.path.append(str(_HERE.parents[2]))  # analysis/
 sys.path.append(str(_HERE.parents[1]))  # analysis/model_results_v0/
 import style  # noqa: E402
-from metrics import add_derived_columns, model_summary  # noqa: E402
+from metrics import (  # noqa: E402
+    SEARCH_NOTE,
+    add_derived_columns,
+    label_with_search,
+    model_summary,
+    search_model_set,
+)
 
 # The dataset has 8 fixed topics every community wrote (10 riddles each),
 # plus 2 free-named wildcard slots per community. instance_topic holds
@@ -89,9 +95,11 @@ def make_topic_heatmap(df: pd.DataFrame):
     im = ax.imshow(acc.to_numpy(), cmap=style.SEQUENTIAL_CMAP, aspect="auto",
                    vmin=0, vmax=float(np.nanmax(acc.to_numpy())))
 
+    search_models = search_model_set(df)
+    ylabels = [label_with_search(m, search_models) for m in acc.index]
     ax.set_xticks(range(len(acc.columns)), acc.columns, rotation=35,
                   ha="right")
-    ax.set_yticks(range(len(acc.index)), acc.index)
+    ax.set_yticks(range(len(acc.index)), ylabels)
     ax.grid(visible=False)
 
     # annotate cells; flip text color on dark cells for readability
@@ -107,7 +115,12 @@ def make_topic_heatmap(df: pd.DataFrame):
     fig.colorbar(im, ax=ax, shrink=0.6,
                  label="Accuracy over completed responses (%)")
     ax.set_title("v0 accuracy by model and topic, automatic evaluation")
-    fig.tight_layout()
+    if search_models:
+        fig.text(0.01, 0.005, SEARCH_NOTE, fontsize=7,
+                 color=style.PALETTE["grey"])
+        fig.tight_layout(rect=(0, 0.03, 1, 1))
+    else:
+        fig.tight_layout()
     return fig
 
 

@@ -20,7 +20,13 @@ _HERE = Path(__file__).resolve()
 sys.path.append(str(_HERE.parents[2]))  # analysis/
 sys.path.append(str(_HERE.parents[1]))  # analysis/model_results_v0/
 import style  # noqa: E402
-from metrics import add_derived_columns, model_summary_with_ci  # noqa: E402
+from metrics import (  # noqa: E402
+    SEARCH_NOTE,
+    add_derived_columns,
+    label_with_search,
+    model_summary_with_ci,
+    search_model_set,
+)
 
 FULL_N = 4400  # complete run size (44 communities x 100 riddles)
 FLOOR_THRESHOLD = 0.05  # format-failure rate above which a score is a floor
@@ -36,10 +42,13 @@ def make_leaderboard(df: pd.DataFrame, n_boot: int = 2000):
         df = add_derived_columns(df)
 
     lb = model_summary_with_ci(df, n_boot=n_boot).iloc[::-1]  # worst at bottom
+    search_models = search_model_set(df)
 
     labels = []
     for model, n, ffr in zip(lb.index, lb.n_completed, lb.format_failure_rate):
-        label = model if n >= FULL_N else f"{model} (n={int(n):,})"
+        label = label_with_search(model, search_models)
+        if n < FULL_N:
+            label += f" (n={int(n):,})"
         if ffr >= FLOOR_THRESHOLD:
             label += " *"
         labels.append(label)
@@ -48,8 +57,16 @@ def make_leaderboard(df: pd.DataFrame, n_boot: int = 2000):
     y = list(range(len(lb)))
     ax.hlines(y, lb.ci_low * 100, lb.ci_high * 100,
               color=style.PALETTE["grey"], lw=1.5, zorder=1)
-    ax.plot(lb.accuracy * 100, y, "o", color=style.PALETTE["blue"],
+    is_search = lb.index.isin(search_models)
+    closed, srch = lb[~is_search], lb[is_search]
+    y_closed = [i for i, s in zip(y, is_search) if not s]
+    y_search = [i for i, s in zip(y, is_search) if s]
+    ax.plot(closed.accuracy * 100, y_closed, "o", color=style.PALETTE["blue"],
             markersize=6, zorder=2)
+    if len(srch):
+        ax.plot(srch.accuracy * 100, y_search, "D",
+                markerfacecolor="white", markeredgewidth=1.4,
+                color=style.PALETTE["vermillion"], markersize=6, zorder=2)
 
     ax.set_yticks(y, labels)
     ax.set_ylim(-0.5, len(lb) - 0.5)
@@ -58,13 +75,15 @@ def make_leaderboard(df: pd.DataFrame, n_boot: int = 2000):
     ax.grid(axis="x", alpha=0.3)
     ax.grid(axis="y", visible=False)
 
-    fig.text(
-        0.01, 0.005,
+    footnote = (
         "(n=...) = completed responses, shown where below 4,400.   "
-        "* = floor: >=5% of responses hit the token budget before answering.",
-        fontsize=7, color=style.PALETTE["grey"],
+        "* = floor: >=5% of responses hit the token budget before answering."
     )
-    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    if search_models:
+        footnote += "\n" + SEARCH_NOTE
+    fig.text(0.01, 0.005, footnote,
+             fontsize=7, color=style.PALETTE["grey"])
+    fig.tight_layout(rect=(0, 0.045 if search_models else 0.03, 1, 1))
     return fig
 
 

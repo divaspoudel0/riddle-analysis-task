@@ -25,7 +25,13 @@ _HERE = Path(__file__).resolve()
 sys.path.append(str(_HERE.parents[2]))  # analysis/
 sys.path.append(str(_HERE.parents[1]))  # analysis/model_results_v0/
 import style  # noqa: E402
-from metrics import add_derived_columns, model_summary  # noqa: E402
+from metrics import (  # noqa: E402
+    SEARCH_NOTE,
+    add_derived_columns,
+    label_with_search,
+    model_summary,
+    search_model_set,
+)
 
 OUTCOMES = ["correct", "honest_uncertainty", "format_failure", "incorrect"]
 OUTCOME_LABELS = {
@@ -66,6 +72,8 @@ def make_failure_modes(df: pd.DataFrame):
         df = add_derived_columns(df)
 
     shares = outcome_shares(df).iloc[::-1]  # best model on top
+    search_models = search_model_set(df)
+    shares.index = [label_with_search(m, search_models) for m in shares.index]
 
     fig, ax = plt.subplots(figsize=(7.5, 8))
     left = pd.Series(0.0, index=shares.index)
@@ -81,7 +89,12 @@ def make_failure_modes(df: pd.DataFrame):
     ax.set_title("v0 response outcomes by model, automatic evaluation")
     ax.grid(axis="y", visible=False)
     ax.legend(loc="lower right", framealpha=0.9, frameon=True, fontsize=7.5)
-    fig.tight_layout()
+    if search_models:
+        fig.text(0.01, 0.005, SEARCH_NOTE, fontsize=7,
+                 color=style.PALETTE["grey"])
+        fig.tight_layout(rect=(0, 0.03, 1, 1))
+    else:
+        fig.tight_layout()
     return fig
 
 

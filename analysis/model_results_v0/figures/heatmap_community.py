@@ -19,7 +19,13 @@ _HERE = Path(__file__).resolve()
 sys.path.append(str(_HERE.parents[2]))  # analysis/
 sys.path.append(str(_HERE.parents[1]))  # analysis/model_results_v0/
 import style  # noqa: E402
-from metrics import add_derived_columns, model_summary  # noqa: E402
+from metrics import (  # noqa: E402
+    SEARCH_NOTE,
+    add_derived_columns,
+    label_with_search,
+    model_summary,
+    search_model_set,
+)
 
 
 def make_community_heatmap(df: pd.DataFrame):
@@ -46,9 +52,11 @@ def make_community_heatmap(df: pd.DataFrame):
     im = ax.imshow(acc.to_numpy(), cmap=style.SEQUENTIAL_CMAP, aspect="auto",
                    vmin=0, vmax=float(np.nanmax(acc.to_numpy())))
 
+    search_models = search_model_set(df)
+    ylabels = [label_with_search(m, search_models) for m in acc.index]
     ax.set_xticks(range(len(acc.columns)), acc.columns, rotation=60,
                   ha="right", fontsize=6.5)
-    ax.set_yticks(range(len(acc.index)), acc.index, fontsize=7.5)
+    ax.set_yticks(range(len(acc.index)), ylabels, fontsize=7.5)
     ax.grid(visible=False)
 
     fig.colorbar(im, ax=ax, shrink=0.7, pad=0.01,
@@ -57,7 +65,12 @@ def make_community_heatmap(df: pd.DataFrame):
         "v0 accuracy by model and community, automatic evaluation "
         "(communities sorted by mean accuracy)"
     )
-    fig.tight_layout()
+    if search_models:
+        fig.text(0.01, 0.005, SEARCH_NOTE, fontsize=7,
+                 color=style.PALETTE["grey"])
+        fig.tight_layout(rect=(0, 0.03, 1, 1))
+    else:
+        fig.tight_layout()
     return fig
 
 

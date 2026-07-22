@@ -23,6 +23,30 @@ import pandas as pd
 
 RNG_SEED = 7
 
+# --- search-enabled runs: separate evaluation category ------------------- #
+# Runs with web search enabled (run_config.json: search_enabled) measure
+# open-web retrieval, not closed-book cultural recall, so figures mark them
+# and keep them out of closed-book comparisons.
+SEARCH_SUFFIX = " (search)"
+SEARCH_NOTE = (
+    "(search) = run with web search enabled: separate evaluation category, "
+    "not directly comparable to closed-book runs."
+)
+
+
+def search_model_set(df: pd.DataFrame) -> set[str]:
+    """Model display names whose run is search-enabled."""
+    if "eval_category" not in df.columns:
+        return set()
+    return set(
+        df.loc[df.eval_category == "search_enabled", "model_display"].unique()
+    )
+
+
+def label_with_search(model: str, search_models: set[str]) -> str:
+    """Append the search suffix to a model label when applicable."""
+    return model + SEARCH_SUFFIX if model in search_models else model
+
 
 def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Add is_completed / is_correct / is_abstention columns."""
@@ -51,6 +75,12 @@ def model_summary(df: pd.DataFrame) -> pd.DataFrame:
                 "coverage": g.is_completed.mean(),
                 "n_completed": len(completed),
                 "n_total": len(g),
+                # search-enabled runs are a separate evaluation category,
+                # not comparable to closed-book recall (see load_results)
+                "eval_category": (
+                    g["eval_category"].iloc[0]
+                    if "eval_category" in g.columns else "closed_book"
+                ),
             }
         )
 

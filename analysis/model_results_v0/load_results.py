@@ -109,6 +109,18 @@ def load_run_folder(folder: Path) -> pd.DataFrame | None:
         print(f"  SKIP {folder.name}: no results jsonl found")
         return None
 
+    # Search-enabled runs (e.g. GPT5.5 with web search) are a separate
+    # evaluation category: open-web retrieval is not comparable to
+    # closed-book recall. The flag lives in run_config.json.
+    search_enabled = False
+    config_path = find_file(folder, "*run_config*.json")
+    if config_path is not None:
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                search_enabled = bool(json.load(f).get("search_enabled", False))
+        except (json.JSONDecodeError, OSError):
+            pass
+
     rows = []
     with open(results_path, encoding="utf-8") as f:
         for line in f:
@@ -124,6 +136,7 @@ def load_run_folder(folder: Path) -> pd.DataFrame | None:
 
     df = pd.DataFrame(rows)
     df["source_folder"] = folder.name
+    df["eval_category"] = "search_enabled" if search_enabled else "closed_book"
     df = df.drop(columns=["raw_response"])
     return df
 
