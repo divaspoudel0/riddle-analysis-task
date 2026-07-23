@@ -120,6 +120,13 @@ def build_report(df: pd.DataFrame, version: str) -> str:
         "it with a distinct marker and a '(search)' label suffix. "
         "Clean run (4,400/4,400 parsed JSON), 49.7% raw match, below both "
         "closed-book GPT5.5 variants; flag to leads.",
+        "- v0: riddle spanish_cuba_history_016 is excluded from analysis "
+        "(EXCLUDED_RIDDLES in load_results). The v0 text was wrong; the "
+        "contributor corrected the source row and it is re-evaluated fresh "
+        "in v2. Every model's answers to it are answers to the wrong riddle, "
+        "so they are dropped from scoring. Denominators are 4,399 riddles "
+        "for Spanish (Cuba); the frozen run files are untouched. See "
+        "RIDDLE_CORRECTIONS.md (flagged 23 Jul 2026).",
         "",
     ]
     return "\n".join(lines)

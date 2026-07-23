@@ -28,7 +28,6 @@ from metrics import (  # noqa: E402
     search_model_set,
 )
 
-FULL_N = 4400  # complete run size (44 communities x 100 riddles)
 FLOOR_THRESHOLD = 0.05  # format-failure rate above which a score is a floor
 
 
@@ -43,11 +42,15 @@ def make_leaderboard(df: pd.DataFrame, n_boot: int = 2000):
 
     lb = model_summary_with_ci(df, n_boot=n_boot).iloc[::-1]  # worst at bottom
     search_models = search_model_set(df)
+    # Full run size = riddles attempted (auto-adjusts if any riddle is
+    # excluded, e.g. a corrected riddle), so full-coverage models are not
+    # falsely annotated with a reduced denominator.
+    full_n = int(lb.n_total.max())
 
     labels = []
     for model, n, ffr in zip(lb.index, lb.n_completed, lb.format_failure_rate):
         label = label_with_search(model, search_models)
-        if n < FULL_N:
+        if n < full_n:
             label += f" (n={int(n):,})"
         if ffr >= FLOOR_THRESHOLD:
             label += " *"
@@ -76,7 +79,7 @@ def make_leaderboard(df: pd.DataFrame, n_boot: int = 2000):
     ax.grid(axis="y", visible=False)
 
     footnote = (
-        "(n=...) = completed responses, shown where below 4,400.   "
+        f"(n=...) = completed responses, shown where below {full_n:,}.   "
         "* = floor: >=5% of responses hit the token budget before answering."
     )
     if search_models:

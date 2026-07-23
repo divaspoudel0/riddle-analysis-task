@@ -34,6 +34,18 @@ EXCLUDED_FOLDERS: dict[str, str] = {
     "28_param-1-2.9B": "removed from benchmarking (config says smoke_test)",
 }
 
+# Individual riddles excluded from analysis, with reasons. The riddle stays
+# in every run folder (models did answer it); we skip it in scoring because
+# the shipped v0 text was later found to be wrong, so those answers are
+# answers to the wrong riddle. The corrected riddle is re-evaluated fresh in
+# a later dataset version, not backfilled into v0. See RIDDLE_CORRECTIONS.md.
+EXCLUDED_RIDDLES: dict[str, str] = {
+    "spanish_cuba_history_016": (
+        "wrong riddle text shipped in v0; contributor corrected the source "
+        "row, re-evaluated in v2 (flagged 23 Jul 2026)"
+    ),
+}
+
 # Columns copied through from each results.jsonl row.
 ROW_COLUMNS = [
     "instance_id",
@@ -155,6 +167,17 @@ def build_frame(runs_dir: Path) -> pd.DataFrame:
         raise SystemExit(f"No usable run folders under {runs_dir}")
 
     full = pd.concat(frames, ignore_index=True)
+
+    # Drop individually excluded riddles (see EXCLUDED_RIDDLES).
+    if EXCLUDED_RIDDLES:
+        excluded = full["riddle_id"].isin(EXCLUDED_RIDDLES)
+        if excluded.any():
+            n_rows = int(excluded.sum())
+            n_riddles = full.loc[excluded, "riddle_id"].nunique()
+            full = full[~excluded].reset_index(drop=True)
+            for rid, reason in EXCLUDED_RIDDLES.items():
+                print(f"  EXCLUDE riddle {rid}: {reason}")
+            print(f"  ({n_rows} rows across {n_riddles} riddle(s) dropped)")
 
     # Model identity: (model_name, reasoning_mode). Display name appends the
     # reasoning mode only when needed to disambiguate.
