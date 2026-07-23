@@ -92,8 +92,19 @@ DIVERGING_CMAP = "vlag"  # seaborn-provided; falls back to "coolwarm" if missing
 SERIF_STACK: list[str] = [
     "STIX Two Text",     # bundled with matplotlib; Times/CM-adjacent serif (Latin + math)
     "Times New Roman",
-    "Noto Serif",        # vendor for reproducible non-Latin serif (see register_fonts)
-    "Noto Serif CJK JP", # CJK serif, if vendored/installed
+    # Vendored in analysis/fonts/ (see fonts/README.md); registered by
+    # apply_style via register_fonts so figures render identically off-Mac.
+    "Noto Serif",            # Latin ext + Cyrillic + Greek + Vietnamese
+    "Noto Serif SC",         # CJK (simplified + traditional codepoints)
+    "Noto Naskh Arabic",     # Arabic incl. Persian/Urdu codepoints
+    "Noto Serif Bengali",
+    "Noto Serif Devanagari",  # Marathi, Nepali, Konkani
+    "Noto Serif Malayalam",
+    "Noto Serif Tamil",
+    "Noto Serif Telugu",
+    "Noto Serif Sinhala",
+    "Noto Serif Thai",
+    "Noto Sans Buginese",    # Lontara; no serif cut exists
     "Arial Unicode MS",  # broad macOS system fallback: Arabic/Devanagari/CJK/Hebrew/...
     "DejaVu Serif",      # matplotlib's always-present last resort (Latin/Greek/Cyrillic)
 ]
@@ -125,9 +136,19 @@ def register_fonts(font_dir: str | Path = Path(__file__).parent / "fonts") -> li
 # --------------------------------------------------------------------------- #
 def _rc_params() -> dict[str, object]:
     """The full rcParams dict applied by :func:`apply_style`."""
+    # Per-glyph font fallback (matplotlib >= 3.6) only walks the list in
+    # ``font.family``; with ``font.family = "serif"`` matplotlib resolves
+    # ``font.serif`` to a SINGLE font and non-Latin glyphs render as tofu.
+    # So pass the concrete stack as the family list, filtered to families
+    # actually installed/registered (missing names would just log findfont
+    # warnings on machines without e.g. Times New Roman).
+    from matplotlib import font_manager as fm
+
+    installed = {f.name for f in fm.fontManager.ttflist}
+    family = [name for name in SERIF_STACK if name in installed] or ["serif"]
     return {
         # --- fonts ---
-        "font.family": "serif",
+        "font.family": family,
         "font.serif": SERIF_STACK,
         "mathtext.fontset": "cm",      # Computer Modern math -> LaTeX look
         "axes.unicode_minus": False,   # use ASCII '-'; safe across fallbacks
@@ -168,7 +189,11 @@ def apply_style() -> None:
     """Apply the project figure style to the global matplotlib rcParams.
 
     Call once at the top of any plotting script, before creating figures.
+    Also registers the vendored fonts in ``analysis/fonts/`` (no-op if the
+    directory is missing), so callers don't need a separate
+    :func:`register_fonts` call.
     """
+    register_fonts()
     mpl.rcParams.update(_rc_params())
 
 
