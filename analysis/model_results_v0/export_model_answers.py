@@ -17,6 +17,8 @@ Field definitions (for the dataset card):
 - model_id             provider-qualified model identifier
 - reasoning_mode       reasoning setting ("none" if not applicable)
 - model_display        disambiguated display name used in figures
+- eval_category        closed_book | search_enabled; search-enabled runs are
+                       a separate category, not comparable to closed-book
 - answer_text          answer extracted from the model response (null if none)
 - answer_parse_status  json | regex | regex_single_quote | unparsed | empty
 - generation_status    runner status (success / error)
@@ -45,6 +47,7 @@ EXPORT_COLUMNS = [
     "model_id",
     "reasoning_mode",
     "model_display",
+    "eval_category",
     "answer_text",
     "answer_parse_status",
     "generation_status",

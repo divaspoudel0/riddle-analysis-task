@@ -72,6 +72,9 @@ importable from the notebook; styling from `analysis/style.py`.
     ../.venv/bin/python export_model_answers.py
 
 Writes `data/processed/model_answers.parquet` (tier-2 artifact, out of git).
+Carries `eval_category` so search-enabled runs stay labelled in the release.
+Re-run this whenever the tidy frame (Step 3) changes, e.g. after a rescoring
+or a riddle exclusion; otherwise the exported parquet goes stale.
 
 ## Step 7 — Notebook
 
