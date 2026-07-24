@@ -65,5 +65,4 @@ def load_survey_data():
 
 
 
-load_survey_data()
 

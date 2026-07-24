@@ -93,10 +93,7 @@ def portuguese_difficulty():
     save_figure(fig, FIGURES_DIR/"portuguese_difficulty")
 
 
-arabic_difficuty()
-indonesian_difficulty()
-bengali_difficulty()
-portuguese_difficulty()
+
 
 
 

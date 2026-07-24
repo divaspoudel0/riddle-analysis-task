@@ -14,7 +14,7 @@ def confidence_distribution():
 
     fig,ax= plt.subplots(figsize=(6,4.5))
     ax.bar(cc.index.astype(str),cc.values, color= PALETTE['sky_blue'])
-    ax.set_label("Confidence (1=low, 5=high)")
+    ax.set_xlabel("Confidence (1=low, 5=high)")
     ax.set_ylabel("Respondents")
     ax.set_title(
         f"Confidence in Community Representation (mean= {conf.mean():.2f})\n"
@@ -27,5 +27,3 @@ def confidence_distribution():
 
     save_figure(fig, FIGURES_DIR/"confidence_distribution")
 
-
-confidence_distribution()

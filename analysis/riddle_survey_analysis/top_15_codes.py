@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 def top_codes():
     path= CSV_DIR/"[MCB]_Analysis_MasterSheet - Code_Frequency_Reference.csv"
     if not path.exists():
-        print("File not found")
+        raise FileNotFoundError(f"{path} does not exist")
 
     df= pd.read_csv(path)
     df.columns= [c.strip() for c in df.columns]
@@ -32,4 +32,4 @@ def top_codes():
 
     save_figure(fig, FIGURES_DIR/"top_codes")
 
-top_codes()
+

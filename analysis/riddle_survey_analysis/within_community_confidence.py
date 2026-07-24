@@ -56,4 +56,3 @@ def within_confidence():
 
     save_figure(fig, FIGURES_DIR/"within_community")
 
-within_confidence()

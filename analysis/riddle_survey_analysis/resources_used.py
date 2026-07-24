@@ -44,7 +44,7 @@ def split_multiselect(value: str, known: list[str] = KNOWN_MULTIWORD):
     return out
 
 
-def calculate_used_resources(raw_data):
+def calculate_used_resources():
     """ used for tallying the resources used by the respondents"""
 
     fixed = [
@@ -68,10 +68,10 @@ def calculate_used_resources(raw_data):
     vals = [rc.get(o, 0) for o in fixed]
     order = sorted(zip(short, vals), key=lambda x: -x[1])
     labs, vs = zip(*order)
-    colors = [PALETTE["vermillion"] if v == min(vs) else PALETTE["bluish_green"] for v in vs]
+    colors = [PALETTE["vermillion"] if v == max(vs) else PALETTE["bluish_green"] for v in vs]
 
     fig, ax = plt.subplots(figsize=(7, 5))
-    ax.barh(labs[::-1], vs[::-1], color=colors)
+    ax.barh(labs[::-1], vs[::-1], color=colors[::-1])
     ax.set_xlabel(f"Respondents (of {len(df)})")
     ax.set_title(
         "Resources Used While Writing Riddles\n"
@@ -84,9 +84,4 @@ def calculate_used_resources(raw_data):
     save_figure(fig, FIGURES_DIR / "resources_used")
 
 
-def main():
-    calculate_used_resources(df)
 
-
-if __name__ == "__main__":
-    main()

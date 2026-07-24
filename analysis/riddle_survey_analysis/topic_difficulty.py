@@ -42,5 +42,3 @@ def calculate_topic_difficulty():
     save_figure(fig,FIGURES_DIR/"topic_difficulty")
 
 
-calculate_topic_difficulty()
-

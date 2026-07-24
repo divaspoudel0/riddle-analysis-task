@@ -29,7 +29,7 @@ def ai_usage_breakdown():
     fig, ax= plt.subplots(figsize=(7,5))
     bars= ax.bar(labels, vals, color=colors)
 
-    ax.set_ylabel(f"Respondents (of len(df))")
+    ax.set_ylabel(f"Respondents (of {len(df)})")
     ax.set_title(
         "Generative AI breakdown\n"
         'Survey Q: "What resources did you use?" + '
@@ -49,4 +49,3 @@ def ai_usage_breakdown():
     save_figure(fig, FIGURES_DIR/"ai_usage")
 
 
-ai_usage_breakdown()

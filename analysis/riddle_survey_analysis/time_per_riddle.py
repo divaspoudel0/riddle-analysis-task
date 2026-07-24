@@ -44,4 +44,3 @@ def time_per_riddle():
     save_figure(fig,FIGURES_DIR/"time_per_riddle")
 
 
-time_per_riddle()
