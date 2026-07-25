@@ -22,7 +22,7 @@ other_notes_logger.propagate = False
 
 NAME_PATTERN = re.compile(r"^Human Eval (?P<language>\w+)_(?P<country>\w+)$", re.IGNORECASE)
 REQUIRED_COLUMNS = ["Annotator Name", "Score (0-3)", "Error Type"]
-OTHER_ERROR_VALUE = "0.4 - Other (add note)"
+OTHER_ERROR_VALUE = ["0.4 - Other (add note)", "2.4 - Other (add note)"]
 # 1. First read .csv files.
 # I assumed that the data are located in `HumanEval` folder 
 # relative path: humaneval_validation\HumanEval
@@ -163,7 +163,7 @@ def check_other_notes(dfs, sheet_index=0):
         sheets = entry["sheets"]
         sheet_names = list(sheets)
         tag = f"{language}_{country}"
-        print(f"checking: {tag}")
+        # print(f"checking: {tag}")
         if len(sheet_names) <= sheet_index:
             issues.append({
                 "language": language, "country": country,
@@ -191,7 +191,7 @@ def check_other_notes(dfs, sheet_index=0):
             })
             continue
 
-        other_mask = df["Error Type"] == OTHER_ERROR_VALUE
+        other_mask = df["Error Type"].isin(OTHER_ERROR_VALUE) 
 
         # print(df["Error Type"].value_counts())
         # print(df["Validator Note"].value_counts())
