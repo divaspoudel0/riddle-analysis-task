@@ -56,6 +56,7 @@ class BenchmarkInstance:
     reference_answer_original: str
     reference_answer_english: str | None
 
+    run_batch: str | None = None
     author_credit: str | None = None
     human_validator_name: str | None = None
     human_answer_original: str | None = None
@@ -79,6 +80,7 @@ class BenchmarkInstance:
             riddle_note=str(data["riddle_note"]) if data.get("riddle_note") is not None else None,
             reference_answer_original=str(data["reference_answer_original"]),
             reference_answer_english=str(data["reference_answer_english"]) if data.get("reference_answer_english") is not None else None,
+            run_batch=data.get("run_batch"),
             author_credit=data.get("author_credit"),
             human_validator_name=data.get("human_validator_name"),
             human_answer_original=data.get("human_answer_original"),
@@ -224,6 +226,9 @@ class RunConfig:
     response_format: ResponseFormat = ResponseFormat.JSON
     batch_mode: bool = False
     batch_size: int | None = None
+    # Optional run-batch filter. None runs all batches; e.g. ["v1"] runs only
+    # the v1 communities. Overridden by the CLI --run-batch flag.
+    run_batches: list[str] | None = None
 
     # Temperature is intentionally Optional and defaults to None.
     # Reasoning models (OpenAI o-series, Anthropic thinking, DeepSeek R1) can
@@ -283,6 +288,7 @@ class RunMetadata:
     batch_mode_requested: bool = False
     batch_mode_used: bool = False
     batch_size: int | None = None
+    run_batches: list[str] | None = None
 
     cache_enabled: bool = False
     cache_backend: str | None = None
@@ -373,6 +379,7 @@ class InstanceResult:
 
     instance_language: str | None = None
     instance_community: str | None = None
+    instance_run_batch: str | None = None
     instance_topic: str | None = None
     reference_answer_original: str | None = None
     reference_answer_english: str | None = None

@@ -1,8 +1,12 @@
 .env
-evals/__pycache__/
+__pycache__/
 evals/*.jsonl
 evals/*.log
+evals/outputs/
 runs/*
+
+# Python envs
+.venv/
 
 new_env
 HumanEval

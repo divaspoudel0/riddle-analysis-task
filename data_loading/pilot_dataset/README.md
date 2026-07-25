@@ -1,91 +1,108 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-17T06:23:27.130598+00:00
-Total submissions: 44
-Total riddles: 4400
+Generated: 2026-06-28T00:12:34.672450+00:00
+Total submissions: 49
+Total riddles: 4900
+Run batches: v0, v1
+
+> **Naming note.** The `v1` in the filename `pilot_dataset_v1.jsonl` is the
+> dataset *schema* version; it becomes v2 when `raw_template_fields` is
+> dropped. The `v1` in the `run_batch` field is a *collection round*, the
+> second wave of communities. These are separate axes. To evaluate only the
+> newly added communities, select by `run_batch` (the eval CLI's
+> `--run-batch` flag), not by the filename. See Versioning below.
 
 ## Purpose
 
 First consolidated dataset for the framework team (T2.2.1).
 Includes only submissions that passed all validator blocking checks.
 Schema follows the Analysis team's canonical instance schema.
+Combines all run batches into one dataset; each riddle is tagged with
+its `run_batch` so evaluation runs can target only new or changed
+communities. See Versioning below.
 
 ## Schema
 
 Each line is one riddle as a JSON object. Fields:
 
-| Field                       | Type                 | Description                                                                           |
-| --------------------------- | -------------------- | ------------------------------------------------------------------------------------- |
-| `instance_result_id`        | string (UUID v4)     | Unique per row                                                                        |
-| `riddle_id`                 | string               | Stable structured ID: `{community}_{topic}_{number}`                                  |
-| `created_at`                | ISO 8601             | When this dataset was built                                                           |
-| `source_row_number`         | int                  | Original row number in contributor's spreadsheet                                      |
-| `language`                  | string (ISO 639-2/3) | Language code, per project metadata spec                                              |
-| `community`                 | string               | Community token (e.g. `tamil_india`)                                                  |
-| `topic`                     | string               | Topic name as submitted                                                               |
-| `is_wildcard`               | bool                 | True if topic is community-specific, not one of the 8 standard topics                 |
-| `riddle_original`           | string               | Riddle text in source language                                                        |
-| `riddle_english`            | string               | English translation                                                                   |
-| `reference_answer_original` | string               | Reference answer in source language                                                   |
-| `reference_answer_english`  | string               | Reference answer in English                                                           |
-| `riddle_hint`               | string or null       | Optional hint                                                                         |
-| `riddle_note`               | string or null       | Optional comment about region/generation specificity                                  |
-| `author_credit`             | string or null       | Submitter name                                                                        |
-| `human_validator_name`      | string or null       | Person who scored the human answer                                                    |
-| `human_answer_original`     | string or null       | Human evaluator's answer attempt                                                      |
-| `human_answer_score`        | string or null       | 0-2 rating (raw label from spreadsheet)                                               |
-| `human_answer_comment`      | string or null       | Comment on the human answer                                                           |
-| `row_status`                | string               | `"valid"` for all rows in v1                                                          |
-| `raw_template_fields`       | object               | Original column names → values, for any field not in canonical schema. Dropped in v2. |
+| Field | Type | Description |
+|---|---|---|
+| `instance_result_id` | string (UUID v4) | Unique per row |
+| `riddle_id` | string | Stable structured ID: `{community}_{topic}_{number}` |
+| `created_at` | ISO 8601 | When this dataset was built |
+| `source_row_number` | int | Original row number in contributor's spreadsheet |
+| `language` | string (ISO 639-2/3) | Language code, per project metadata spec |
+| `community` | string | Community token (e.g. `tamil_india`) |
+| `run_batch` | string | Submission batch this community entered or was last changed in (`v0`, `v1`, ...). Internal; dropped from the HuggingFace release. |
+| `topic` | string | Topic name as submitted |
+| `is_wildcard` | bool | True if topic is community-specific, not one of the 8 standard topics |
+| `riddle_original` | string | Riddle text in source language |
+| `riddle_english` | string | English translation |
+| `reference_answer_original` | string | Reference answer in source language |
+| `reference_answer_english` | string | Reference answer in English |
+| `riddle_hint` | string or null | Optional hint |
+| `riddle_note` | string or null | Optional comment about region/generation specificity |
+| `author_credit` | string or null | Submitter name |
+| `human_validator_name` | string or null | Person who scored the human answer |
+| `human_answer_original` | string or null | Human evaluator's answer attempt |
+| `human_answer_score` | string or null | 0-2 rating (raw label from spreadsheet) |
+| `human_answer_comment` | string or null | Comment on the human answer |
+| `row_status` | string | `"valid"` for all rows in v1 |
+| `raw_template_fields` | object | Original column names → values, for any field not in canonical schema. Dropped in v2. |
 
 ## Coverage
 
-| Community                  | Riddles |
-| -------------------------- | ------- |
-| `arabic_egypt`             | 100     |
-| `arabic_morocco`           | 100     |
-| `arabic_sudan`             | 100     |
-| `arabic_syria`             | 100     |
-| `belarusian_belarus`       | 100     |
-| `bengali_bangladesh`       | 100     |
-| `bengali_india`            | 100     |
-| `brazilian_portuguese`     | 100     |
-| `bugisnese_indonesia`      | 100     |
-| `bulgarian_bulgaria`       | 100     |
-| `cantonese_china`          | 100     |
-| `chinese_china`            | 100     |
-| `chinese_simplified_china` | 100     |
-| `dutch_netherlands`        | 100     |
-| `english_canada`           | 100     |
-| `english_usa`              | 100     |
-| `french_france`            | 100     |
-| `german_germany`           | 100     |
-| `hungarian_hungary`        | 100     |
-| `indonesian_indonesia`     | 100     |
-| `italian_italy`            | 100     |
-| `konkani_india`            | 100     |
-| `luganda_uganda`           | 100     |
-| `lumasaba_uganda`          | 100     |
-| `malayalam_india`          | 100     |
-| `marathi_india`            | 100     |
-| `mongondow_indonesia`      | 100     |
-| `nepali_nepal`             | 100     |
-| `persian_iran`             | 100     |
-| `polish_poland`            | 100     |
-| `portuguese_portugal`      | 100     |
-| `russian_russia`           | 100     |
-| `serbian_serbia`           | 100     |
-| `sinhala_sri_lanka`        | 100     |
-| `spanish_argentina`        | 100     |
-| `spanish_cuba`             | 100     |
-| `spanish_peru`             | 100     |
-| `swahili_kenya`            | 100     |
-| `tamil_india`              | 100     |
-| `telugu_india`             | 100     |
-| `thai_thailand`            | 100     |
-| `urdu_pakistan`            | 100     |
-| `uzbek_uzbekistan`         | 100     |
-| `yoruba_nigeria`           | 100     |
+| Community | Batch | Riddles |
+|---|---|---|
+| `arabic_egypt` | v0 | 100 |
+| `arabic_morocco` | v0 | 100 |
+| `arabic_sudan` | v0 | 100 |
+| `arabic_syria` | v0 | 100 |
+| `assamese_india` | v1 | 100 |
+| `belarusian_belarus` | v0 | 100 |
+| `bengali_bangladesh` | v0 | 100 |
+| `bengali_india` | v0 | 100 |
+| `brazilian_portuguese` | v0 | 100 |
+| `bugisnese_indonesia` | v0 | 100 |
+| `bulgarian_bulgaria` | v0 | 100 |
+| `cantonese_china` | v0 | 100 |
+| `chinese_china` | v0 | 100 |
+| `chinese_simplified_china` | v0 | 100 |
+| `dutch_netherlands` | v0 | 100 |
+| `english_canada` | v0 | 100 |
+| `english_usa` | v0 | 100 |
+| `french_france` | v0 | 100 |
+| `german_germany` | v0 | 100 |
+| `hungarian_hungary` | v0 | 100 |
+| `indonesian_indonesia` | v0 | 100 |
+| `italian_italy` | v0 | 100 |
+| `kannada_india` | v1 | 100 |
+| `konkani_india` | v0 | 100 |
+| `luganda_uganda` | v0 | 100 |
+| `lumasaba_uganda` | v0 | 100 |
+| `malayalam_india` | v0 | 100 |
+| `marathi_india` | v0 | 100 |
+| `mongondow_indonesia` | v0 | 100 |
+| `nepali_nepal` | v0 | 100 |
+| `persian_iran` | v0 | 100 |
+| `polish_poland` | v0 | 100 |
+| `portuguese_portugal` | v0 | 100 |
+| `russian_russia` | v0 | 100 |
+| `serbian_serbia` | v0 | 100 |
+| `sinhala_sri_lanka` | v0 | 100 |
+| `spanish_argentina` | v0 | 100 |
+| `spanish_cuba` | v0 | 100 |
+| `spanish_peru` | v0 | 100 |
+| `swahili_kenya` | v0 | 100 |
+| `tamil_india` | v0 | 100 |
+| `telugu_india` | v0 | 100 |
+| `thai_thailand` | v0 | 100 |
+| `tunisian_arabic_tunisia` | v1 | 100 |
+| `ukrainian_ukraine` | v1 | 100 |
+| `urdu_pakistan` | v0 | 100 |
+| `uzbek_uzbekistan` | v0 | 100 |
+| `vietnamese_vietnam` | v1 | 100 |
+| `yoruba_nigeria` | v0 | 100 |
 
 ## Design decisions
 
@@ -126,21 +143,40 @@ Each line is one riddle as a JSON object. Fields:
 
 ```bash
 cd data_loading
-uv run python validate_submissions.py --no-download   # produce passed_jsonl/
-uv run python build_pilot_dataset.py                  # consolidate
+# validate each batch into its own reports directory
+uv run python validate_submissions.py --run-batch v0 --no-download
+uv run python validate_submissions.py --run-batch v1 --no-download
+# combine all batches into the dataset + registry
+uv run python build_pilot_dataset.py
+# or build a single batch:
+uv run python build_pilot_dataset.py --batches v1
 ```
 
 ## Versioning
 
-- **v0** (this build): 44 communities, 4400 riddles. Submission window
-  closed 16 June 2026. Used as the pilot dataset for initial benchmark
-  framework testing. Includes `raw_template_fields` for forward
-  compatibility; Analysis team consumes canonical fields only.
-- **v1** (in progress): Submission window 17–26 June 2026. Additional
-  communities being collected. Will be built and validated once the
-  window closes.
-- **Combined release** (planned): v0 and v1 merged into a single dataset
-  and released on HuggingFace (private, Cohere Labs Community org).
-  This combined dataset will be used for the full benchmark run.
-  At that point `raw_template_fields` will be dropped, `human_answer_score`
-  parsed to int, and the 0-2 vs 0-3 scoring scale reconciled.
+Two independent version axes. Do not conflate them.
+
+### Run batches
+
+Communities are grouped into run batches: `v0` is the original
+collection, `v1` the next round, and so on. Every riddle carries a
+`run_batch` tag, and the build also writes `submission_registry.yaml`,
+a per-community manifest of language, run_batch, and riddle count.
+
+The registry is the human-readable manifest of which community is in
+which batch. Model runs are self-funded, so teams should not re-pay to
+evaluate communities they already ran. Each riddle carries its
+`run_batch`, and the eval CLI filters on it: pass `--run-batch v1` to
+cover only the new and corrected communities, or omit the flag to run
+all batches when bringing a new model online. A community that is
+corrected and re-submitted in a later batch is bumped to that batch, so
+a `--run-batch v1` run correctly re-runs it.
+
+### Schema versions
+
+- **v1** (this version): includes `raw_template_fields` for forward
+  compatibility. Analysis team consumes canonical fields; data preserved
+  for review.
+- **v2** (planned): drops `raw_template_fields` after Analysis confirms
+  the mapping is complete. May parse `human_answer_score` to int and
+  reconcile the 0-2 vs 0-3 scoring scale mismatch.

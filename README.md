@@ -18,12 +18,24 @@ results.**
 
 ## The data
 
-The **V0 dataset** lives at `data_loading/v0_dataset/pilot_dataset_v1.jsonl`
-(already built and checked in) — **4,400 riddles across 44 communities**.
+Two datasets live in `data_loading/`:
+
+- **Combined pilot (current)** — `data_loading/pilot_dataset/pilot_dataset_v1.jsonl`,
+  **4,900 riddles across 49 communities**. Built from two collection rounds (v0
+  and v1); each riddle carries a `run_batch` tag, and
+  `pilot_dataset/submission_registry.yaml` lists every community with its language
+  and round.
+- **Frozen V0 set** — `data_loading/v0_dataset/pilot_dataset_v1.jsonl`,
+  **4,400 riddles across 44 communities**. The original round, kept unchanged so
+  V0 benchmark runs stay reproducible.
 
 Each line is one riddle (source + English text, reference answers, topic,
-community, optional hint). See the
+community, run batch, optional hint). See the
 [dataset README](data_loading/pilot_dataset/README.md) for the full schema.
+
+> To evaluate only the communities added in a later round, pass `--run-batch v1` 
+> to both the framework CLI and `riddles_framework.batch.fill`; omit it to run the full set.
+> See [`framework/README.md`](framework/README.md).
 
 ---
 
@@ -123,7 +135,7 @@ Find your assigned task ID in the
    you **complete** your assigned task.
 2. **Name your files `ID_model-name`** — `ID` must match the one listed for you
    in the sheet (e.g. `07_gpt-5.5`).
-3. **Upload `results.jsonl`** — from `framework/runs/<run_id>/results.jsonl`.
+3. **Upload `results.jsonl`** and **`run_config.json`** in a folder — from `framework/runs/<run_id>/`.
 4. **Upload the cache too** (encouraged — CacheSaver makes runs reproducible):
    compress the cache folder and upload it:
    ```bash
@@ -138,4 +150,5 @@ Find your assigned task ID in the
   plus a plain-language walkthrough in
   [`framework/docs/getting-started.md`](framework/docs/getting-started.md).
 - **Dataset schema & rebuild** — [`data_loading/`](data_loading/).
+- **Publish to HuggingFace** — [`data_loading/RELEASE.md`](data_loading/RELEASE.md).
 - **Scoring details** — [`evals/README.md`](evals/README.md).
