@@ -4,6 +4,9 @@ evals/*.jsonl
 evals/*.log
 runs/*
 
+new_env
+HumanEval
+humaneval_validation/*.log
 # macOS metadata files
 .DS_Store
 **/.DS_Store
