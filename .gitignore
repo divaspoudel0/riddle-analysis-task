@@ -8,6 +8,9 @@ runs/*
 # Python envs
 .venv/
 
+new_env
+HumanEval
+humaneval_validation/*.log
 # macOS metadata files
 .DS_Store
 **/.DS_Store
