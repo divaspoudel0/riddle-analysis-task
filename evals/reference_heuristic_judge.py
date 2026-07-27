@@ -3,6 +3,14 @@
 Run directly from the repository root:
 
     python evals/reference_heuristic_judge.py framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
+
+Add abstention phrases on the command line or from a UTF-8 file containing one
+phrase per line:
+
+    python evals/reference_heuristic_judge.py results.jsonl \
+        --additional-no-answer-phrases "I give up" "No clue"
+    python evals/reference_heuristic_judge.py results.jsonl \
+        --additional-no-answer-phrases-file no_answer_phrases.txt
 """
 
 from __future__ import annotations
@@ -266,11 +274,29 @@ def _contains_guarded(longer: str, shorter: str) -> bool:
     return shorter in longer
 
 
-def is_no_answer(candidate: Any) -> bool:
+def load_no_answer_phrases(path: Path) -> list[str]:
+    """Load non-empty abstention phrases from a UTF-8 file, one per line."""
+    return [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def is_no_answer(
+    candidate: Any,
+    *,
+    additional_no_answer_phrases: tuple[str, ...] = (),
+) -> bool:
     normalized = normalize_text(candidate)
     if not normalized:
         return False
-    return any(normalized.startswith(normalize_text(phrase)) for phrase in NO_ANSWER_PHRASES_RAW)
+    phrases = (*NO_ANSWER_PHRASES_RAW, *additional_no_answer_phrases)
+    return any(
+        normalized_phrase and normalized.startswith(normalized_phrase)
+        for phrase in phrases
+        if (normalized_phrase := normalize_text(phrase))
+    )
 
 
 def match_candidate_to_reference(candidate: Any, reference: Any) -> MatchResult:
@@ -315,7 +341,11 @@ def match_candidate_to_reference(candidate: Any, reference: Any) -> MatchResult:
     return MatchResult(False, reason="candidate did not match any reference form")
 
 
-def evaluate_row(row: dict[str, Any]) -> dict[str, Any]:
+def evaluate_row(
+    row: dict[str, Any],
+    *,
+    additional_no_answer_phrases: tuple[str, ...] = (),
+) -> dict[str, Any]:
     parsed = parse_candidate(row)
     reference = row.get("reference_answer_original")
     candidate = parsed.candidate
@@ -338,7 +368,10 @@ def evaluate_row(row: dict[str, Any]) -> dict[str, Any]:
         output["reason"] = parsed.error or "could not parse candidate answer"
         return output
 
-    if is_no_answer(candidate):
+    if is_no_answer(
+        candidate,
+        additional_no_answer_phrases=additional_no_answer_phrases,
+    ):
         output["verdict"] = "unknown"
         output["score"] = 1
         output["match_type"] = "no_answer"
@@ -387,6 +420,7 @@ def evaluate_file(
     out_jsonl: Path | None = None,
     summary_json: Path | None = None,
     limit: int | None = None,
+    additional_no_answer_phrases: tuple[str, ...] = (),
 ) -> tuple[Path, Path, dict[str, Any]]:
     rows = load_jsonl(results_path)
     if limit is not None:
@@ -396,7 +430,13 @@ def evaluate_file(
     output_jsonl = out_jsonl or output_dir / "heuristic_match.jsonl"
     output_summary = summary_json or output_dir / "heuristic_summary.json"
 
-    evaluated = [evaluate_row(row) for row in rows]
+    evaluated = [
+        evaluate_row(
+            row,
+            additional_no_answer_phrases=additional_no_answer_phrases,
+        )
+        for row in rows
+    ]
     write_jsonl(output_jsonl, evaluated)
 
     summary = summarize(evaluated, input_path=results_path, output_jsonl=output_jsonl)
@@ -417,6 +457,27 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out-jsonl", help="Explicit output JSONL path.")
     parser.add_argument("--summary-json", help="Explicit summary JSON path.")
     parser.add_argument("--limit", type=int, default=None, help="Evaluate only the first N rows.")
+    parser.add_argument(
+        "--additional-no-answer-phrases",
+        nargs="+",
+        action="extend",
+        default=[],
+        metavar="PHRASE",
+        help=(
+            "Additional abstention phrases. Quote phrases containing spaces; "
+            "the option may be repeated."
+        ),
+    )
+    parser.add_argument(
+        "--additional-no-answer-phrases-file",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help=(
+            "UTF-8 file containing one additional abstention phrase per line; "
+            "blank lines are ignored and the option may be repeated."
+        ),
+    )
     parser.add_argument("--quiet", action="store_true", help="Do not print the summary line.")
     return parser
 
@@ -429,12 +490,21 @@ def main(argv: list[str] | None = None) -> int:
     if not results_path.exists():
         parser.error(f"results file not found: {results_path}")
 
+    additional_no_answer_phrases = list(args.additional_no_answer_phrases)
+    for phrases_path_arg in args.additional_no_answer_phrases_file:
+        phrases_path = Path(phrases_path_arg)
+        try:
+            additional_no_answer_phrases.extend(load_no_answer_phrases(phrases_path))
+        except (OSError, UnicodeError) as exc:
+            parser.error(f"could not read no-answer phrases file {phrases_path}: {exc}")
+
     out_jsonl, summary_json, summary = evaluate_file(
         results_path,
         out_dir=Path(args.out_dir) if args.out_dir else None,
         out_jsonl=Path(args.out_jsonl) if args.out_jsonl else None,
         summary_json=Path(args.summary_json) if args.summary_json else None,
         limit=args.limit,
+        additional_no_answer_phrases=tuple(additional_no_answer_phrases),
     )
 
     if not args.quiet:

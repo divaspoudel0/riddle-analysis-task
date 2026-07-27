@@ -43,6 +43,19 @@ python evals/reference_heuristic_judge.py \
   framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
 ```
 
+To extend the built-in abstention phrases for a run, supply phrases directly
+or load them from a UTF-8 file:
+
+```bash
+# Supply a list
+python evals/reference_heuristic_judge.py results.jsonl \
+  --additional-no-answer-phrases "I give up" "No clue"
+
+# Supply a UTF-8 file, one phrase per line
+python evals/reference_heuristic_judge.py results.jsonl \
+  --additional-no-answer-phrases-file phrases.txt
+```
+
 By default, the files are written here:
 
 ```text
@@ -159,4 +172,3 @@ python -m evals.llm_judge_run \
 ```
 
 Writes verdicts (same shape as the heuristic match) to `<run_dir>/llm_judge.jsonl`.
-
