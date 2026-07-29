@@ -23,15 +23,14 @@ import pandas as pd
 
 RNG_SEED = 7
 
-# --- search-enabled runs: separate evaluation category ------------------- #
-# Runs with web search enabled (run_config.json: search_enabled) measure
-# open-web retrieval, not closed-book cultural recall, so figures mark them
-# and keep them out of closed-book comparisons.
+# --- search-enabled runs: labelled, not separated ------------------------ #
+# Runs with web search enabled (run_config.json: search_enabled) are ranked
+# alongside the others and simply labelled, since the benchmark does not
+# define an open- vs closed-book split. Web search gives a retrieval
+# advantage worth noting, so we flag it in the label and a footnote. The
+# eval_category column stays for anyone who wants to filter.
 SEARCH_SUFFIX = " (search)"
-SEARCH_NOTE = (
-    "(search) = run with web search enabled: separate evaluation category, "
-    "not directly comparable to closed-book runs."
-)
+SEARCH_NOTE = "(search) = web search enabled for this run."
 
 
 def search_model_set(df: pd.DataFrame) -> set[str]:

@@ -60,16 +60,10 @@ def make_leaderboard(df: pd.DataFrame, n_boot: int = 2000):
     y = list(range(len(lb)))
     ax.hlines(y, lb.ci_low * 100, lb.ci_high * 100,
               color=style.PALETTE["grey"], lw=1.5, zorder=1)
-    is_search = lb.index.isin(search_models)
-    closed, srch = lb[~is_search], lb[is_search]
-    y_closed = [i for i, s in zip(y, is_search) if not s]
-    y_search = [i for i, s in zip(y, is_search) if s]
-    ax.plot(closed.accuracy * 100, y_closed, "o", color=style.PALETTE["blue"],
+    # Search-enabled runs sit in the same ranking as everything else; they
+    # are distinguished only by the "(search)" label, not a separate marker.
+    ax.plot(lb.accuracy * 100, y, "o", color=style.PALETTE["blue"],
             markersize=6, zorder=2)
-    if len(srch):
-        ax.plot(srch.accuracy * 100, y_search, "D",
-                markerfacecolor="white", markeredgewidth=1.4,
-                color=style.PALETTE["vermillion"], markersize=6, zorder=2)
 
     ax.set_yticks(y, labels)
     ax.set_ylim(-0.5, len(lb) - 0.5)
