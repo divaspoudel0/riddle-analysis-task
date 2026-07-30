@@ -46,6 +46,7 @@ LANGUAGE_TO_ISO_639_2 = {
     "english": "eng",
     "french": "fra",
     "german": "deu",
+    "gujarati": "guj",             # script detector returns "unknown" for Gujarati (skipped, no false warning)
     "hungarian": "hun",
     "indonesian": "ind",
     "italian": "ita",

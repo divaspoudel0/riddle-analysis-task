@@ -1,9 +1,9 @@
 # Pilot Dataset v1
 
-Generated: 2026-06-28T00:12:34.672450+00:00
-Total submissions: 49
-Total riddles: 4900
-Run batches: v0, v1
+Generated: 2026-07-30T13:51:34.588254+00:00
+Total submissions: 60
+Total riddles: 6000
+Run batches: v0, v1, v2
 
 > **Naming note.** The `v1` in the filename `pilot_dataset_v1.jsonl` is the
 > dataset *schema* version; it becomes v2 when `raw_template_fields` is
@@ -54,7 +54,9 @@ Each line is one riddle as a JSON object. Fields:
 
 | Community | Batch | Riddles |
 |---|---|---|
+| `afaan_oromo_oromo` | v2 | 100 |
 | `arabic_egypt` | v0 | 100 |
+| `arabic_lebanese` | v2 | 100 |
 | `arabic_morocco` | v0 | 100 |
 | `arabic_sudan` | v0 | 100 |
 | `arabic_syria` | v0 | 100 |
@@ -66,20 +68,28 @@ Each line is one riddle as a JSON object. Fields:
 | `bugisnese_indonesia` | v0 | 100 |
 | `bulgarian_bulgaria` | v0 | 100 |
 | `cantonese_china` | v0 | 100 |
+| `catalan_catalonia` | v2 | 100 |
 | `chinese_china` | v0 | 100 |
+| `chinese_malaysia` | v2 | 100 |
 | `chinese_simplified_china` | v0 | 100 |
+| `chinese_singapore` | v2 | 100 |
 | `dutch_netherlands` | v0 | 100 |
 | `english_canada` | v0 | 100 |
 | `english_usa` | v0 | 100 |
+| `french_canada` | v2 | 100 |
 | `french_france` | v0 | 100 |
 | `german_germany` | v0 | 100 |
+| `gujarati_india` | v2 | 100 |
 | `hungarian_hungary` | v0 | 100 |
 | `indonesian_indonesia` | v0 | 100 |
 | `italian_italy` | v0 | 100 |
+| `japanese_japan` | v2 | 100 |
 | `kannada_india` | v1 | 100 |
 | `konkani_india` | v0 | 100 |
 | `luganda_uganda` | v0 | 100 |
 | `lumasaba_uganda` | v0 | 100 |
+| `luxembourgish_luxembourg` | v2 | 100 |
+| `malay_malaysia` | v2 | 100 |
 | `malayalam_india` | v0 | 100 |
 | `marathi_india` | v0 | 100 |
 | `mongondow_indonesia` | v0 | 100 |
@@ -98,10 +108,11 @@ Each line is one riddle as a JSON object. Fields:
 | `telugu_india` | v0 | 100 |
 | `thai_thailand` | v0 | 100 |
 | `tunisian_arabic_tunisia` | v1 | 100 |
+| `turkish_turkey` | v2 | 100 |
 | `ukrainian_ukraine` | v1 | 100 |
 | `urdu_pakistan` | v0 | 100 |
 | `uzbek_uzbekistan` | v0 | 100 |
-| `vietnamese_vietnam` | v1 | 100 |
+| `vietnamese_vietnam` | v2 | 100 |
 | `yoruba_nigeria` | v0 | 100 |
 
 ## Design decisions
