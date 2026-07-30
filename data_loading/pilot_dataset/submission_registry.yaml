@@ -3,7 +3,7 @@
 # decide which communities to run for a given batch. Rerun the build to
 # regenerate.
 metadata:
-  generated: 2026-07-30T13:51:34.588254+00:00
+  generated: 2026-07-30T14:00:26.822004+00:00
   batches: [v0, v1, v2]
   total_communities: 60
   total_riddles: 6000
