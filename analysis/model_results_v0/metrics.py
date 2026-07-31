@@ -48,17 +48,35 @@ def label_with_search(model: str, search_models: set[str]) -> str:
     return model + SEARCH_SUFFIX if model in search_models else model
 
 
+# Literal prompt-template placeholders some models echo back verbatim as the
+# answer (they parse as valid JSON, so the extractor accepts them, but they
+# carry no answer). These are format failures, not knowledge failures: the
+# model never attempted the riddle. Handled here on the analysis side until
+# the judge itself rejects placeholder strings. See DATA_QUALITY_v0.md.
+TEMPLATE_ECHO_ANSWERS = frozenset({
+    "<your_riddle_answer>",
+    "<answer>",
+    "...",
+})
+
+
 def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Add is_completed / is_correct / is_abstention columns."""
+    """Add is_completed / is_correct / is_abstention / is_format_failure."""
     df = df.copy()
     df["is_completed"] = (df["generation_status"] == "success") & (
         df["answer_parse_status"] != "empty"
     )
-    df["is_correct"] = df["judge_verdict"].eq("correct")
+    # Prompt-template echoes: an extractable but empty answer. Treat as a
+    # format failure, never correct, even if one coincidentally matched a
+    # reference.
+    df["is_template_echo"] = (
+        df["answer_text"].fillna("").str.strip().isin(TEMPLATE_ECHO_ANSWERS)
+    )
+    df["is_correct"] = df["judge_verdict"].eq("correct") & ~df["is_template_echo"]
     # judge 'unknown' = explicit "I don't know" style responses
     df["is_abstention"] = df["judge_verdict"].eq("unknown")
-    df["is_format_failure"] = df["is_completed"] & df["answer_parse_status"].eq(
-        "unparsed"
+    df["is_format_failure"] = df["is_completed"] & (
+        df["answer_parse_status"].eq("unparsed") | df["is_template_echo"]
     )
     return df
 
