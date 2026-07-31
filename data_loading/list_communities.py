@@ -12,13 +12,19 @@ Usage:
 
 from __future__ import annotations
 
+import csv
 import json
 from collections import Counter
 from pathlib import Path
 
+import pandas as pd
+
+from export_huggingface import parse_contributors
+
 HERE = Path(__file__).parent
 DATASET = HERE / "pilot_dataset" / "pilot_dataset_v1.jsonl"
 OUT = HERE / "COMMUNITIES.md"
+OUT_CSV = HERE / "communities_and_credits.csv"
 
 
 def readable(community: str) -> str:
@@ -28,17 +34,17 @@ def readable(community: str) -> str:
 
 def main() -> None:
     rows = [json.loads(l) for l in DATASET.read_text().splitlines() if l.strip()]
+    # Reuse the HF card's contributor parser so this list matches the card
+    # (handles comma/slash/newline-joined names, backticks, case dupes).
+    contributors = parse_contributors(pd.DataFrame(rows))
+
     comms: dict[str, dict] = {}
     for r in rows:
         c = r["community"]
         d = comms.setdefault(
-            c, {"lang": r["language"], "batch": r["run_batch"],
-                "n": 0, "authors": Counter()}
+            c, {"lang": r["language"], "batch": r["run_batch"], "n": 0}
         )
         d["n"] += 1
-        a = r.get("author_credit")
-        if a and str(a).strip() and str(a).strip().lower() not in ("nan", "none"):
-            d["authors"][str(a).strip()] += 1
 
     n_comm = len(comms)
     n_lang = len({d["lang"] for d in comms.values()})
@@ -84,11 +90,22 @@ def main() -> None:
         "|---|---|",
     ]
     for c in sorted(comms):
-        authors = ", ".join(sorted(comms[c]["authors"]))
+        authors = ", ".join(contributors.get(c, []))
         lines.append(f"| `{c}` | {authors or '—'} |")
 
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Wrote {OUT}: {n_comm} communities, {n_lang} languages")
+
+    # CSV for the attribution team to cross-check (one row per community).
+    with OUT_CSV.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["community", "name", "language_iso", "run_batch",
+                    "riddle_count", "contributors"])
+        for c in sorted(comms):
+            d = comms[c]
+            w.writerow([c, readable(c), d["lang"], d["batch"], d["n"],
+                        "; ".join(contributors.get(c, []))])
+    print(f"Wrote {OUT_CSV}")
 
 
 if __name__ == "__main__":

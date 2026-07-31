@@ -82,26 +82,26 @@ Names are pulled from the `author_credit` field and are provisional pending cont
 | `arabic_egypt` | Farah Abdou, Nadine Elframawy, Rawan Elframawy |
 | `arabic_lebanese` | Adnan El Assadi |
 | `arabic_morocco` | Abdellah El Mekki, Abderrahmane Issam, Zakaria Baannou |
-| `arabic_sudan` | Eithar Ismail, Wafaa Mohammed, abdelhadi Osama |
+| `arabic_sudan` | abdelhadi Osama, Eithar Ismail, Wafaa Mohammed |
 | `arabic_syria` | Yusser Al Ghussin, Zena AL Khalili |
 | `assamese_india` | Angana Borah, Dipti Borah Hazarika, Mina Saikia, Prasanta Borah |
-| `belarusian_belarus` | Ilia Afanasev, Ilia Afanasev, Vladislav Poritski, Oksana Volchek, Iryna Balunenka, Vladislav Poritski, Oksana Volchek, Vladislav Poritski, Oksana Volchek, Ilia Afanasev |
+| `belarusian_belarus` | Ilia Afanasev, Iryna Balunenka, Oksana Volchek, Vladislav Poritski |
 | `bengali_bangladesh` | Ahanaf Aziz, Istiak, Nazia Tasnim |
 | `bengali_india` | Ankita Maity, Ruchira, Souvik |
-| `brazilian_portuguese` | Daniel Souza, FelipeBocaJR, João Paulo, Juliana Carvalho, Lucas Resck, Pedro Delgado, facms, its_assisgab, mrncstt |
+| `brazilian_portuguese` | Daniel Souza, facms, FelipeBocaJR, its_assisgab, João Paulo, Juliana Carvalho, Lucas Resck, mrncstt, Pedro Delgado |
 | `bugisnese_indonesia` | Ahmad Mufli Ramadhan |
 | `bulgarian_bulgaria` | Ralitza Rizova |
 | `cantonese_china` | Fengran Mo, Jinghan Zhang |
 | `catalan_catalonia` | Aleix, Irene, Javi, Marc, Ona |
 | `chinese_china` | Stephy Chen |
 | `chinese_malaysia` | Nancy F. Chen, Zhengyuan Liu |
-| `chinese_simplified_china` | Bin, Cecilia, Charles, Di, Kaiser, Lingbo, Tenney, charles |
+| `chinese_simplified_china` | Bin, Cecilia, Charles, Di, Kaiser, Lingbo, Tenney |
 | `chinese_singapore` | Ruiyang Tan, Weihua Zheng |
 | `dutch_netherlands` | Charlotte, David, Mike, Rochelle |
 | `english_canada` | Jane Smith, Julia Kreutzer, Madeline Smith, Matt Bobkin |
 | `english_usa` | Ananya Sahu, Henry Gagnier, Jonathan Swindell, Sajag Swami, Swati Rajwal |
-| `french_canada` | Lauren, Micol (mi_col) |
-| `french_france` | BryanBradfo, BryanBradfo/ Wafa Aissa, Wafa Aissa |
+| `french_canada` | Lauren, Micol |
+| `french_france` | BryanBradfo, Wafa Aissa |
 | `german_germany` | Diana Kozachek, Julia Kreutzer |
 | `gujarati_india` | Amit Agarwal, Fenal Ilasariya, Hitesh Patel |
 | `hungarian_hungary` | Károly Boczka |
@@ -109,30 +109,28 @@ Names are pulled from the `author_credit` field and are provisional pending cont
 | `italian_italy` | Lisa Alazraki, Marco De Santis |
 | `japanese_japan` | Reuben |
 | `kannada_india` | Emile Anand, Vanya Bannihatti Kumar |
-| `konkani_india` | Vivek Silimkhan, prerana rane, prerana rane Vivek Silimkhan |
+| `konkani_india` | prerana rane, Vivek Silimkhan |
 | `luganda_uganda` | Alex Gimei |
 | `lumasaba_uganda` | Alex Gimei |
 | `luxembourgish_luxembourg` | Cedric Lothritz, Fred Philippy |
 | `malay_malaysia` | Roy Ka-Wei Lee |
 | `malayalam_india` | Arya Hariharan, Arya Suneesh |
-| `marathi_india` | Rushikesh Zawar and Yash Bagla |
+| `marathi_india` | Rushikesh Zawar, Yash Bagla |
 | `mongondow_indonesia` | Ahmad Mufli Ramadhan |
 | `nepali_nepal` | Dikshya Poudel, Divas Poudel, jebish7 |
 | `persian_iran` | Amin Shfaiei, Aylin Naebzadeh, Hamidreza Saffari, Houman Mehrafarin, Masoumeh Javadi Zarnaghi, Mehrnaz Mofakhami, Melika Davoodzadeh, Pouya Sadeghi, Sara Rajaee, Sarah Bahrami |
 | `polish_poland` | Dominik Krzeminski, Joanna Radoła |
 | `portuguese_portugal` | diogom |
-| `russian_russia` | Anastasiia Nikitina, Andrei Nikitin
-(Anastasiia's husband), Dina Pisarevskaya, Galina Kozulina
-(Anastasiia's mom), Sergey Sedov, Sergey Sedov (Dina's husband) |
+| `russian_russia` | Anastasiia Nikitina, Andrei Nikitin, Dina Pisarevskaya, Galina Kozulina, Sergey Sedov |
 | `serbian_serbia` | Danka Jokić, Milica Andrić, Nebojša Damnjanović, Toma Knežević |
 | `sindhi_india` | Naman Bhatia |
 | `sinhala_sri_lanka` | Sayuru |
 | `spanish_argentina` | Leandro Cossio, Matías Ávalos, Silvia Fernández |
-| `spanish_cuba` | Eduardo Sánchez, Eduardo Sánchez[source: 1], Fernando Ortiz, Popular Proverbs, Rogelio Díaz Castillo |
+| `spanish_cuba` | Eduardo Sánchez, Fernando Ortiz, Rogelio Díaz Castillo |
 | `spanish_peru` | David Quispe-Castillo, Fabrizzio Marin Colquichagua, Luis Fernando Solis Navarro |
 | `swahili_kenya` | Loice Nanyanga, Priscilla, Valen |
 | `tamil_india` | Vinod |
-| `telugu_india` | Akhil Eppa, Indu/Leema, Jayanth Krishna Chundru, Manaswitha Sunkara, Prahitha Movva, Salman Khan, Tejaswi Sunkara |
+| `telugu_india` | Akhil Eppa, Indu, Jayanth Krishna Chundru, Leema, Manaswitha Sunkara, Prahitha Movva, Salman Khan, Tejaswi Sunkara |
 | `thai_thailand` | Kanison Tungsupakij, Patteera Triamamornwooth, Punnatud Duengkae, Rapol Tongchenchitt, Warit Lekmuenwai |
 | `tunisian_arabic_tunisia` | Safa Faraa, Wafa Aissa |
 | `turkish_turkey` | Ceren Berk |
@@ -140,8 +138,4 @@ Names are pulled from the `author_credit` field and are provisional pending cont
 | `urdu_pakistan` | Muhammad Saad Umar |
 | `uzbek_uzbekistan` | Abdumutalib Begmuratov |
 | `vietnamese_vietnam` | Christian Hoang, My Chiffon Nguyen, Van Ngo |
-| `yoruba_nigeria` | Esther Adenuga, Esther Adenuga,
-Yusuf Ismail, Esther Adenuga,
-Yusuf Ismail,
-`Seun Ajayi, Esther Adenuga,
-`Seun Ajayi, Esther Adenuga, Yusuf Ismail, Joy Olusanya, Seun Ajayi, `Seun Ajayi |
+| `yoruba_nigeria` | Esther Adenuga, Joy Olusanya, Seun Ajayi, Yusuf Ismail |
