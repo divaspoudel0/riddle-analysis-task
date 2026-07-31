@@ -131,6 +131,11 @@ def build_report(df: pd.DataFrame, version: str) -> str:
         "so they are dropped from scoring. Denominators are 4,399 riddles "
         "for Spanish (Cuba); the frozen run files are untouched. See "
         "RIDDLE_CORRECTIONS.md (flagged 23 Jul 2026).",
+        "- v0: 4 Apertus runs (swiss-ai, folders 30-33) added 31 Jul 2026 "
+        "by Hannah: Apertus 8B and 70B in v1 (Instruct-2509) and v1.5. "
+        "Closed-book, full v0 coverage (4,400 riddles each, ~all success). "
+        "Accuracy 5.6% (v1 8B) to 14.6% (v1.5 70B); v1.5 > v1 and 70B > 8B. "
+        "Leaderboard now 29 runs; top unchanged.",
         "",
     ]
     return "\n".join(lines)
