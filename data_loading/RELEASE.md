@@ -28,7 +28,7 @@ first, always.**
    uv run python build_pilot_dataset.py
    ```
 
-   Expect 49 communities, 4900 riddles. These grow with new releases.
+   Expect 61 communities, 6100 riddles. These grow with new releases.
 
 2. Export to HuggingFace format:
 
@@ -37,7 +37,7 @@ first, always.**
    ```
 
    Produces `hf_export/data/test-00000-of-00001.parquet` and `hf_export/README.md`.
-   Expect 49 communities, 43 languages, release_version v0:4400 v1:500.
+   Expect 61 communities, 51 languages, release_version v0:4400 v1:400 v2:1300.
 
 3. Review the card (`hf_export/README.md`), especially the contributor credits.
    They are auto-derived from the inconsistent `author_credit` field and are

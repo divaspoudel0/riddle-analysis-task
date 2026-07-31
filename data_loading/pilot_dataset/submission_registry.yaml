@@ -3,14 +3,22 @@
 # decide which communities to run for a given batch. Rerun the build to
 # regenerate.
 metadata:
-  generated: 2026-06-28T00:12:34.672450+00:00
-  batches: [v0, v1]
-  total_communities: 49
-  total_riddles: 4900
+  generated: 2026-07-31T16:13:35.167580+00:00
+  batches: [v0, v1, v2]
+  total_communities: 61
+  total_riddles: 6100
 communities:
+  afaan_oromo_oromo:
+    language: gaz
+    run_batch: v2
+    riddles: 100
   arabic_egypt:
     language: arz
     run_batch: v0
+    riddles: 100
+  arabic_lebanese:
+    language: apc
+    run_batch: v2
     riddles: 100
   arabic_morocco:
     language: ary
@@ -56,13 +64,25 @@ communities:
     language: yue
     run_batch: v0
     riddles: 100
+  catalan_catalonia:
+    language: cat
+    run_batch: v2
+    riddles: 100
   chinese_china:
     language: zho
     run_batch: v0
     riddles: 100
+  chinese_malaysia:
+    language: zho
+    run_batch: v2
+    riddles: 100
   chinese_simplified_china:
     language: zho
     run_batch: v0
+    riddles: 100
+  chinese_singapore:
+    language: zho
+    run_batch: v2
     riddles: 100
   dutch_netherlands:
     language: nld
@@ -76,6 +96,10 @@ communities:
     language: eng
     run_batch: v0
     riddles: 100
+  french_canada:
+    language: fra
+    run_batch: v2
+    riddles: 100
   french_france:
     language: fra
     run_batch: v0
@@ -83,6 +107,10 @@ communities:
   german_germany:
     language: deu
     run_batch: v0
+    riddles: 100
+  gujarati_india:
+    language: guj
+    run_batch: v2
     riddles: 100
   hungarian_hungary:
     language: hun
@@ -95,6 +123,10 @@ communities:
   italian_italy:
     language: ita
     run_batch: v0
+    riddles: 100
+  japanese_japan:
+    language: jpn
+    run_batch: v2
     riddles: 100
   kannada_india:
     language: kan
@@ -111,6 +143,14 @@ communities:
   lumasaba_uganda:
     language: myx
     run_batch: v0
+    riddles: 100
+  luxembourgish_luxembourg:
+    language: ltz
+    run_batch: v2
+    riddles: 100
+  malay_malaysia:
+    language: zsm
+    run_batch: v2
     riddles: 100
   malayalam_india:
     language: mal
@@ -148,6 +188,10 @@ communities:
     language: srp
     run_batch: v0
     riddles: 100
+  sindhi_india:
+    language: snd
+    run_batch: v2
+    riddles: 100
   sinhala_sri_lanka:
     language: sin
     run_batch: v0
@@ -184,6 +228,10 @@ communities:
     language: aeb
     run_batch: v1
     riddles: 100
+  turkish_turkey:
+    language: tur
+    run_batch: v2
+    riddles: 100
   ukrainian_ukraine:
     language: ukr
     run_batch: v1
@@ -198,7 +246,7 @@ communities:
     riddles: 100
   vietnamese_vietnam:
     language: vie
-    run_batch: v1
+    run_batch: v2
     riddles: 100
   yoruba_nigeria:
     language: yor

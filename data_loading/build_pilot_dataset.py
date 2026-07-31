@@ -48,8 +48,9 @@ HERE = Path(__file__).parent
 RUN_BATCH_DIRS = {
     "v0": HERE / "reports" / "passed_jsonl",
     "v1": HERE / "reports_v1" / "passed_jsonl",
+    "v2": HERE / "reports_v2" / "passed_jsonl",
 }
-DEFAULT_BATCH_ORDER = ["v0", "v1"]
+DEFAULT_BATCH_ORDER = ["v0", "v1", "v2"]
 
 OUTPUT_DIR = HERE / "pilot_dataset"
 OUTPUT_FILE = OUTPUT_DIR / "pilot_dataset_v1.jsonl"

@@ -111,8 +111,12 @@ def build_report(df: pd.DataFrame, version: str) -> str:
         "(88), Command A+ (32). 635 scored incorrect, 4 leaked through as "
         "correct. These are format failures, not knowledge failures; because "
         "they cluster in two or three runs they depress those models' "
-        "leaderboard rows specifically. Rerun judge + loader once Abdellah's "
-        "placeholder-handling PR lands (~630 rows reclassify).",
+        "leaderboard rows specifically. Now reclassified analysis-side "
+        "(metrics.TEMPLATE_ECHO_ANSWERS): counted as format failures, never "
+        "correct, so they move out of the 'incorrect' bucket and flag the "
+        "three runs as format-failure floors. Accuracy is essentially "
+        "unchanged (only 4 coincidental matches removed). A judge-side "
+        "placeholder reject would supersede this.",
         "- v0: GPT5.5-search (03_gpt-5.5-search, added 22 Jul 2026) ran with "
         "web search enabled. It is a SEPARATE evaluation category "
         "(eval_category=search_enabled in the tidy frame): open-web "

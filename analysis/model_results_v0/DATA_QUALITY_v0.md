@@ -1,6 +1,6 @@
 # Data quality report: v0 model runs
 
-Generated 2026-07-23 by data_quality_report.py. Do not edit by hand; rerun the script.
+Generated 2026-07-27 by data_quality_report.py. Do not edit by hand; rerun the script.
 
 Rows: 109975, models: 25, communities: 44, conditions: 1
 
@@ -52,6 +52,6 @@ Threshold: models with more than 5% of rows empty or unparsed.
 - v0: Qwen-SEA-LION and OLMo-3-32B-Think spill reasoning and truncate before answering on a subset of rows; treated as genuine no-answers.
 - v0: judge abstention detection (NO_ANSWER_PHRASES_RAW) covers ~6 of 30+ benchmark languages; honest-uncertainty rates are lower bounds. Raised with Abdellah 19 Jul 2026; rerun scoring once the phrase list is extended.
 - v0: follow-up audit (22 Jul 2026) found zero non-English abstention phrases in v0 responses. Models abstain in English even when riddles are presented in other languages, so the language-coverage caveat above is softer than first feared: English-only detection appears to capture v0 abstentions in practice.
-- v0: 639 answers are literal prompt-template echoes (530 `<your_riddle_answer>`, 25 `<answer>`, 84 `...`), concentrated in three runs: OLMo-3-32B-Think (519), Qwen-SEA-LION-v4.5-27B-IT (88), Command A+ (32). 635 scored incorrect, 4 leaked through as correct. These are format failures, not knowledge failures; because they cluster in two or three runs they depress those models' leaderboard rows specifically. Rerun judge + loader once Abdellah's placeholder-handling PR lands (~630 rows reclassify).
+- v0: 639 answers are literal prompt-template echoes (530 `<your_riddle_answer>`, 25 `<answer>`, 84 `...`), concentrated in three runs: OLMo-3-32B-Think (519), Qwen-SEA-LION-v4.5-27B-IT (88), Command A+ (32). 635 scored incorrect, 4 leaked through as correct. These are format failures, not knowledge failures; because they cluster in two or three runs they depress those models' leaderboard rows specifically. Now reclassified analysis-side (metrics.TEMPLATE_ECHO_ANSWERS): counted as format failures, never correct, so they move out of the 'incorrect' bucket and flag the three runs as format-failure floors. Accuracy is essentially unchanged (only 4 coincidental matches removed). A judge-side placeholder reject would supersede this.
 - v0: GPT5.5-search (03_gpt-5.5-search, added 22 Jul 2026) ran with web search enabled. It is a SEPARATE evaluation category (eval_category=search_enabled in the tidy frame): open-web retrieval is not comparable to closed-book recall, so figures mark it with a distinct marker and a '(search)' label suffix. Clean run (4,400/4,400 parsed JSON), 49.7% raw match, below both closed-book GPT5.5 variants; flag to leads.
 - v0: riddle spanish_cuba_history_016 is excluded from analysis (EXCLUDED_RIDDLES in load_results). The v0 text was wrong; the contributor corrected the source row and it is re-evaluated fresh in v2. Every model's answers to it are answers to the wrong riddle, so they are dropped from scoring. Denominators are 4,399 riddles for Spanish (Cuba); the frozen run files are untouched. See RIDDLE_CORRECTIONS.md (flagged 23 Jul 2026).
