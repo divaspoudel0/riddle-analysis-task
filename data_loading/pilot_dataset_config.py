@@ -28,6 +28,8 @@ LANGUAGE_TO_ISO_639_2 = {
     "arabic_morocco": "ary",       # Moroccan Arabic / Darija
     "arabic_sudan": "apd",         # Sudanese Arabic (NOT Sundanese)
     "arabic_syria": "apc",         # North Levantine Arabic
+    "arabic_lebanese": "apc",      # Lebanese = North Levantine Arabic (same code as Syria)
+    "afaan_oromo_oromo": "gaz",    # Afaan Oromo = West Central Oromo (standard written form)
 
     # ----- Simple keys (first-token lookup) -----
     "assamese": "asm",            # Assamese (Bengali-Assamese script)
@@ -37,6 +39,7 @@ LANGUAGE_TO_ISO_639_2 = {
     "bugisnese": "bug",
     "bulgarian": "bul",
     "cantonese": "yue",            # verified by source inspection
+    "catalan": "cat",
     "chinese": "zho",
     "dutch": "nld",
     "egyptian": "arz",             # legacy alias; new filenames use arabic_egypt
@@ -46,11 +49,14 @@ LANGUAGE_TO_ISO_639_2 = {
     "hungarian": "hun",
     "indonesian": "ind",
     "italian": "ita",
+    "japanese": "jpn",
     "kannada": "kan",
     "konkani": "kok",
     "luganda": "lug",
     "lumasaba": "myx",             # Lumasaba (Bukusu/Bagisu)
     "lusoga": "xog",
+    "luxembourgish": "ltz",
+    "malay": "zsm",                # Standard Malay
     "malayalam": "mal",
     "marathi": "mar",
     "mongondow": "mog",            # Bolaang Mongondow, verified
@@ -72,6 +78,7 @@ LANGUAGE_TO_ISO_639_2 = {
     "telugu": "tel",
     "thai": "tha",
     "tunisian": "aeb",           # Tunisian Arabic (639-3); first-token key is unambiguous
+    "turkish": "tur",
     "ukrainian": "ukr",
     "urdu": "urd",
     "uzbek": "uzb",
@@ -94,6 +101,7 @@ ISO_TO_SCRIPT_FAMILY = {
     # Han (Chinese characters)
     "yue": "han",
     "zho": "han",
+    "jpn": "han",                 # kanji detected as han; kana-only rows read "unknown" (skipped)
     # Cyrillic
     "bel": "cyrillic",
     "bul": "cyrillic",
