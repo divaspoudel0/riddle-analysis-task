@@ -144,7 +144,9 @@ def validate_query_sheet_against_reference(
     )
     _summarize_query_missing_values(query_sheet, insights)
     _compare_columns(reference_sheet, query_sheet, required_columns, tolerated_issues, insights)
-    _validate_number_column(query_sheet, config.expected_rows, tolerated_issues, insights)
+    _validate_number_column(
+        query_sheet, config.expected_rows, blocking_issues, tolerated_issues, insights
+    )
     _validate_topics(
         reference_sheet,
         query_sheet,
@@ -379,11 +381,20 @@ def _compare_columns(
 def _validate_number_column(
     query_sheet: pd.DataFrame,
     expected_rows: int,
+    blocking_issues: list[str],
     tolerated_issues: list[str],
     insights: dict[str, object],
 ) -> None:
+    # The build forms a riddle id per row from {community}_{topic}_{Number}.
+    # A missing 'Number' column (e.g. a sheet that used 'Id' instead) or a
+    # duplicate number collapses rows into the same id, which the framework
+    # dataset loader rejects. So these are blocking, not tolerated.
     if "Number" not in query_sheet.columns:
-        tolerated_issues.append("query_sheet is missing the non-blocking 'Number' column.")
+        blocking_issues.append(
+            "query_sheet is missing the 'Number' column. Each riddle needs a "
+            "'Number' (1..N) so it gets a unique id; if your sheet uses a "
+            "different header (e.g. 'Id'), rename it to 'Number'."
+        )
         insights["duplicate_numbers_in_query"] = []
         insights["missing_numbers_in_query"] = []
         return
@@ -393,8 +404,9 @@ def _validate_number_column(
     insights["duplicate_numbers_in_query"] = duplicate_numbers
 
     if duplicate_numbers:
-        tolerated_issues.append(
-            f"query_sheet has duplicate values in 'Number': {duplicate_numbers}"
+        blocking_issues.append(
+            f"'Number' has duplicate value(s): {duplicate_numbers}. Each riddle "
+            "needs a unique number; duplicates collide into the same riddle id."
         )
 
     numeric_numbers = pd.to_numeric(query_numbers, errors="coerce")

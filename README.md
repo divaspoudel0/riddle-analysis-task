@@ -21,8 +21,8 @@ results.**
 Two datasets live in `data_loading/`:
 
 - **Combined pilot (current)** — `data_loading/pilot_dataset/pilot_dataset_v1.jsonl`,
-  **4,900 riddles across 49 communities**. Built from two collection rounds (v0
-  and v1); each riddle carries a `run_batch` tag, and
+  **6,100 riddles across 61 communities**. Built from three collection rounds (v0,
+  v1, and v2); each riddle carries a `run_batch` tag, and
   `pilot_dataset/submission_registry.yaml` lists every community with its language
   and round.
 - **Frozen V0 set** — `data_loading/v0_dataset/pilot_dataset_v1.jsonl`,
