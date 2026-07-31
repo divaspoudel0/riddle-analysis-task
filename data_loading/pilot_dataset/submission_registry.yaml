@@ -3,10 +3,10 @@
 # decide which communities to run for a given batch. Rerun the build to
 # regenerate.
 metadata:
-  generated: 2026-07-30T14:00:26.822004+00:00
+  generated: 2026-07-31T16:13:35.167580+00:00
   batches: [v0, v1, v2]
-  total_communities: 60
-  total_riddles: 6000
+  total_communities: 61
+  total_riddles: 6100
 communities:
   afaan_oromo_oromo:
     language: gaz
@@ -187,6 +187,10 @@ communities:
   serbian_serbia:
     language: srp
     run_batch: v0
+    riddles: 100
+  sindhi_india:
+    language: snd
+    run_batch: v2
     riddles: 100
   sinhala_sri_lanka:
     language: sin

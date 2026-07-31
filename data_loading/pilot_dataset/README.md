@@ -1,8 +1,8 @@
 # Pilot Dataset v1
 
-Generated: 2026-07-30T14:00:26.822004+00:00
-Total submissions: 60
-Total riddles: 6000
+Generated: 2026-07-31T16:13:35.167580+00:00
+Total submissions: 61
+Total riddles: 6100
 Run batches: v0, v1, v2
 
 > **Naming note.** The `v1` in the filename `pilot_dataset_v1.jsonl` is the
@@ -99,6 +99,7 @@ Each line is one riddle as a JSON object. Fields:
 | `portuguese_portugal` | v0 | 100 |
 | `russian_russia` | v0 | 100 |
 | `serbian_serbia` | v0 | 100 |
+| `sindhi_india` | v2 | 100 |
 | `sinhala_sri_lanka` | v0 | 100 |
 | `spanish_argentina` | v0 | 100 |
 | `spanish_cuba` | v0 | 100 |

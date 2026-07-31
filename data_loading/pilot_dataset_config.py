@@ -70,6 +70,7 @@ LANGUAGE_TO_ISO_639_2 = {
     "runyankore": "nyn",
     "russian": "rus",
     "serbian": "srp",
+    "sindhi": "snd",               # Sindhi (India community uses Perso-Arabic script)
     "sinhala": "sin",
     "spanish": "spa",
     "sudanese": "apd",             # legacy alias; new filenames use arabic_sudan
@@ -99,6 +100,7 @@ ISO_TO_SCRIPT_FAMILY = {
     "ary": "arabic",
     "aeb": "arabic",
     "urd": "arabic",
+    "snd": "arabic",              # Sindhi (India) in Perso-Arabic script
     # Han (Chinese characters)
     "yue": "han",
     "zho": "han",

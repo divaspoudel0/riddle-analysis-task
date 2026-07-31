@@ -2,7 +2,7 @@
 
 Generated from `pilot_dataset/pilot_dataset_v1.jsonl` by `list_communities.py`. Do not edit by hand; rerun the script.
 
-**6,000 riddles** across **60 communities** and **50 languages** (ISO 639-3). Communities per collection round: v0: 44, v1: 4, v2: 12.
+**6,100 riddles** across **61 communities** and **51 languages** (ISO 639-3). Communities per collection round: v0: 44, v1: 4, v2: 13.
 
 > Language counts treat regional dialects as distinct languages (e.g. Egyptian, Moroccan, Sudanese, Syrian, Lebanese, and Tunisian Arabic each count separately), since they are separate communities with distinct riddles. Select a round for evaluation with the `--run-batch` flag; the round lives in the `run_batch` column, not the filename.
 
@@ -68,6 +68,7 @@ Generated from `pilot_dataset/pilot_dataset_v1.jsonl` by `list_communities.py`. 
 | `japanese_japan` | Japanese Japan | jpn | v2 | 100 |
 | `luxembourgish_luxembourg` | Luxembourgish Luxembourg | ltz | v2 | 100 |
 | `malay_malaysia` | Malay Malaysia | zsm | v2 | 100 |
+| `sindhi_india` | Sindhi India | snd | v2 | 100 |
 | `turkish_turkey` | Turkish Turkey | tur | v2 | 100 |
 | `vietnamese_vietnam` | Vietnamese Vietnam | vie | v2 | 100 |
 
@@ -124,6 +125,7 @@ Names are pulled from the `author_credit` field and are provisional pending cont
 (Anastasiia's husband), Dina Pisarevskaya, Galina Kozulina
 (Anastasiia's mom), Sergey Sedov, Sergey Sedov (Dina's husband) |
 | `serbian_serbia` | Danka Jokić, Milica Andrić, Nebojša Damnjanović, Toma Knežević |
+| `sindhi_india` | Naman Bhatia |
 | `sinhala_sri_lanka` | Sayuru |
 | `spanish_argentina` | Leandro Cossio, Matías Ávalos, Silvia Fernández |
 | `spanish_cuba` | Eduardo Sánchez, Eduardo Sánchez[source: 1], Fernando Ortiz, Popular Proverbs, Rogelio Díaz Castillo |
