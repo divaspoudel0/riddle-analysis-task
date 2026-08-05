@@ -32,6 +32,7 @@ base_url: https://openrouter.ai/api/v1
 runner_version: v1.0.0
 notes: DeepSeek V4 Pro routed via OpenRouter for V0 solver run
 strict_capability_check: true
+strict_uploadable_rows: true
 
 model_spec:
   model_name: deepseek-v4-pro

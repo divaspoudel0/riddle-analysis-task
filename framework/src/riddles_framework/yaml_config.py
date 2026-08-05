@@ -108,6 +108,7 @@ def load_run_config_from_yaml(path: str) -> RunConfig:
             runner_version=data.get("runner_version", "v1.0.0"),
             notes=data.get("notes"),
             strict_capability_check=bool(data.get("strict_capability_check", True)),
+            strict_uploadable_rows=bool(data.get("strict_uploadable_rows", False)),
         )
     except KeyError as exc:
         raise ConfigError(f"Missing required config key: {exc}") from exc

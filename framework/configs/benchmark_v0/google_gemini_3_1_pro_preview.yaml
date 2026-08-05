@@ -31,6 +31,7 @@ base_url: null
 runner_version: v1.0.0
 notes: Gemini 3.1 Pro Preview via Google AI API (direct key) — V1 batch; replaces the OpenRouter route used for V0
 strict_capability_check: true
+strict_uploadable_rows: true
 
 model_spec:
   model_name: gemini-3.1-pro-preview
