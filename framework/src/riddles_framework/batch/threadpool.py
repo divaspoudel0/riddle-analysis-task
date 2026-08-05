@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+import time
 from typing import Any, Callable
 
 from .cache_compat import cache_lookup, cache_store, request_key
@@ -47,6 +48,17 @@ def _create_kwargs(prompt: str, model: str, max_output_tokens: int,
     return kwargs
 
 
+def _openai_sdk_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Move OpenRouter-only body fields under OpenAI SDK's ``extra_body``."""
+    sdk_kwargs = dict(kwargs)
+    extra_body = dict(sdk_kwargs.pop("extra_body", {}) or {})
+    if "reasoning" in sdk_kwargs:
+        extra_body["reasoning"] = sdk_kwargs.pop("reasoning")
+    if extra_body:
+        sdk_kwargs["extra_body"] = extra_body
+    return sdk_kwargs
+
+
 def fill_openai_compatible(
     *,
     prompts: list[str],
@@ -58,6 +70,7 @@ def fill_openai_compatible(
     max_output_tokens: int = 4096,
     response_format: str = "free_form",
     extra_create_kwargs: dict[str, Any] | None = None,
+    max_attempts: int = 3,
     client_factory: Callable[..., Any] | None = None,
     progress: Callable[[int, int], None] | None = None,
 ) -> FillResult:
@@ -86,13 +99,30 @@ def fill_openai_compatible(
     filled = errors = 0
     done = 0
 
+    def response_text(resp: Any) -> str:
+        if not getattr(resp, "choices", None):
+            return ""
+        return str(getattr(resp.choices[0].message, "content", None) or "").strip()
+
     def work(item: tuple[str, dict[str, Any], str]) -> bool:
         _p, kw, key = item
-        resp = client.chat.completions.create(**kw)
-        # n=1 -> exactly one choice; store the ChatCompletion as the cache entry,
-        # the same object the online OpenAI path caches.
-        cache_store(cache_dir, key, resp)
-        return True
+        last_error: Exception | None = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                resp = client.chat.completions.create(**_openai_sdk_kwargs(kw))
+                if response_text(resp):
+                    # n=1 -> exactly one choice; store the ChatCompletion as the cache entry,
+                    # the same object the online OpenAI path caches.
+                    cache_store(cache_dir, key, resp)
+                    return True
+                last_error = RuntimeError("provider returned an empty message")
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+
+            if attempt < max_attempts:
+                time.sleep(min(2 ** (attempt - 1), 8))
+
+        raise RuntimeError(f"cache fill failed after {max_attempts} attempts: {last_error}")
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         futures = [ex.submit(work, m) for m in misses]

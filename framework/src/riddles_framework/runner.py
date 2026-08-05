@@ -170,6 +170,14 @@ class BenchmarkRunner:
             ]
 
         for (instance, prompt), gen in zip(batch, generations):
+            if self.run_config.strict_uploadable_rows and (
+                gen.status != GenerationStatus.SUCCESS
+                or not str(gen.raw_response or "").strip()
+            ):
+                raise RuntimeError(
+                    "batch generation produced a non-uploadable row: "
+                    f"riddle_id={instance.riddle_id} status={gen.status.value}"
+                )
             self._append_generated_result(
                 writer=writer,
                 metadata=metadata,

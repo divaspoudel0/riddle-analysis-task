@@ -10,6 +10,17 @@ from ..utils import getenv_required, looks_like_refusal, safe_int
 from .base import Model
 
 
+def _openai_sdk_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Move OpenRouter-only body fields under OpenAI SDK's ``extra_body``."""
+    sdk_kwargs = dict(kwargs)
+    extra_body = dict(sdk_kwargs.pop("extra_body", {}) or {})
+    if "reasoning" in sdk_kwargs:
+        extra_body["reasoning"] = sdk_kwargs.pop("reasoning")
+    if extra_body:
+        sdk_kwargs["extra_body"] = extra_body
+    return sdk_kwargs
+
+
 class OpenRouterAdapter(Model):
     def __init__(self, spec: ModelSpec, cfg: dict) -> None:
         super().__init__(spec)
@@ -26,8 +37,6 @@ class OpenRouterAdapter(Model):
             client_kwargs["namespace"] = cfg.get("cache_namespace")
             if cfg.get("cache_dir"):
                 client_kwargs["cache_dir"] = cfg["cache_dir"]
-            if cfg.get("batch_size"):
-                client_kwargs["batch_size"] = cfg["batch_size"]
         self.client = make_openrouter_client(cfg.get("cache_enabled", False), **client_kwargs)
 
         # Concurrent generate_batch via a plain thread-safe client + direct cache
@@ -90,7 +99,7 @@ class OpenRouterAdapter(Model):
             if model_params:
                 kwargs.update(model_params)
 
-            resp = self.client.chat.completions.create(**kwargs)
+            resp = self.client.chat.completions.create(**_openai_sdk_kwargs(kwargs))
 
             text = None
             if getattr(resp, "choices", None):

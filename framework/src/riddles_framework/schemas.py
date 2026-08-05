@@ -255,6 +255,10 @@ class RunConfig:
     runner_version: str = "v1.0.0"
     notes: str | None = None
     strict_capability_check: bool = True
+    # Abort a batch run on any non-success/empty generation instead of
+    # recording it. Off by default: several models legitimately produce
+    # empties/truncations, and analysis records those as categories.
+    strict_uploadable_rows: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

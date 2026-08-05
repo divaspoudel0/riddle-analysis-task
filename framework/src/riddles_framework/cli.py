@@ -14,6 +14,8 @@ from .models.openai_adapter import OpenAIAdapter
 from .models.anthropic_adapter import AnthropicAdapter
 from .models.cohere_adapter import CohereAdapter
 from .models.gemini_adapter import GeminiAdapter
+from .models.huggingface_router_adapter import HuggingFaceRouterAdapter
+from .models.huggingface_text_generation_adapter import HuggingFaceTextGenerationAdapter
 from .models.openrouter_adapter import OpenRouterAdapter
 from .models.together_adapter import TogetherAdapter
 from .models.transformers_local_adapter import LocalTransformersAdapter
@@ -30,6 +32,11 @@ def register_builtin_adapters() -> None:
         ("qwen:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),
         ("xai:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),
         ("openrouter:openrouter", lambda spec, cfg: OpenRouterAdapter(spec, cfg)),
+        ("huggingface_router:huggingface_router", lambda spec, cfg: HuggingFaceRouterAdapter(spec, cfg)),
+        (
+            "huggingface_text_generation:huggingface_text_generation",
+            lambda spec, cfg: HuggingFaceTextGenerationAdapter(spec, cfg),
+        ),
         ("together:together", lambda spec, cfg: TogetherAdapter(spec, cfg)),
         ("local:local", lambda spec, cfg: LocalTransformersAdapter(spec, cfg)),
         ("vllm:direct_api", lambda spec, cfg: VLLMAdapter(spec, cfg)),
