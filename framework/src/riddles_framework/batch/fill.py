@@ -27,7 +27,16 @@ from ..schemas import PromptConfig
 from ..yaml_config import load_run_config_from_yaml
 
 # Providers reached over an OpenAI-compatible chat endpoint (use threadpool).
-OPENAI_COMPATIBLE = {"cohere", "openrouter", "qwen", "xai", "together", "openai", "vllm"}
+OPENAI_COMPATIBLE = {
+    "cohere",
+    "openrouter",
+    "huggingface_router",
+    "qwen",
+    "xai",
+    "together",
+    "openai",
+    "vllm",
+}
 # Providers with a native Batch API and a distinct cache entry format.
 BATCH_PROVIDERS = {"openai", "google", "anthropic"}
 
@@ -64,6 +73,17 @@ def _build_cache_key(prompt: str, rc, provider: str, model: str) -> str:
 
     if provider == "google":
         return gemini_request_key({"model": model, "contents": prompt})
+    if provider == "huggingface_text_generation":
+        from .huggingface_text import build_hf_text_body, hf_text_request_key
+        return hf_text_request_key(
+            build_hf_text_body(
+                prompt,
+                model=model,
+                max_output_tokens=rc.max_output_tokens,
+                response_format=rc.response_format.value,
+                extra=dict(rc.model_params),
+            )
+        )
     tok = "max_completion_tokens" if provider == "openai" else "max_tokens"
     body = {
         "model": model,
@@ -74,12 +94,14 @@ def _build_cache_key(prompt: str, rc, provider: str, model: str) -> str:
         body["response_format"] = {"type": "json_object"}
     if provider == "openai":
         body.update(_openai_extra_body(rc))
+    elif rc.model_params:
+        body.update(rc.model_params)
     return openai_request_key(body)
 
 
 def _build_prompts(rc) -> list[str]:
     template = load_prompt_template(rc.prompt_template_id, rc.prompt_template_version)
-    instances = load_benchmark_instances(rc.dataset_path)
+    instances = load_benchmark_instances(rc.dataset_path, run_batches=rc.run_batches)
     pc = PromptConfig(
         prompt_language=rc.prompt_language,
         riddle_language_presented=rc.riddle_language_presented,
@@ -97,9 +119,25 @@ def main(argv=None) -> int:
     p.add_argument("--workers", type=int, default=8, help="threadpool concurrency")
     p.add_argument("--poll", type=int, default=30, help="batch poll interval (s)")
     p.add_argument("--dry-run", action="store_true", help="report misses/backend, make no calls")
+    p.add_argument(
+        "--run-batch",
+        dest="run_batches",
+        nargs="+",
+        default=None,
+        metavar="BATCH",
+        help=(
+            "Fill only these submission batches, e.g. --run-batch v1, or "
+            "--run-batch v0 v1. Overrides run_batches in the config. "
+            "Default: fill all batches in the dataset."
+        ),
+    )
     args = p.parse_args(argv)
 
     rc = load_run_config_from_yaml(args.config)
+    if args.run_batches is not None:
+        rc.run_batches = args.run_batches
+    if rc.run_batches is not None:
+        print(f"Run-batch filter: {rc.run_batches}")
     if not rc.cache_enabled or not rc.cache_dir:
         p.error("config must have cache_enabled: true and a cache_dir for cache filling")
 
@@ -127,6 +165,17 @@ def main(argv=None) -> int:
         p.error(f"{rc.api_key_env_var} is not set")
 
     if backend == "threadpool":
+        if provider == "huggingface_text_generation":
+            from .huggingface_text import fill_huggingface_text_generation
+            res = fill_huggingface_text_generation(
+                prompts=prompts, model=model, cache_dir=cache_dir, api_key=api_key,
+                max_workers=args.workers, max_output_tokens=rc.max_output_tokens,
+                response_format=rf, extra_create_kwargs=dict(rc.model_params),
+                base_url=rc.base_url,
+                progress=lambda d, t: print(f"\r[fill] {d}/{t}", end="", flush=True),
+            )
+            print(f"\n[fill] done: {res}")
+            return 0 if res.errors == 0 else 1
         if provider not in OPENAI_COMPATIBLE:
             p.error(f"threadpool backend supports OpenAI-compatible providers only, not {provider!r}")
         from .threadpool import fill_openai_compatible
@@ -134,6 +183,7 @@ def main(argv=None) -> int:
             prompts=prompts, model=model, cache_dir=cache_dir, api_key=api_key,
             base_url=rc.base_url, max_workers=args.workers,
             max_output_tokens=rc.max_output_tokens, response_format=rf,
+            extra_create_kwargs=dict(rc.model_params),
             progress=lambda d, t: print(f"\r[fill] {d}/{t}", end="", flush=True),
         )
         print(f"\n[fill] done: {res}")

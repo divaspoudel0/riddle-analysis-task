@@ -28,6 +28,8 @@ class AccessPattern(str, Enum):
     DIRECT_API = "direct_api"
     GCP = "gcp"
     OPENROUTER = "openrouter"
+    HUGGINGFACE_ROUTER = "huggingface_router"
+    HUGGINGFACE_TEXT_GENERATION = "huggingface_text_generation"
     TOGETHER = "together"
     LOCAL = "local"
 
@@ -44,6 +46,8 @@ class Provider(str, Enum):
     XAI = "xai"
     QWEN = "qwen"
     OPENROUTER = "openrouter"
+    HUGGINGFACE_ROUTER = "huggingface_router"
+    HUGGINGFACE_TEXT_GENERATION = "huggingface_text_generation"
     TOGETHER = "together"
     LOCAL = "local"
     DUMMY = "dummy"

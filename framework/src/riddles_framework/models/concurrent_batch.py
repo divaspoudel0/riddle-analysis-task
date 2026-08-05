@@ -14,12 +14,24 @@ populate the cache for later ``cache_enabled`` runs and dedupe within the run.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+import time
 from typing import Any
 
 from ..constants import GenerationStatus
 from ..schemas import GenerationResult
 from ..utils import looks_like_refusal, safe_int
 from ..batch.cache_compat import cache_lookup, cache_store, openai_request_key
+
+
+def _openai_sdk_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Move OpenRouter-only body fields under OpenAI SDK's ``extra_body``."""
+    sdk_kwargs = dict(kwargs)
+    extra_body = dict(sdk_kwargs.pop("extra_body", {}) or {})
+    if "reasoning" in sdk_kwargs:
+        extra_body["reasoning"] = sdk_kwargs.pop("reasoning")
+    if extra_body:
+        sdk_kwargs["extra_body"] = extra_body
+    return sdk_kwargs
 
 
 def _result_from_completion(resp: Any) -> GenerationResult:
@@ -54,6 +66,7 @@ def openai_compatible_generate_batch(
     model_params: dict[str, Any] | None = None,
     token_param: str = "max_tokens",
     max_workers: int | None = None,
+    max_attempts: int = 3,
 ) -> list[GenerationResult]:
     """Concurrently generate for every prompt, in input order.
 
@@ -85,14 +98,32 @@ def openai_compatible_generate_batch(
             cached = cache_lookup(cache_dir, key)
             if cached:
                 return _result_from_completion(cached[0])
-        try:
-            resp = plain_client.chat.completions.create(**kw)
-        except Exception as exc:  # noqa: BLE001
-            return GenerationResult(raw_response=None, status=GenerationStatus.ERROR,
-                                    error_message=str(exc))
-        if cache_dir:
-            cache_store(cache_dir, key, resp)
-        return _result_from_completion(resp)
+
+        last_result: GenerationResult | None = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                resp = plain_client.chat.completions.create(**_openai_sdk_kwargs(kw))
+            except Exception as exc:  # noqa: BLE001
+                last_result = GenerationResult(
+                    raw_response=None,
+                    status=GenerationStatus.ERROR,
+                    error_message=str(exc),
+                )
+            else:
+                result = _result_from_completion(resp)
+                if result.status == GenerationStatus.SUCCESS and str(result.raw_response or "").strip():
+                    if cache_dir:
+                        cache_store(cache_dir, key, resp)
+                    return result
+                last_result = result
+
+            if attempt < max_attempts:
+                time.sleep(min(2 ** (attempt - 1), 4))
+
+        if last_result is not None:
+            status = last_result.status.value
+            raise RuntimeError(f"provider returned non-success response after {max_attempts} attempts: {status}")
+        raise RuntimeError(f"provider returned no response after {max_attempts} attempts")
 
     workers = max_workers or max(1, len(prompts))
     with ThreadPoolExecutor(max_workers=workers) as ex:

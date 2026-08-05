@@ -157,19 +157,14 @@ class BenchmarkRunner:
         condition_id: str,
     ) -> None:
         prompts = [prompt for _, prompt in batch]
-        try:
-            generations = self._generate_batch(prompts)
-        except Exception as exc:
-            generations = [
-                GenerationResult(
-                    raw_response=None,
-                    status=GenerationStatus.ERROR,
-                    error_message=str(exc),
-                )
-                for _ in prompts
-            ]
+        generations = self._generate_batch(prompts)
 
         for (instance, prompt), gen in zip(batch, generations):
+            if gen.status != GenerationStatus.SUCCESS or not str(gen.raw_response or "").strip():
+                raise RuntimeError(
+                    "batch generation produced a non-uploadable row: "
+                    f"riddle_id={instance.riddle_id} status={gen.status.value}"
+                )
             self._append_generated_result(
                 writer=writer,
                 metadata=metadata,

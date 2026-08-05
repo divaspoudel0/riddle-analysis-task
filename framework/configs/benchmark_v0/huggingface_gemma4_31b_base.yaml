@@ -1,0 +1,48 @@
+runner_name: benchmark_v0
+
+dataset_path: ../data_loading/pilot_dataset/pilot_dataset_v1.jsonl
+dataset_version: pilot_dataset_v1
+
+prompt_template_id: riddle_master
+prompt_template_version: v1
+prompt_language: eng
+riddle_language_presented: source
+is_hint_provided: false
+
+reasoning_mode: null
+search_enabled: false
+response_format: free_form
+batch_mode: true
+batch_size: 12
+
+temperature: null
+max_output_tokens: 4096
+seed: null
+
+model_params: {}
+
+cache_enabled: true
+cache_backend: cachesaver
+cache_namespace: multicultural_riddles/pilot_dataset_v1/gemma4_31b_base_huggingface_text_generation/source_no_hint/master_v1
+cache_dir: .cache/cachesaver
+
+api_key_env_var: HF_TOKEN
+
+runner_version: v1.0.0
+notes: Gemma 4 31B base routed online through Hugging Face text generation
+strict_capability_check: true
+
+model_spec:
+  model_name: gemma-4-31b
+  model_id: google/gemma-4-31B-huggingface-text-generation
+  provider: huggingface_text_generation
+  access_pattern: huggingface_text_generation
+  provider_model_name: google/gemma-4-31B
+  closed_source: false
+  notes: Gemma 4 31B base model through Hugging Face text generation, not instruction-tuned
+  capabilities:
+    supports_reasoning: false
+    supports_search: false
+    supports_structured_output: false
+    supports_batch: true
+    supports_seed: false
