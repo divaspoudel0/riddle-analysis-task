@@ -20,7 +20,7 @@ Thin: spanish_peru, swahili_kenya.
 | GPT5.5 [high] | 73.5 | 77.9 |
 | claude-opus-4-7 [thinking] | 62.8 | 69.2 |
 | deepseek-v4-pro-thinking | 61.1 | 67.7 |
-| deepseek-v4-pro | 55.9 | 63.1 |
+| deepseek-v4-pro | 56.0 | 63.2 |
 | claude-opus-4-7 [none] | 55.4 | 62.7 |
 | Gemini 2.5 Flash | 44.8 | 51.9 |
 | Mistral Large 3 | 36.6 | 43.2 |
@@ -38,6 +38,6 @@ Thin: spanish_peru, swahili_kenya.
 | Tiny-Aya earth | 5.8 | 11.6 |
 | Tiny-Aya water | 5.8 | 11.8 |
 | Tiny-Aya global | 5.4 | 10.6 |
-| Qwen/Qwen3.5-0.8B | 0.2 | 1.2 |
+| Qwen/Qwen3.5-0.8B | 0.2 | 1.3 |
 
 > Provisional until coverage completes. Rerun to refresh.

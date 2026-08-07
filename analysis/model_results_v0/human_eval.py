@@ -130,8 +130,12 @@ def build_scored(h: pd.DataFrame, auto: pd.DataFrame) -> pd.DataFrame:
 
 
 def leaderboard(m: pd.DataFrame, communities: set[str]) -> pd.DataFrame:
-    """Leaderboard over the given communities, using final scores."""
-    sub = m[m["community"].isin(communities)]
+    """Leaderboard over the given communities, using ONLY Henry's scores.
+
+    Pending rows (no Henry score) are dropped, not judge-filled, so every
+    number here traces to the flatfile with zero assumptions on our side.
+    """
+    sub = m[m["community"].isin(communities) & ~m["is_pending"]]
     lb = sub.groupby("model_display").agg(
         strict=("is_correct", "mean"),
         lenient=("is_correct_lenient", "mean"),
