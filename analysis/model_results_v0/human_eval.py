@@ -1,43 +1,51 @@
 """Human-eval analysis for v0, rerunnable as coverage grows.
 
-Reads Henry's flat human-eval file (data/human_eval_v0/model_riddle_results_flat.csv)
-and joins it to the automatic tidy frame. Rerun whenever Henry refreshes the
-CSV; everything below updates.
+Single source of truth for scores: Henry's flat file
+(data/human_eval_v0/model_riddle_results_flat.csv). Every non-pending row
+already carries a score (human 0/1/2/3, or auto: exact_match=3, empty=0,
+placeholder=0, idk=1). Only pending_human_eval rows are blank; those we fill
+with the heuristic judge score (Henry's cap policy) for the coverage-filled
+views only.
 
-Henry's schema (one row per riddle x model):
-  score            0/1/2/3 or empty (0 wrong, 3 correct, 2 partial, 1 rare)
-  scoring_method   human_eval | pending_human_eval | auto_exact_match |
-                   auto_idk | auto_placeholder | auto_empty
-  error_type       code (e.g. 0.3 hallucinated); error_type_label is the text
-  annotator_name   one annotator per riddle (so no inter-annotator agreement)
+The DEFENSIBLE leaderboard for the paper is computed on COMPLETE communities
+only, using Henry's score for every row (no judge-fill, no guessing). It is
+provisional until coverage completes; every output is labelled with N/44.
 
-Cap handling (Henry's call): fill rows without a human score with the
-heuristic judge score, so tiny models are not flattered by reporting over a
-thin human-eligible set.
+Rerun after each flatfile refresh:  python human_eval.py
 
 Outputs:
-  data/processed/human_eval_coverage.csv   per-community completion (Discord tracker)
-  data/processed/human_joined.parquet      joined frame (feeds the leaderboard + dashboard)
-  HUMAN_EVAL_v0.md                          summary report
+  data/processed/human_eval_coverage.csv     per-community completion (chase tracker)
+  data/processed/human_leaderboard.csv       defensible leaderboard (complete communities)
+  data/processed/human_joined.parquet        full joined frame (feeds figures + the Space)
+  HUMAN_EVAL_v0.md                            summary report
 """
 
 from __future__ import annotations
 
 import sys
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from load_results import EXCLUDED_RIDDLES  # same exclusions (Cuba)
+from load_results import EXCLUDED_RIDDLES  # Cuba etc.
 
 FLAT_CSV = Path("data/human_eval_v0/model_riddle_results_flat.csv")
 AUTO_PARQUET = Path("data/processed/results_tidy.parquet")
 OUT_COVERAGE = Path("data/processed/human_eval_coverage.csv")
+OUT_LB = Path("data/processed/human_leaderboard.csv")
 OUT_PARQUET = Path("data/processed/human_joined.parquet")
 OUT_MD = Path("HUMAN_EVAL_v0.md")
 
-# Henry's model_name -> our model_display (24 human-eval models; no search run).
+TOTAL_COMMUNITIES = 44          # v0
+EXPECTED_MODELS = 24            # human-eval covers the 24 closed-book models
+RIDDLES_PER_COMMUNITY = 100
+THIN_THRESHOLD = 0.20           # < 20% of human-eligible rows scored
+STRICT_SCORE = 3.0             # correct
+LENIENT_SCORE = 2.0           # correct or close
+
+# Henry's model_name -> our model_display (verified 24/24).
 MODEL_NAME_MAP = {
     "Amazon-Nova-Lite": "Amazon Nova Lite v1",
     "Amazon-Nova-Micro": "Amazon Nova Micro v1",
@@ -65,11 +73,6 @@ MODEL_NAME_MAP = {
     "tiny-aya-water": "Tiny-Aya water",
 }
 
-# A riddle counts as correct (strict) when the human gave the top score.
-HUMAN_CORRECT_SCORE = 3.0
-# Communities considered too thin for agreement stats (still shown in coverage).
-THIN_THRESHOLD = 0.20  # < 20% of human-eligible rows scored
-
 
 def load_flat() -> pd.DataFrame:
     h = pd.read_csv(FLAT_CSV, low_memory=False)
@@ -77,27 +80,30 @@ def load_flat() -> pd.DataFrame:
     h["model_display"] = h["model_name"].map(MODEL_NAME_MAP)
     unmapped = sorted(h.loc[h["model_display"].isna(), "model_name"].dropna().unique())
     if unmapped:
-        print(f"  WARNING unmapped model_name(s): {unmapped}")
+        raise SystemExit(
+            f"Unmapped model_name(s) {unmapped}. Add to MODEL_NAME_MAP before "
+            "trusting any number."
+        )
+    if h["model_display"].nunique() != EXPECTED_MODELS:
+        print(f"  NOTE: {h['model_display'].nunique()} models in flatfile "
+              f"(expected {EXPECTED_MODELS}).")
     return h
 
 
 def coverage_report(h: pd.DataFrame) -> pd.DataFrame:
-    """Per-community completion = human / (human + pending). Auto-resolved
-    rows don't need human eval, so they are not in the denominator."""
-    h = h.assign(
+    g = h.assign(
         is_human=h["scoring_method"].eq("human_eval"),
         is_pending=h["scoring_method"].eq("pending_human_eval"),
-    )
-    g = h.groupby("community")
+    ).groupby("community")
     cov = pd.DataFrame({
         "human_done": g["is_human"].sum().astype(int),
         "pending": g["is_pending"].sum().astype(int),
     })
     cov["human_eligible"] = cov["human_done"] + cov["pending"]
     cov["pct_complete"] = (
-        cov["human_done"] / cov["human_eligible"].where(cov["human_eligible"] > 0)
-        * 100
+        cov["human_done"] / cov["human_eligible"].where(cov["human_eligible"] > 0) * 100
     ).round(1)
+
     def status(r):
         if r["human_done"] == 0:
             return "not_started"
@@ -106,111 +112,109 @@ def coverage_report(h: pd.DataFrame) -> pd.DataFrame:
         if r["pct_complete"] < THIN_THRESHOLD * 100:
             return "thin"
         return "partial"
+
     cov["status"] = cov.apply(status, axis=1)
     return cov.sort_values(["status", "pct_complete"])
 
 
-def join_and_fill(h: pd.DataFrame, auto: pd.DataFrame) -> pd.DataFrame:
-    """Attach the heuristic judge score; fill non-human rows with it."""
-    auto_side = auto[["riddle_id", "model_display", "judge_score",
-                      "judge_verdict"]].copy()
-    m = h.merge(auto_side, on=["riddle_id", "model_display"], how="left")
-
-    m["is_human"] = m["scoring_method"].eq("human_eval") & m["score"].notna()
-    m["score_source"] = m["scoring_method"]
-    # final_score: human score where present, else the heuristic judge score.
-    m["final_score"] = m["score"].where(m["is_human"], m["judge_score"])
-    # correctness on a common binary: top human score, or judge 'correct'.
-    m["is_correct"] = (
-        (m["is_human"] & (m["score"] == HUMAN_CORRECT_SCORE))
-        | (~m["is_human"] & m["judge_verdict"].eq("correct"))
-    )
+def build_scored(h: pd.DataFrame, auto: pd.DataFrame) -> pd.DataFrame:
+    """Henry's score for every row; fill only pending rows with the judge."""
+    judge = auto[["riddle_id", "model_display", "judge_score", "judge_verdict"]]
+    m = h.merge(judge, on=["riddle_id", "model_display"], how="left")
+    m["is_pending"] = m["scoring_method"].eq("pending_human_eval")
+    # final score = Henry's score, or the heuristic judge score where pending.
+    m["final_score"] = m["score"].where(~m["is_pending"], m["judge_score"])
+    m["is_correct"] = m["final_score"].eq(STRICT_SCORE)
+    m["is_correct_lenient"] = m["final_score"].ge(LENIENT_SCORE)
     return m
 
 
-def human_leaderboard(m: pd.DataFrame) -> pd.DataFrame:
-    """Per-model hybrid accuracy (human where scored, judge-filled elsewhere)."""
-    def agg(g: pd.DataFrame) -> pd.Series:
-        human = g[g.is_human]
-        return pd.Series({
-            "accuracy": g.is_correct.mean(),                    # strict, top score
-            "human_graded": human["score"].mean() / 3 if len(human) else float("nan"),
-            "human_share": g.is_human.mean(),                   # how much is real human
-            "n": len(g),
-        })
-    return (
-        m.groupby("model_display").apply(agg, include_groups=False)
-        .sort_values("accuracy", ascending=False)
-    )
+def leaderboard(m: pd.DataFrame, communities: set[str]) -> pd.DataFrame:
+    """Leaderboard over the given communities, using final scores."""
+    sub = m[m["community"].isin(communities)]
+    lb = sub.groupby("model_display").agg(
+        strict=("is_correct", "mean"),
+        lenient=("is_correct_lenient", "mean"),
+        n=("is_correct", "size"),
+        human_share=("scoring_method", lambda s: (s == "human_eval").mean()),
+    ).sort_values("strict", ascending=False)
+    return lb
 
 
 def main() -> None:
     h = load_flat()
     auto = pd.read_parquet(AUTO_PARQUET)
+    m = build_scored(h, auto)
 
     cov = coverage_report(h)
+    complete = set(cov[cov.status == "complete"].index)
+
+    # --- sanity checks: fail loudly rather than ship a wrong number ---
+    cm = m[m["community"].isin(complete)]
+    per_model = cm.groupby("model_display").size()
+    expected = len(complete) * RIDDLES_PER_COMMUNITY
+    off = per_model[per_model != expected]
+    if len(complete) and not off.empty:
+        print(f"  WARN: some models != {expected} rows on complete communities:\n"
+              f"{off.to_string()}")
+    stray_pending = int(cm["is_pending"].sum())
+    if stray_pending:
+        print(f"  NOTE: {stray_pending} stray pending rows inside 'complete' "
+              "communities (counted via judge fill).")
+
     OUT_COVERAGE.parent.mkdir(parents=True, exist_ok=True)
     cov.to_csv(OUT_COVERAGE)
-    n_done = (cov.status == "complete").sum()
-    print(f"Coverage: {n_done}/{len(cov)} communities complete, "
-          f"{(cov.status=='partial').sum()} partial, "
-          f"{(cov.status=='thin').sum()} thin, "
-          f"{(cov.status=='not_started').sum()} not started")
-    print(f"  wrote {OUT_COVERAGE}")
+    counts = cov.status.value_counts().to_dict()
+    print(f"Coverage: complete {counts.get('complete',0)}, partial "
+          f"{counts.get('partial',0)}, thin {counts.get('thin',0)}, "
+          f"not started {counts.get('not_started',0)} (of {len(cov)}).")
 
-    m = join_and_fill(h, auto)
+    lb = leaderboard(m, complete)
+    lb.to_csv(OUT_LB)
     m.to_parquet(OUT_PARQUET, index=False)
-    lb = human_leaderboard(m)
-    print(f"\n  wrote {OUT_PARQUET}")
-    print("\nHybrid human leaderboard (top 6, human-where-scored + judge-filled):")
-    print((lb.head(6)[["accuracy", "human_graded", "human_share"]] *
-           [100, 100, 100]).round(1).to_string())
 
-    write_report(cov, lb, m)
-    print(f"\n  wrote {OUT_MD}")
+    print(f"\nDEFENSIBLE human leaderboard  (complete communities only, "
+          f"N={len(complete)}/{TOTAL_COMMUNITIES}, provisional):")
+    print((lb.head(8)[["strict", "lenient"]] * 100).round(1).to_string())
+
+    write_report(cov, lb, complete)
+    print(f"\n  wrote {OUT_LB}, {OUT_COVERAGE}, {OUT_PARQUET}, {OUT_MD}")
 
 
-def write_report(cov: pd.DataFrame, lb: pd.DataFrame, m: pd.DataFrame) -> None:
-    from datetime import date
+def write_report(cov: pd.DataFrame, lb: pd.DataFrame, complete: set[str]) -> None:
     counts = cov.status.value_counts().to_dict()
     lines = [
         "# Human evaluation report: v0",
         "",
         f"Generated {date.today().isoformat()} by human_eval.py from "
-        "`model_riddle_results_flat.csv`. Rerun as coverage grows; do not "
-        "edit by hand.",
+        "`model_riddle_results_flat.csv`. Rerun as coverage grows; do not edit "
+        "by hand. Every score traces to Henry's flatfile.",
         "",
-        "Scores are hybrid: human where a human scored the answer, filled with "
-        "the heuristic judge score elsewhere (Henry's cap policy). Accuracy is "
-        "the strict top-score rate; human_graded is the mean human score / 3.",
+        f"**Provisional: {len(complete)}/{TOTAL_COMMUNITIES} communities have "
+        "complete human evaluation.** The leaderboard below is computed on those "
+        "communities only, using the human score for every row (auto-resolved "
+        "rows keep their auto score; no judge-fill). Strict = top score (3); "
+        "lenient = score >= 2. Rankings can still change as coverage completes.",
         "",
         "## Coverage",
         "",
         f"complete: {counts.get('complete',0)}, partial: {counts.get('partial',0)}, "
-        f"thin: {counts.get('thin',0)}, not started: {counts.get('not_started',0)} "
-        f"(of {len(cov)} communities). Full per-community table in "
-        "`data/processed/human_eval_coverage.csv`.",
+        f"thin: {counts.get('thin',0)}, not started: {counts.get('not_started',0)}. "
+        "Per-community table in `data/processed/human_eval_coverage.csv`.",
         "",
-        "Not started (chase these): "
-        + ", ".join(cov[cov.status == "not_started"].index) + ".",
+        "Not started (chase): "
+        + (", ".join(cov[cov.status == "not_started"].index) or "none") + ".",
+        "Thin: " + (", ".join(cov[cov.status == "thin"].index) or "none") + ".",
         "",
-        "## Hybrid leaderboard",
+        f"## Human leaderboard (complete communities, N={len(complete)}/"
+        f"{TOTAL_COMMUNITIES})",
         "",
-        "| model | accuracy (%) | human graded (%) | human share (%) |",
-        "|---|---|---|---|",
+        "| model | strict (%) | lenient (%) |",
+        "|---|---|---|",
     ]
     for model, r in lb.iterrows():
-        lines.append(
-            f"| {model} | {r.accuracy*100:.1f} | {r.human_graded*100:.1f} | "
-            f"{r.human_share*100:.1f} |"
-        )
-    lines += [
-        "",
-        "> human share = fraction of a model's rows that carry a real human "
-        "score; the rest are judge-filled. These numbers move as coverage "
-        "grows, so rerun after each refresh.",
-        "",
-    ]
+        lines.append(f"| {model} | {r.strict*100:.1f} | {r.lenient*100:.1f} |")
+    lines += ["", "> Provisional until coverage completes. Rerun to refresh.", ""]
     OUT_MD.write_text("\n".join(lines), encoding="utf-8")
 
 
