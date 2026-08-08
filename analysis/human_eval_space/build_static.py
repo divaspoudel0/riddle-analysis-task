@@ -29,7 +29,57 @@ app = types.ModuleType("app")
 app.__file__ = str(_APP)
 exec(compile(_src, str(_APP), "exec"), app.__dict__)
 
+import plotly.graph_objects as go  # noqa: E402
+
 OUT = Path(__file__).parent / "index.html"  # repo root: HF Static Space entry
+
+# community-name suffix token -> Plotly 'country names' label
+TOKEN2COUNTRY = {
+    "egypt": "Egypt", "morocco": "Morocco", "sudan": "Sudan", "syria": "Syria",
+    "belarus": "Belarus", "bangladesh": "Bangladesh", "india": "India",
+    "portuguese": "Brazil", "indonesia": "Indonesia", "bulgaria": "Bulgaria",
+    "china": "China", "netherlands": "Netherlands", "canada": "Canada",
+    "usa": "United States", "france": "France", "germany": "Germany",
+    "hungary": "Hungary", "italy": "Italy", "uganda": "Uganda", "nepal": "Nepal",
+    "iran": "Iran", "poland": "Poland", "portugal": "Portugal", "russia": "Russia",
+    "serbia": "Serbia", "lanka": "Sri Lanka", "argentina": "Argentina",
+    "cuba": "Cuba", "peru": "Peru", "kenya": "Kenya", "thailand": "Thailand",
+    "pakistan": "Pakistan", "uzbekistan": "Uzbekistan", "nigeria": "Nigeria",
+}
+
+
+def country_of(community: str):
+    return TOKEN2COUNTRY.get(community.rsplit("_", 1)[-1])
+
+
+def build_map(diff_records: list) -> str:
+    """Choropleth: mean v0 human accuracy per country on complete communities."""
+    agg: dict = {}
+    for r in diff_records:
+        c = country_of(r["community"])
+        if c:
+            agg.setdefault(c, {"vals": [], "comms": []})
+            agg[c]["vals"].append(r["Human %"])
+            agg[c]["comms"].append(r["community"])
+    countries, z, hover = [], [], []
+    for c, v in agg.items():
+        mean = sum(v["vals"]) / len(v["vals"])
+        countries.append(c)
+        z.append(round(mean, 1))
+        hover.append(f"<b>{c}</b><br>human accuracy: {mean:.1f}%<br>"
+                     + ", ".join(sorted(v["comms"])))
+    fig = go.Figure(go.Choropleth(
+        locations=countries, locationmode="country names", z=z, text=hover,
+        hovertemplate="%{text}<extra></extra>", colorscale="Blues",
+        marker_line_color="white", marker_line_width=0.5,
+        colorbar=dict(title="Human %", thickness=12, len=0.7)))
+    fig.update_geos(showcountries=True, countrycolor="#e5e7eb", showframe=False,
+                    showcoastlines=False, landcolor="#f6f7f8",
+                    projection_type="natural earth")
+    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=520,
+                      paper_bgcolor="#fff")
+    return fig.to_html(full_html=False, include_plotlyjs=False, div_id="mapdiv",
+                       config={"displayModeBar": False, "responsive": True})
 
 
 def records(df, index_name):
@@ -69,8 +119,15 @@ def main() -> None:
         cov[["status", "pct_complete", "human_done", "pending", "human_eligible"]],
         "community")
 
+    map_html = build_map(data["difficulty"]["strict"])
+    covered = sorted({country_of(r["community"]) for r in data["coverage"]
+                      if country_of(r["community"])})
+
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(HTML.replace("__DATA__", json.dumps(data)), encoding="utf-8")
+    html = (HTML.replace("__DATA__", json.dumps(data))
+                .replace("__MAP__", map_html)
+                .replace("__NCOUNTRIES__", str(len(covered))))
+    OUT.write_text(html, encoding="utf-8")
     print(f"Wrote {OUT}  (complete {len(complete)}/{app.TOTAL_COMMUNITIES}, "
           f"kappa {overall:.3f})")
 
@@ -114,7 +171,7 @@ HTML = r"""<!doctype html>
 <div id="diff" class="pane"><div id="diffchart"></div><div class="cap" id="diffcap"></div></div>
 <div id="kappa" class="pane"><div class="cards" id="kcards"></div><div id="kchart"></div><div class="cap" id="kcap"></div></div>
 <div id="cov" class="pane"><div id="covtable"></div><div class="cap" id="covcap"></div></div>
-<div id="map" class="pane"><div class="info">Coverage map — visualization by <b>Pouya Sadeghi</b> (Cohere Labs). Add the image to this Space to render it here. It can later be augmented by shading each community by human accuracy from the Community-difficulty view.</div></div>
+<div id="map" class="pane"><p style="font-size:14px;margin:0 0 10px">World map — concept by <b>Pouya Sadeghi</b> (Cohere Labs), shaded by v0 human accuracy (strict) per country across __NCOUNTRIES__ countries. Hover a country for its communities.</p>__MAP__<div class="cap">Darker = higher human accuracy on communities with complete evaluation. Countries in grey are represented in the benchmark but not yet complete. Provisional (N=17/44 communities).</div></div>
 <div class="foot" id="foot"></div>
 <script>
 const D=__DATA__;
@@ -129,7 +186,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
  document.getElementById(b.dataset.p).classList.add('on');window.dispatchEvent(new Event('resize'));});
-const L={margin:{l:10,r:10,t:10,b:44},plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{size:12},xaxis:{gridcolor:'#eef0f2',zeroline:false}};
+const L={margin:{l:10,r:16,t:10,b:44},plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{size:12},xaxis:{gridcolor:'#eef0f2',zeroline:false},yaxis:{automargin:true,ticklabelposition:'outside'}};
 function dumbbell(el,rows,keyF,keyC,labels,xlab){
  const y=rows.map(labels),lo=rows.map(r=>r[keyF]),hi=rows.map(r=>r[keyC]);
  const segs=[];rows.forEach((r,i)=>segs.push({x:[r[keyF],r[keyC]],y:[y[i],y[i]],mode:'lines',line:{color:'#d0d3d8',width:3},showlegend:false,hoverinfo:'skip',type:'scatter'}));
