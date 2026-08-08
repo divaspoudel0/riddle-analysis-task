@@ -52,31 +52,36 @@ def country_of(community: str):
     return TOKEN2COUNTRY.get(community.rsplit("_", 1)[-1])
 
 
-def build_map(diff_records: list) -> str:
-    """Choropleth: mean v0 human accuracy per country on complete communities."""
+def build_map(coverage_records: list) -> str:
+    """Choropleth: number of cultures (communities) covered per country.
+
+    Coverage map, concept by Pouya Sadeghi: colour a country by how many of the
+    benchmark's cultures it contributes, binned 1 / 2 / 3 / 4 / 5-10.
+    """
     agg: dict = {}
-    for r in diff_records:
+    for r in coverage_records:
         c = country_of(r["community"])
         if c:
-            agg.setdefault(c, {"vals": [], "comms": []})
-            agg[c]["vals"].append(r["Human %"])
-            agg[c]["comms"].append(r["community"])
+            agg.setdefault(c, []).append(r["community"])
     countries, z, hover = [], [], []
-    for c, v in agg.items():
-        mean = sum(v["vals"]) / len(v["vals"])
+    for c, comms in agg.items():
+        n = len(comms)
         countries.append(c)
-        z.append(round(mean, 1))
-        hover.append(f"<b>{c}</b><br>human accuracy: {mean:.1f}%<br>"
-                     + ", ".join(sorted(v["comms"])))
+        z.append(min(n, 5))  # colour capped at the "5-10" bin
+        plural = "culture" if n == 1 else "cultures"
+        hover.append(f"<b>{c}</b><br>{n} {plural}<br>" + ", ".join(sorted(comms)))
     fig = go.Figure(go.Choropleth(
         locations=countries, locationmode="country names", z=z, text=hover,
         hovertemplate="%{text}<extra></extra>", colorscale="Blues",
-        marker_line_color="white", marker_line_width=0.5,
-        colorbar=dict(title="Human %", thickness=12, len=0.7)))
-    fig.update_geos(showcountries=True, countrycolor="#e5e7eb", showframe=False,
-                    showcoastlines=False, landcolor="#f6f7f8",
+        zmin=1, zmax=5, marker_line_color="white", marker_line_width=0.5,
+        colorbar=dict(
+            title=dict(text="Cultures covered per country", side="bottom"),
+            orientation="h", y=-0.12, thickness=14, len=0.6,
+            tickvals=[1, 2, 3, 4, 5], ticktext=["1", "2", "3", "4", "5–10"])))
+    fig.update_geos(showcountries=True, countrycolor="#ffffff", showframe=True,
+                    framecolor="#888", showcoastlines=False, landcolor="#e5e7eb",
                     projection_type="natural earth")
-    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=520,
+    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=560,
                       paper_bgcolor="#fff")
     return fig.to_html(full_html=False, include_plotlyjs=False, div_id="mapdiv",
                        config={"displayModeBar": False, "responsive": True})
@@ -119,7 +124,7 @@ def main() -> None:
         cov[["status", "pct_complete", "human_done", "pending", "human_eligible"]],
         "community")
 
-    map_html = build_map(data["difficulty"]["strict"])
+    map_html = build_map(data["coverage"])
     covered = sorted({country_of(r["community"]) for r in data["coverage"]
                       if country_of(r["community"])})
 
@@ -171,7 +176,7 @@ HTML = r"""<!doctype html>
 <div id="diff" class="pane"><div id="diffchart"></div><div class="cap" id="diffcap"></div></div>
 <div id="kappa" class="pane"><div class="cards" id="kcards"></div><div id="kchart"></div><div class="cap" id="kcap"></div></div>
 <div id="cov" class="pane"><div id="covtable"></div><div class="cap" id="covcap"></div></div>
-<div id="map" class="pane"><p style="font-size:14px;margin:0 0 10px">World map — concept by <b>Pouya Sadeghi</b> (Cohere Labs), shaded by v0 human accuracy (strict) per country across __NCOUNTRIES__ countries. Hover a country for its communities.</p>__MAP__<div class="cap">Darker = higher human accuracy on communities with complete evaluation. Countries in grey are represented in the benchmark but not yet complete. Provisional (N=17/44 communities).</div></div>
+<div id="map" class="pane"><p style="font-size:14px;margin:0 0 10px">Coverage map — concept by <b>Pouya Sadeghi</b> (Cohere Labs): cultures covered per country, across __NCOUNTRIES__ countries. Hover a country for its cultures.</p>__MAP__<div class="cap">Darker = more of the benchmark's cultures contributed by that country. Grey countries are not represented in the benchmark. Covers all 44 v0 cultures.</div></div>
 <div class="foot" id="foot"></div>
 <script>
 const D=__DATA__;
