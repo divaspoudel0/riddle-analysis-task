@@ -324,11 +324,11 @@ with tab_map:
     map_img = DATA / "coverage_map.png"
     if map_img.exists():
         st.image(str(map_img), use_container_width=True)
-        st.caption("Coverage map — visualization by ipouyall (Cohere Labs). "
+        st.caption("Coverage map — visualization by Pouya Sadeghi (Cohere Labs). "
                    "Drop an updated image at data/coverage_map.png to replace.")
     else:
         st.info(
-            "No map image yet. Add ipouyall's coverage map as "
+            "No map image yet. Add Pouya Sadeghi's coverage map as "
             "`data/coverage_map.png` and it will render here, credited. "
             "We can later augment it by shading each community by human "
             "accuracy from the difficulty tab.")
