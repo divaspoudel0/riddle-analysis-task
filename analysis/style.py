@@ -29,6 +29,13 @@ from pathlib import Path
 from typing import Iterable
 
 import matplotlib as mpl
+from matplotlib.colors import LinearSegmentedColormap
+
+
+# ACL's two-column layout has a 6.5-inch text block. These dimensions leave a
+# small safety margin so exported figures fit without LaTeX scaling artifacts.
+ACL_ONE_COLUMN_WIDTH = 3.15
+ACL_TWO_COLUMN_WIDTH = 6.45
 
 
 # --------------------------------------------------------------------------- #
@@ -74,6 +81,12 @@ CONDITION_COLORS: dict[str, str] = {
 # Sequential map for continuous quantities (accuracy heatmaps, etc.).
 # "viridis" is perceptually uniform and colorblind-friendly.
 SEQUENTIAL_CMAP = "viridis"
+# A restrained sequential scale for score heatmaps. It reserves dark ink for
+# direct cell labels and uses a single blue hue only to encode ordered values.
+SCORE_CMAP = LinearSegmentedColormap.from_list(
+    "riddles_score",
+    ("#F7F7F5", "#D8EAF2", "#A8D0E5", "#6CAED6"),
+)
 # Diverging map for signed quantities (e.g. delta vs. a baseline).
 DIVERGING_CMAP = "vlag"  # seaborn-provided; falls back to "coolwarm" if missing
 
@@ -90,13 +103,13 @@ DIVERGING_CMAP = "vlag"  # seaborn-provided; falls back to "coolwarm" if missing
 # the system fallbacks. Until then, "Arial Unicode MS" (broad macOS system font)
 # is the practical catch-all so labels don't render as missing-glyph boxes.
 SERIF_STACK: list[str] = [
-    "STIX Two Text",     # bundled with matplotlib; Times/CM-adjacent serif (Latin + math)
+    "STIX Two Text",  # bundled with matplotlib; Times/CM-adjacent serif (Latin + math)
     "Times New Roman",
     # Vendored in analysis/fonts/ (see fonts/README.md); registered by
     # apply_style via register_fonts so figures render identically off-Mac.
-    "Noto Serif",            # Latin ext + Cyrillic + Greek + Vietnamese
-    "Noto Serif SC",         # CJK (simplified + traditional codepoints)
-    "Noto Naskh Arabic",     # Arabic incl. Persian/Urdu codepoints
+    "Noto Serif",  # Latin ext + Cyrillic + Greek + Vietnamese
+    "Noto Serif SC",  # CJK (simplified + traditional codepoints)
+    "Noto Naskh Arabic",  # Arabic incl. Persian/Urdu codepoints
     "Noto Serif Bengali",
     "Noto Serif Devanagari",  # Marathi, Nepali, Konkani
     "Noto Serif Malayalam",
@@ -104,9 +117,9 @@ SERIF_STACK: list[str] = [
     "Noto Serif Telugu",
     "Noto Serif Sinhala",
     "Noto Serif Thai",
-    "Noto Sans Buginese",    # Lontara; no serif cut exists
+    "Noto Sans Buginese",  # Lontara; no serif cut exists
     "Arial Unicode MS",  # broad macOS system fallback: Arabic/Devanagari/CJK/Hebrew/...
-    "DejaVu Serif",      # matplotlib's always-present last resort (Latin/Greek/Cyrillic)
+    "DejaVu Serif",  # matplotlib's always-present last resort (Latin/Greek/Cyrillic)
 ]
 
 
@@ -150,8 +163,8 @@ def _rc_params() -> dict[str, object]:
         # --- fonts ---
         "font.family": family,
         "font.serif": SERIF_STACK,
-        "mathtext.fontset": "cm",      # Computer Modern math -> LaTeX look
-        "axes.unicode_minus": False,   # use ASCII '-'; safe across fallbacks
+        "mathtext.fontset": "cm",  # Computer Modern math -> LaTeX look
+        "axes.unicode_minus": False,  # use ASCII '-'; safe across fallbacks
         # --- type sizes (tuned for a single-column paper figure) ---
         "font.size": 9,
         "axes.titlesize": 10,
@@ -173,13 +186,13 @@ def _rc_params() -> dict[str, object]:
         "axes.edgecolor": "#333333",
         "axes.linewidth": 0.8,
         # --- figure / saving: vector-first for print ---
-        "figure.figsize": (3.5, 2.6),  # ~single column; override per figure
-        "figure.dpi": 150,             # on-screen; savefig.dpi governs export
+        "figure.figsize": (ACL_ONE_COLUMN_WIDTH, 2.25),
+        "figure.dpi": 150,  # on-screen; savefig.dpi governs export
         "savefig.dpi": 300,
         "savefig.format": "pdf",
         "savefig.bbox": "tight",
         "savefig.pad_inches": 0.02,
-        "pdf.fonttype": 42,            # embed TrueType (editable, no Type-3)
+        "pdf.fonttype": 42,  # embed TrueType (editable, no Type-3)
         "ps.fonttype": 42,
         "legend.frameon": False,
     }
@@ -195,6 +208,25 @@ def apply_style() -> None:
     """
     register_fonts()
     mpl.rcParams.update(_rc_params())
+
+
+def acl_figure_size(columns: int = 1, height: float = 2.25) -> tuple[float, float]:
+    """Return an ACL-safe figure size in inches.
+
+    Args:
+        columns: ``1`` for a single-column figure or ``2`` for a full-width figure.
+        height: Requested figure height in inches.
+
+    Returns:
+        A ``(width, height)`` tuple accepted by Matplotlib.
+
+    Raises:
+        ValueError: If ``columns`` is not one or two.
+    """
+    widths = {1: ACL_ONE_COLUMN_WIDTH, 2: ACL_TWO_COLUMN_WIDTH}
+    if columns not in widths:
+        raise ValueError("columns must be 1 or 2")
+    return widths[columns], height
 
 
 def color_for_condition(condition_id: str) -> str:
@@ -219,3 +251,22 @@ def save_figure(fig, path: str | Path, **kwargs) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, **kwargs)
     return path
+
+
+def save_figure_pair(fig, stem: str | Path, **kwargs) -> tuple[Path, Path]:
+    """Save a publication PDF and a review-friendly PNG from one figure.
+
+    Args:
+        fig: Matplotlib figure to save.
+        stem: Output path without an extension.
+        **kwargs: Additional ``savefig`` arguments.
+
+    Returns:
+        Paths to the generated PDF and PNG, respectively.
+    """
+    stem = Path(stem)
+    stem.parent.mkdir(parents=True, exist_ok=True)
+    pdf_path = save_figure(fig, stem.with_suffix(".pdf"), **kwargs)
+    png_path = stem.with_suffix(".png")
+    fig.savefig(png_path, dpi=300, **kwargs)
+    return pdf_path, png_path

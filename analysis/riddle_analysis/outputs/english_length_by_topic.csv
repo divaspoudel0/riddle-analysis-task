@@ -1,0 +1,10 @@
+topic,q1,median,q3,n
+Politics,12.0,17.0,24.0,598
+History,13.0,17.0,23.0,600
+Geography,11.0,17.0,23.0,600
+Arts,12.0,17.0,24.0,600
+Sports,13.0,18.0,25.0,599
+National Heritage,12.0,18.0,25.0,599
+Kid's World,11.0,16.0,24.0,599
+Everyday Life,10.0,15.0,20.0,597
+Wildcard,10.0,16.0,23.0,1200

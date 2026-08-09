@@ -1,0 +1,13 @@
+paper_order,model_display,available_with_complete_v0_v2_coverage,figure_status
+1,gemini-3.1-pro-preview,True,included
+2,GPT5.5-search,True,included
+3,deepseek-v4-pro-thinking,True,included
+4,deepseek-v4-pro,True,included
+5,Apertus-v1.5-70B,True,included
+6,Apertus-v1.5-8B,True,included
+7,Apertus-70B-Instruct-2509,True,included
+8,Apertus-8B-Instruct-2509,True,included
+9,EuroLLM-22B-Instruct-2512,True,included
+10,Tiny-Aya water,True,included
+11,Tiny-Aya earth,True,included
+12,Tiny-Aya fire,True,included

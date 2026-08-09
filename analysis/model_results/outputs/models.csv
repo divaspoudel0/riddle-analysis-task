@@ -1,0 +1,13 @@
+model_display,model_id,reasoning_mode,evaluation_category,v0_rows,v1_rows,v2_rows,selected_for_paper
+Apertus-70B-Instruct-2509,swiss-ai/Apertus-70B-Instruct-2509,none,closed_book,4399,400,1300,True
+Apertus-8B-Instruct-2509,swiss-ai/Apertus-8B-Instruct-2509,none,closed_book,4399,400,1300,True
+Apertus-v1.5-70B,swiss-ai/Apertus-v1.5-70B,none,closed_book,4399,400,1300,True
+Apertus-v1.5-8B,swiss-ai/Apertus-v1.5-8B,none,closed_book,4399,400,1300,True
+EuroLLM-22B-Instruct-2512,local/eurollm-22b-instruct-2512,none,closed_book,4399,400,1300,True
+GPT5.5-search,openai/gpt-5.5-search,none,search_enabled,4399,400,1300,True
+Tiny-Aya earth,cohere/tiny-aya-earth,none,closed_book,4399,400,1300,True
+Tiny-Aya fire,cohere/tiny-aya-fire,none,closed_book,4399,400,1300,True
+Tiny-Aya water,cohere/tiny-aya-water,none,closed_book,4399,400,1300,True
+deepseek-v4-pro,deepseek/deepseek-v4-pro-openrouter,none,closed_book,4399,400,1300,True
+deepseek-v4-pro-thinking,deepseek/deepseek-v4-pro-thinking-openrouter,high,closed_book,4399,400,1300,True
+gemini-3.1-pro-preview,google/gemini-3.1-pro-preview-openrouter,none,closed_book,4399,400,1300,True

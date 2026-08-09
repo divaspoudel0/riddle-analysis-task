@@ -1,0 +1,11 @@
+region,riddles,languages,missing_english_riddles,missing_english_answers,human_score_coverage
+Sub-Saharan Africa,500,5,0,0,0.004
+North Africa,400,4,0,0,0.9475
+North America,300,2,0,0,0.5366666666666666
+Caribbean,100,1,0,0,0.0
+South America,300,2,1,0,0.3333333333333333
+Europe,1400,14,2,2,0.35714285714285715
+West Asia,400,3,0,0,0.4325
+Central Asia,100,1,0,0,1.0
+South Asia,1400,13,3,40,0.21214285714285713
+East & Southeast Asia,1200,9,2,0,0.04416666666666667
