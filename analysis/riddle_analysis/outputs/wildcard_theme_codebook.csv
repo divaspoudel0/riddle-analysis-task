@@ -1,0 +1,123 @@
+community,topic,theme
+arabic_egypt,Economics,Economy
+german_germany,Economy,Economy
+dutch_netherlands,Work life,Economy
+brazilian_portuguese,Brazilian Cuisine,Food
+arabic_lebanese,Cuisine,Food
+vietnamese_vietnam,Cuisine,Food
+arabic_morocco,Food,Food
+arabic_sudan,Food,Food
+belarusian_belarus,Food,Food
+chinese_simplified_china,Food,Food
+dutch_netherlands,Food,Food
+english_canada,Food,Food
+french_canada,Food,Food
+german_germany,Food,Food
+luxembourgish_luxembourg,Food,Food
+mongondow_indonesia,Food,Food
+persian_iran,Food,Food
+spanish_cuba,Food,Food
+swahili_kenya,Food,Food
+tunisian_arabic_tunisia,Food,Food
+marathi_india,Food & Coooking,Food
+chinese_singapore,Food & Hawker Culture,Food
+nepali_nepal,Food & Household,Food
+gujarati_india,Food & Kitchen,Food
+sinhala_sri_lanka,Food & Rituals,Food
+urdu_pakistan,Food & Street Culture,Food
+assamese_india,Food and Agriculture,Food
+arabic_egypt,Food culture,Food
+bulgarian_bulgaria,Gasronomy,Food
+catalan_catalonia,Gastronomy,Food
+portuguese_portugal,Gastronomy,Food
+uzbek_uzbekistan,National Cuisine,Food
+turkish_turkey,Turkish Cuisine,Food
+arabic_syria,Wildcard 1 [Food],Food
+konkani_india,Wildcard 1 [Food],Food
+tamil_india,Wildcard 2 [Food Is Medicine],Food
+bengali_india,Anatomy,Health
+luganda_uganda,Anatomy,Health
+lumasaba_uganda,Anatomy,Health
+bengali_bangladesh,Human Anatomy,Health
+afaan_oromo_oromo,Human Body,Health
+marathi_india,Human Body,Health
+sindhi_india,درياءَ ۽ منڇر جا مهاڻا (Life of the Indus & Manchhar Boat-Folk),Heritage
+sindhi_india,سنڌي شاديءَ جون ننڍڙيون رسمون (Sindhi Wedding Micro-Traditions),Heritage
+cantonese_china,Cantonese Expressions,Language
+cantonese_china,Cantonese Sayings,Language
+chinese_china,Colloquial phrases,Language
+russian_russia,Colloquial phrases,Language
+thai_thailand,Idiom,Language
+polish_poland,Language,Language
+sinhala_sri_lanka,Language & Proverbs,Language
+spanish_cuba,Popular Proverbs,Language
+arabic_sudan,Proverbs,Language
+italian_italy,Proverbs & Sayings,Language
+brazilian_portuguese,Puns,Language
+chinese_singapore,Singlish & Slang,Language
+french_france,Slang,Language
+spanish_peru,Slang,Language
+thai_thailand,Spoonerism,Language
+tunisian_arabic_tunisia,dialect,Language
+ukrainian_ukraine,idioms and proverbs,Language
+arabic_morocco,Clothing,Material Culture
+indonesian_indonesia,Objects & Things,Material Culture
+japanese_japan,Wildcard 1 [Konbini Culture],Material Culture
+japanese_japan,Wildcard 2 [Sento/Onsen Etiquette],Material Culture
+malayalam_india,Cinema,Media
+persian_iran,Cinema,Media
+english_usa,Hollywood,Media
+chinese_malaysia,Literature,Media
+malay_malaysia,Literature,Media
+chinese_malaysia,Movies,Media
+hungarian_hungary,Movies,Media
+malay_malaysia,Movies,Media
+mongondow_indonesia,Music,Media
+serbian_serbia,Music,Media
+polish_poland,Popculture,Media
+catalan_catalonia,Popular Culture,Media
+english_usa,TV shows,Media
+bugisnese_indonesia,Traditional instruments,Media
+turkish_turkey,Turkish Pop Culture,Media
+tamil_india,Wildcard 1 [Tamil Literature],Media
+chinese_simplified_china,Animal,Nature
+luxembourgish_luxembourg,Animal Names,Nature
+swahili_kenya,Animals,Nature
+yoruba_nigeria,Animals,Nature
+indonesian_indonesia,Animals & Plants,Nature
+kannada_india,Animals & insects,Nature
+afaan_oromo_oromo,Nature,Nature
+belarusian_belarus,Nature,Nature
+bengali_bangladesh,Nature,Nature
+bengali_india,Nature,Nature
+english_canada,Nature,Nature
+malayalam_india,Nature,Nature
+nepali_nepal,Nature,Nature
+spanish_argentina,Nature,Nature
+assamese_india,"Nature, Animals and Science",Nature
+luganda_uganda,Plants,Nature
+lumasaba_uganda,Plants,Nature
+yoruba_nigeria,Plants,Nature
+arabic_syria,Wildcard 2 [animals_naming],Nature
+russian_russia,Moscow,Places
+kannada_india,"Time, travel & maps",Places
+vietnamese_vietnam,Beliefs,Religion
+gujarati_india,Festivals & Folk Culture,Religion
+spanish_argentina,Mythology,Religion
+italian_italy,Myths & Folklore,Religion
+spanish_peru,Myths and Legends,Religion
+bugisnese_indonesia,Religion,Religion
+urdu_pakistan,Religion & Festivals,Religion
+konkani_india,Wildcard 2 [Festival],Religion
+arabic_lebanese,Infrastructure,Science
+french_france,Science,Science
+serbian_serbia,Science & Technology,Science
+french_canada,Technology,Science
+portuguese_portugal,Big in Portugal,Society
+hungarian_hungary,Clever Hungarians,Society
+ukrainian_ukraine,Culture,Society
+uzbek_uzbekistan,Culture,Society
+chinese_china,Gen-Z ,Society
+bulgarian_bulgaria,Humanities,Society
+telugu_india,Wildcard 1 [Caste],Society
+telugu_india,Wildcard 2 [Relationships],Society
