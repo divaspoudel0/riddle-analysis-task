@@ -1,64 +1,69 @@
-import pandas as pd
-import numpy as np
-from pathlib import Path
+"""Validate HumanEval Excel workbook submissions."""
+
+import argparse
 import logging
 import re
+from pathlib import Path
 
-# define logging config
-logging.basicConfig(
-    filename="null_values.log",
-    encoding="utf-8",
-    filemode="a",
-    level=logging.ERROR
-)
-
-other_notes_logger = logging.getLogger("other_notes")
-other_notes_logger.setLevel(logging.ERROR)
-
-other_notes_handler = logging.FileHandler("other_notes.log", encoding="utf-8", mode="a")
-
-other_notes_logger.addHandler(other_notes_handler)
-other_notes_logger.propagate = False
+import pandas as pd
 
 NAME_PATTERN = re.compile(r"^Human Eval (?P<language>\w+)_(?P<country>\w+)$", re.IGNORECASE)
 REQUIRED_COLUMNS = ["Annotator Name", "Score (0-3)", "Error Type"]
-OTHER_ERROR_VALUE = ["0.4 - Other (add note)", "2.4 - Other (add note)"]
+OTHER_ERROR_VALUES = ["0.4 - Other (add note)", "2.4 - Other (add note)"]
+
+
+def configure_logging(log_directory: Path) -> logging.Logger:
+    """Configure project-local logs and return the other-notes logger."""
+    logging.basicConfig(
+        filename=log_directory / "null_values.log",
+        encoding="utf-8",
+        filemode="w",
+        level=logging.ERROR,
+        force=True,
+    )
+    other_notes_logger = logging.getLogger("other_notes")
+    other_notes_logger.setLevel(logging.ERROR)
+    other_notes_logger.handlers.clear()
+    handler = logging.FileHandler(log_directory / "other_notes.log", encoding="utf-8", mode="w")
+    other_notes_logger.addHandler(handler)
+    other_notes_logger.propagate = False
+    return other_notes_logger
 # 1. First read .csv files.
 # I assumed that the data are located in `HumanEval` folder 
 # relative path: humaneval_validation\HumanEval
-def load_files(input_path):
-    try:
-        folder = Path(input_path)
-        dfs = []
-        skipped = []
+def load_files(input_path: Path) -> list[dict[str, object]]:
+    """Load matching workbooks from an input directory."""
+    if not input_path.is_dir():
+        raise FileNotFoundError(f"Input directory does not exist: {input_path}")
 
-        for f in folder.glob("*.xlsx"):
-            match = NAME_PATTERN.match(f.stem)
-            if not match:
-                skipped.append(f.name)
-                continue
+    dataframes: list[dict[str, object]] = []
+    skipped: list[str] = []
+    for workbook in sorted(input_path.glob("*.xlsx")):
+        match = NAME_PATTERN.match(workbook.stem)
+        if not match:
+            skipped.append(workbook.name)
+            continue
 
-            language = match.group("language")
-            country = match.group("country")
+        try:
+            sheets = pd.read_excel(workbook, sheet_name=None)
+        except Exception as error:
+            logging.error("Could not read %s: %s", workbook, error)
+            raise ValueError(f"Could not read workbook: {workbook}") from error
+        dataframes.append({
+            "language": match.group("language"),
+            "country": match.group("country"),
+            "sheets": sheets,
+        })
 
-            sheets = pd.read_excel(f, sheet_name=None)  # dict of {sheet_name: df}
-            dfs.append({
-                "language": language,
-                "country": country,
-                "sheets": sheets,
-            })
-        print(f"Loaded {len(dfs)} matching files")
-        if skipped:
-            print(f"Skipped {len(skipped)} non-matching files: {skipped}")
-
-        return dfs
-    except Exception as e:
-        logging.error(f"error while finding the files: {e}")
+    print(f"Loaded {len(dataframes)} matching file(s).")
+    if skipped:
+        print(f"Skipped {len(skipped)} non-matching file(s): {', '.join(skipped)}")
+    return dataframes
 
 
 
 # 2.1. Check that ["Annotator Name", "Score (0-3)", "Error Type"] don't include any null value for the main sheet
-def check_nulls_sheet1(dfs):
+def check_nulls_sheet1(dfs: list[dict[str, object]]) -> list[dict[str, object]]:
     issues = []
 
     for entry in dfs:
@@ -100,7 +105,7 @@ def check_nulls_sheet1(dfs):
 
 
 # 2.2. Check that ["Annotator Name", "Score (0-3)", "Error Type"] don't include any null value for the extra sheet
-def check_nulls_sheet2(dfs):
+def check_nulls_sheet2(dfs: list[dict[str, object]]) -> list[dict[str, object]]:
     issues = []
 
     for entry in dfs:
@@ -151,7 +156,9 @@ def check_nulls_sheet2(dfs):
 
 
 # 3. Check that the Validator Note exists for rows in which have Other (add note) as Error Type.
-def check_other_notes(dfs, sheet_index=0):
+def check_other_notes(
+    dfs: list[dict[str, object]], sheet_index: int = 0
+) -> list[dict[str, object]]:
     """
     sheet_index=0 -> main sheet, sheet_index=1 -> extra sheet.
     """
@@ -191,7 +198,7 @@ def check_other_notes(dfs, sheet_index=0):
             })
             continue
 
-        other_mask = df["Error Type"].isin(OTHER_ERROR_VALUE) 
+        other_mask = df["Error Type"].isin(OTHER_ERROR_VALUES)
 
         # print(df["Error Type"].value_counts())
         # print(df["Validator Note"].value_counts())
@@ -210,7 +217,7 @@ def check_other_notes(dfs, sheet_index=0):
                 "row_indices": row_indices,
             })
             other_notes_logger.error(
-                f"[{tag} / {sheet_name}] {bad_count} row(s) with Error Type='{OTHER_ERROR_VALUE}' "
+                f"[{tag} / {sheet_name}] {bad_count} row(s) with Error Type='{OTHER_ERROR_VALUES}' "
                 f"but empty Validator Note at rows {row_indices}"
             )
             # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -220,20 +227,46 @@ def check_other_notes(dfs, sheet_index=0):
     return issues
 
 
+def main() -> int:
+    """Run every validation check and return a conventional process status."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "input_directory",
+        nargs="?",
+        type=Path,
+        default=Path(__file__).parent / "HumanEval",
+        help="Directory containing Human Eval <language>_<country>.xlsx files.",
+    )
+    args = parser.parse_args()
+    if not args.input_directory.is_dir():
+        print(f"Error: Input directory does not exist: {args.input_directory}")
+        return 2
+    configure_logging(args.input_directory)
+
+    try:
+        data = load_files(args.input_directory)
+    except (FileNotFoundError, ValueError) as error:
+        print(f"Error: {error}")
+        return 2
+    if not data:
+        print("Error: no matching HumanEval workbooks found.")
+        return 2
+
+    issues = [
+        *check_nulls_sheet1(data),
+        *check_nulls_sheet2(data),
+        *check_other_notes(data, sheet_index=0),
+        *check_other_notes(data, sheet_index=1),
+    ]
+    if issues:
+        print(f"Validation failed: {len(issues)} issue(s) found.")
+        for issue in issues:
+            print(issue)
+        return 1
+    print("Validation passed.")
+    return 0
+
+
 if __name__ == "__main__":
-    base_dir = Path(__file__).parent
-    data_folder_path = base_dir / "HumanEval"
-    data = load_files(data_folder_path)
-    # check for the main sheet
-    # issues1 = check_nulls_sheet1(data)
-    # check extra
-    # issues2 = check_nulls_sheet2(data)
-
-    # check for the main sheet
-    other_issues1 = check_other_notes(data, sheet_index=0)
-
-    # check for the extra
-    other_issues2 = check_other_notes(data, sheet_index=1)
-
-
+    raise SystemExit(main())
 
