@@ -1,8 +1,8 @@
 """Build a self-contained static dashboard from Henry's flat file.
 
-Free HuggingFace Static Spaces cannot run Streamlit, so this precomputes every
-metric (reusing app.py's exact functions) and bakes the numbers into a single
-self-contained index.html with Plotly from CDN.
+Self-contained: precomputes every metric from the flat file and bakes the
+numbers into a single index.html with Plotly from CDN (free HuggingFace Static
+Space — no server, no Streamlit).
 
 This is the human-evaluation layer of the benchmark: the *ceiling* (what models
 actually get right when a person judges) that complements the team's full-corpus
@@ -10,7 +10,7 @@ heuristic *floor*. Views: floor->ceiling leaderboard, community difficulty,
 how-models-fail error types, judge-vs-human agreement, coverage.
 
 Refresh: drop a newer data/model_riddle_results_flat.csv, rerun this script,
-push index.html. Numbers are identical to human_eval.py / app.py.
+upload index.html to the Space. Metrics match the model_results_v0 pipeline.
 
     python build_static.py
 """
@@ -18,23 +18,143 @@ push index.html. Numbers are identical to human_eval.py / app.py.
 from __future__ import annotations
 
 import json
-import sys
-import types
+from datetime import datetime
 from pathlib import Path
 
-# stub streamlit and exec only app.py's compute half (before the UI marker),
-# so we reuse the exact functions without running the Streamlit UI.
-_st = types.ModuleType("streamlit")
-_st.cache_data = lambda *a, **k: (lambda f: f)
-sys.modules["streamlit"] = _st
+import pandas as pd
 
-_APP = Path(__file__).parent / "app.py"
-_src = _APP.read_text().split("# ------------------------------- UI")[0]
-app = types.ModuleType("app")
-app.__file__ = str(_APP)
-exec(compile(_src, str(_APP), "exec"), app.__dict__)
+DATA = Path(__file__).parent / "data"
+FLAT = DATA / "model_riddle_results_flat.csv"
+AUTO = DATA / "results_tidy.parquet"          # heuristic-judge output (static)
+OUT = Path(__file__).parent / "index.html"    # repo root: HF Static Space entry
 
-OUT = Path(__file__).parent / "index.html"  # repo root: HF Static Space entry
+TOTAL_COMMUNITIES = 44
+EXPECTED_MODELS = 24
+RIDDLES_PER_COMMUNITY = 100
+THIN_THRESHOLD = 0.20
+STRICT_SCORE = 3.0
+LENIENT_SCORE = 2.0
+EXCLUDED_RIDDLES = {"spanish_cuba_history_016"}  # Cuba: wrong v0 text, redone in v2
+
+# Henry's model_name -> our display name (verified 24/24).
+MODEL_NAME_MAP = {
+    "Amazon-Nova-Lite": "Amazon Nova Lite v1",
+    "Amazon-Nova-Micro": "Amazon Nova Micro v1",
+    "Deepseek-v4-flash": "DeepSeek V4 Flash",
+    "EuroLLM-Instruct": "EuroLLM-22B-Instruct-2512",
+    "GPT5.5-high": "GPT5.5 [high]",
+    "GPT5.5-none": "GPT5.5 [none]",
+    "Gemini-2.5-Flash": "Gemini 2.5 Flash",
+    "Gemini-2.5-Flash-Lite": "Gemini 2.5 Flash Lite",
+    "Mistral-Large-3": "Mistral Large 3",
+    "Olmo-3-32B-Think": "OLMo-3-32B-Think",
+    "Qwen-3.5-0.8B": "Qwen/Qwen3.5-0.8B",
+    "Qwen-SEA-LION-v4.5-27B-IT": "Qwen-SEA-LION-v4.5-27B-IT",
+    "Qwen3.5-27B": "Qwen3.5 27B",
+    "claude-opus-4-7": "claude-opus-4-7 [none]",
+    "claude-opus-4-7-thinking": "claude-opus-4-7 [thinking]",
+    "command-a-plus-05-2026": "Cohere Command A Plus",
+    "deepseek-v4-pro": "deepseek-v4-pro",
+    "deepseek-v4-pro-thinking": "deepseek-v4-pro-thinking",
+    "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
+    "gemma-4-31b": "Gemma 4 31B IT",
+    "tiny-aya-earth": "Tiny-Aya earth",
+    "tiny-aya-fire": "Tiny-Aya fire",
+    "tiny-aya-global": "Tiny-Aya global",
+    "tiny-aya-water": "Tiny-Aya water",
+}
+
+
+def load():
+    """Read Henry's flat file + join the heuristic verdict. Single source of truth."""
+    h = pd.read_csv(FLAT, low_memory=False)
+    h = h[~h["riddle_id"].isin(EXCLUDED_RIDDLES)].copy()
+    h["model_display"] = h["model_name"].map(MODEL_NAME_MAP)
+    unmapped = sorted(h.loc[h["model_display"].isna(), "model_name"].dropna().unique())
+    if unmapped:
+        raise SystemExit(f"Unmapped model_name(s) {unmapped}; update MODEL_NAME_MAP.")
+    auto = pd.read_parquet(AUTO)[["riddle_id", "model_display", "judge_verdict"]]
+    h["is_human"] = h["scoring_method"].eq("human_eval")
+    h["is_pending"] = h["scoring_method"].eq("pending_human_eval")
+    h["is_correct"] = h["score"].eq(STRICT_SCORE)
+    h["is_correct_lenient"] = h["score"].ge(LENIENT_SCORE)
+    m = h.merge(auto, on=["riddle_id", "model_display"], how="left")
+    mtime = datetime.fromtimestamp(FLAT.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return m, mtime
+
+
+def coverage(h: pd.DataFrame) -> pd.DataFrame:
+    g = h.groupby("community")
+    cov = pd.DataFrame({
+        "human_done": g["is_human"].sum().astype(int),
+        "pending": g["is_pending"].sum().astype(int),
+    })
+    cov["human_eligible"] = cov["human_done"] + cov["pending"]
+    cov["pct_complete"] = (
+        cov["human_done"] / cov["human_eligible"].where(cov["human_eligible"] > 0) * 100
+    ).round(1)
+
+    def status(r):
+        if r["human_done"] == 0:
+            return "not_started"
+        if r["human_eligible"] == 0 or r["pct_complete"] >= 99:
+            return "complete"
+        if r["pct_complete"] < THIN_THRESHOLD * 100:
+            return "thin"
+        return "partial"
+
+    cov["status"] = cov.apply(status, axis=1)
+    return cov.sort_values(["status", "pct_complete"])
+
+
+def leaderboard(m: pd.DataFrame, communities: set, strict: bool) -> pd.DataFrame:
+    """Floor (heuristic) vs ceiling (human) on complete communities.
+
+    Ceiling uses the flat-file score for every row, pending dropped (never
+    filled). Floor is the heuristic judge on the very same rows.
+    """
+    col = "is_correct" if strict else "is_correct_lenient"
+    sub = m[m["community"].isin(communities) & ~m["is_pending"]]
+    ceil = sub.groupby("model_display")[col].mean().mul(100)
+    floor = (sub.assign(auto=sub["judge_verdict"].eq("correct"))
+             .groupby("model_display")["auto"].mean().mul(100))
+    n = sub.groupby("model_display").size()
+    human_share = sub.groupby("model_display")["is_human"].mean().mul(100)
+    lb = pd.DataFrame({
+        "Human (ceiling) %": ceil, "Heuristic (floor) %": floor,
+        "n": n, "human-scored %": human_share.round(0),
+    }).sort_values("Human (ceiling) %", ascending=False)
+    lb.insert(0, "rank", range(1, len(lb) + 1))
+    return lb.round(1)
+
+
+def community_difficulty(m: pd.DataFrame, communities: set, strict: bool) -> pd.DataFrame:
+    """Mean accuracy across all models per community (how hard each culture is)."""
+    col = "is_correct" if strict else "is_correct_lenient"
+    sub = m[m["community"].isin(communities) & ~m["is_pending"]]
+    human = sub.groupby("community")[col].mean().mul(100)
+    floor = (sub.assign(a=sub["judge_verdict"].eq("correct"))
+             .groupby("community")["a"].mean().mul(100))
+    return pd.DataFrame({"Human %": human, "Heuristic %": floor}).sort_values("Human %").round(1)
+
+
+def community_kappa(m: pd.DataFrame, communities: set) -> tuple:
+    """Cohen's kappa between heuristic judge and human, per community."""
+    r = m[m["is_human"] & m["community"].isin(communities) & m["judge_verdict"].notna()].copy()
+    r["h"] = r["score"].eq(STRICT_SCORE)
+    r["j"] = r["judge_verdict"].eq("correct")
+
+    def kappa(x):
+        po = (x["h"] == x["j"]).mean()
+        ph, pj = x["h"].mean(), x["j"].mean()
+        pe = ph * pj + (1 - ph) * (1 - pj)
+        return float("nan") if pe == 1 else (po - pe) / (1 - pe)
+
+    per = r.groupby("community").apply(kappa).rename("kappa").sort_values()
+    overall = kappa(r)
+    misses = int((~r["j"] & r["h"]).sum())        # human-correct the judge missed
+    overcredit = int((r["j"] & ~r["h"]).sum())     # judge-correct humans rejected
+    return per.round(3), overall, misses, overcredit, len(r)
 
 # ordered failure/outcome buckets + colours (how models fail, from human eval)
 FAIL_ORDER = ["Correct", "Partially correct", "Explicit uncertainty",
@@ -84,13 +204,13 @@ def fail_modes(m, communities: set):
 
 
 def main() -> None:
-    m, mtime = app.load()
-    cov = app.coverage(m.drop_duplicates(["community", "riddle_id", "model_display"]))
+    m, mtime = load()
+    cov = coverage(m.drop_duplicates(["community", "riddle_id", "model_display"]))
     complete = set(cov[cov.status == "complete"].index)
 
     data = {
         "meta": {
-            "mtime": mtime, "complete": len(complete), "total": app.TOTAL_COMMUNITIES,
+            "mtime": mtime, "complete": len(complete), "total": TOTAL_COMMUNITIES,
             "models": int(m["model_display"].nunique()),
             "human_rows": int(m["is_human"].sum()), "pending": int(m["is_pending"].sum()),
         },
@@ -98,10 +218,10 @@ def main() -> None:
         "fail_order": FAIL_ORDER, "fail_colors": FAIL_COLORS,
     }
     for tag, strict in [("strict", True), ("lenient", False)]:
-        data["leaderboard"][tag] = records(app.leaderboard(m, complete, strict), "model")
-        data["difficulty"][tag] = records(app.community_difficulty(m, complete, strict), "community")
+        data["leaderboard"][tag] = records(leaderboard(m, complete, strict), "model")
+        data["difficulty"][tag] = records(community_difficulty(m, complete, strict), "community")
 
-    per, overall, misses, overcredit, n = app.community_kappa(m, complete)
+    per, overall, misses, overcredit, n = community_kappa(m, complete)
     data["kappa"] = {"overall": round(overall, 3), "misses": misses,
                      "overcredit": overcredit, "n": n,
                      "per": records(per.to_frame("kappa"), "community")}
@@ -111,7 +231,7 @@ def main() -> None:
         "community")
 
     OUT.write_text(HTML.replace("__DATA__", json.dumps(data)), encoding="utf-8")
-    print(f"Wrote {OUT}  (complete {len(complete)}/{app.TOTAL_COMMUNITIES}, "
+    print(f"Wrote {OUT}  (complete {len(complete)}/{TOTAL_COMMUNITIES}, "
           f"kappa {overall:.3f})")
 
 
