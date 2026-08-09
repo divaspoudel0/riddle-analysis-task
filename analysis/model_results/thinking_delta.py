@@ -24,19 +24,31 @@ def plot_thinking_delta(results: pd.DataFrame) -> None:
         .unstack("model_display")
     )
     delta = means[models[1]] - means[models[0]]
+    delta_pp = delta * 100
     apply_style()
     fig, ax = plt.subplots(figsize=acl_figure_size(1, 3.1))
     ax.barh(
-        delta.index,
-        delta,
+        delta_pp.index,
+        delta_pp,
         color=[
             PALETTE["bluish_green"] if value >= 0 else PALETTE["vermillion"]
-            for value in delta
+            for value in delta_pp
         ],
     )
-    ax.axvline(0, color=PALETTE["black"])
+    ax.tick_params(axis="y", length=0)
+    padding = max(abs(delta_pp).max() * 0.12, 0.5)
+    ax.set_xlim(delta_pp.min() - padding, delta_pp.max() + padding)
+    for position, value in enumerate(delta_pp):
+        ax.text(
+            value + (padding / 4 if value >= 0 else -padding / 4),
+            position,
+            f"{value:+.2f} pp",
+            ha="left" if value >= 0 else "right",
+            va="center",
+            fontsize=7,
+        )
     ax.set(
-        xlabel="Thinking − non-thinking strict match rate",
+        xlabel="Thinking − non-thinking strict match rate (percentage points)",
         title="DeepSeek V4 Pro: effect of thinking mode",
     )
     fig.tight_layout()

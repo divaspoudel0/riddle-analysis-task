@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.offsetbox import AnnotationBbox, HPacker, TextArea
 
 from analysis.constants import REPO_ROOT, SURVEY_TOPICS, figure_stem
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
@@ -24,6 +25,22 @@ PII_COLUMNS = {"Timestamp", "Your Discord name", "Your Discord handle or user ID
 TOPICS = SURVEY_TOPICS
 
 
+def _count_percentage_label(value: int, denominator: int) -> HPacker:
+    """Return a compact, two-colour count-and-percentage label."""
+    return HPacker(
+        children=[
+            TextArea(str(value), textprops={"fontsize": 7, "color": PALETTE["black"]}),
+            TextArea(
+                f"({value / denominator:.0%})",
+                textprops={"fontsize": 7, "color": PALETTE["grey"]},
+            ),
+        ],
+        align="center",
+        pad=0,
+        sep=3,
+    )
+
+
 def _add_horizontal_count_label(
     ax: plt.Axes,
     value: int,
@@ -33,16 +50,15 @@ def _add_horizontal_count_label(
     offset: float = 0.35,
 ) -> None:
     """Annotate a horizontal count bar with dark count and muted percentage."""
-    label = str(value)
-    ax.text(value + offset, index, label, va="center", fontsize=7)
-    ax.annotate(
-        f" ({value / denominator:.0%})",
-        xy=(value + offset, index),
-        xytext=(5 + 4 * len(label), 0),
-        textcoords="offset points",
-        va="center",
-        fontsize=7,
-        color=PALETTE["grey"],
+    ax.add_artist(
+        AnnotationBbox(
+            _count_percentage_label(value, denominator),
+            (value + offset, index),
+            box_alignment=(0, 0.5),
+            frameon=False,
+            pad=0,
+            annotation_clip=False,
+        )
     )
 
 
@@ -54,17 +70,17 @@ def _add_vertical_count_label(
     *,
     offset: float = 0.6,
 ) -> None:
-    """Annotate a vertical count bar with dark count and muted percentage."""
-    label = str(value)
-    ax.text(index, value + offset, label, ha="center", fontsize=7)
-    ax.annotate(
-        f" ({value / denominator:.0%})",
-        xy=(index, value + offset),
-        xytext=(4 + 4 * len(label), 0),
-        textcoords="offset points",
-        va="center",
-        fontsize=7,
-        color=PALETTE["grey"],
+    """Annotate a vertical count bar with a centered count and percentage."""
+    label_y = value + max(offset, 1.2)
+    ax.add_artist(
+        AnnotationBbox(
+            _count_percentage_label(value, denominator),
+            (index, label_y),
+            box_alignment=(0.5, 0.5),
+            frameon=False,
+            pad=0,
+            annotation_clip=False,
+        )
     )
 
 
@@ -124,7 +140,7 @@ def load_survey(path: Path = DATA_PATH) -> pd.DataFrame:
 
 
 def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
-    """Relate writing difficulty to aggregate model match rate by topic."""
+    """Plot topic-writing difficulty and its fixed-topic model relationship."""
     rows = []
     for topic in TOPICS:
         values = survey[f"difficulty_{topic.casefold().replace(' ', '_')}"]
@@ -143,16 +159,15 @@ def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
     model_summary = pd.read_csv(TOPIC_MATCH_PATH)
     model_summary["topic"] = model_summary["topic"].replace({"Wildcard": "Wild Card"})
     comparison = summary.merge(model_summary, on="topic", how="inner")
+    correlation_comparison = comparison.loc[comparison["topic"] != "Wild Card"].copy()
     correlation = (
-        comparison["mean_difficulty"]
+        correlation_comparison["mean_difficulty"]
         .rank()
-        .corr(comparison["mean_model_match_rate"].rank())
+        .corr(correlation_comparison["mean_model_match_rate"].rank())
     )
 
     apply_style()
-    fig, (ax, scatter_ax) = plt.subplots(
-        1, 2, figsize=acl_figure_size(2, 3.15), gridspec_kw={"width_ratios": [1.2, 1]}
-    )
+    fig, ax = plt.subplots(figsize=acl_figure_size(1, 3.15))
     colors = [
         PALETTE["vermillion"] if topic == summary.iloc[-1].topic else PALETTE["grey"]
         for topic in summary.topic
@@ -180,19 +195,25 @@ def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
             fontsize=7,
             color=PALETTE["grey"],
         )
+    fig.tight_layout()
+    save_figure_pair(
+        fig, figure_stem("riddle_writing_analysis", "topic_writing_difficulty")
+    )
+    plt.close(fig)
+
+    fig, scatter_ax = plt.subplots(figsize=acl_figure_size(1, 2.7))
     scatter_ax.scatter(
-        comparison["mean_difficulty"],
-        comparison["mean_model_match_rate"] * 100,
+        correlation_comparison["mean_difficulty"],
+        correlation_comparison["mean_model_match_rate"] * 100,
         color=PALETTE["blue"],
         s=28,
         zorder=3,
     )
     label_offsets = {
-        "Everyday Life": (4, 7),
-        "Kid's World": (4, -11),
-        "Wild Card": (4, 8),
+        "Everyday Life": (4, 12),
+        "Kid's World": (4, 3),
     }
-    for row in comparison.itertuples():
+    for row in correlation_comparison.itertuples():
         scatter_ax.annotate(
             row.topic,
             (row.mean_difficulty, row.mean_model_match_rate * 100),
@@ -206,11 +227,11 @@ def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
     scatter_ax.grid(alpha=0.35)
     fig.tight_layout()
     save_figure_pair(
-        fig, figure_stem("riddle_writing_analysis", "topic_writing_difficulty")
+        fig, figure_stem("riddle_writing_analysis", "topic_difficulty_model_match")
     )
     plt.close(fig)
-    comparison["spearman_rho"] = correlation
-    comparison.to_csv(
+    correlation_comparison["spearman_rho"] = correlation
+    correlation_comparison.to_csv(
         OUTPUT_DIR / "topic_difficulty_model_match_comparison.csv", index=False
     )
     return summary

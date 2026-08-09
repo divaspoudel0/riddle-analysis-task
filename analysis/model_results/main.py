@@ -25,6 +25,7 @@ def main() -> None:
         REGION_ORDER,
         "full_corpus_region_performance",
         "Strict match rate by region",
+        "region_performance_v2",
     )
     plot_group_performance(
         results,
@@ -32,6 +33,7 @@ def main() -> None:
         LANGUAGE_GROUP_ORDER,
         "full_corpus_language_group_performance",
         "Strict match rate across multi-community language groups",
+        "language_group_performance_v2",
     )
     plot_thinking_delta(results)
 

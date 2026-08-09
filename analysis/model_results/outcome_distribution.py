@@ -45,11 +45,17 @@ def plot_outcomes(results: pd.DataFrame) -> None:
         left += shares[label]
     ax.set(
         xlabel="Completed responses (%)",
-        title="Deterministic heuristic-score distribution",
     )
-    ax.legend(ncol=2)
-    fig.tight_layout()
-    save_figure_pair(fig, figure_stem("model_results", "full_corpus_outcomes"))
+    fig.suptitle("Deterministic heuristic-score distribution", y=0.97)
+    fig.legend(
+        loc="upper center",
+        ncol=4,
+        bbox_to_anchor=(0.5, 0.93),
+        columnspacing=1.2,
+        handlelength=1.2,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    save_figure_pair(fig, figure_stem("model_results", "outcomes_v2"))
     plt.close(fig)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     shares.reset_index().to_csv(OUTPUT_DIR / "full_corpus_outcomes.csv", index=False)

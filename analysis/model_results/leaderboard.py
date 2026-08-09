@@ -28,8 +28,10 @@ def plot_leaderboard(results: pd.DataFrame) -> None:
     )
     positions = range(len(summary))
     values = summary["match_rate"] * 100
-    ax.hlines(positions, 0, values, color=PALETTE["light_grey"])
-    ax.scatter(values, positions, color=PALETTE["blue"], zorder=3)
+    ax.barh(positions, values, color=PALETTE["blue"], height=0.64)
+    ax.set_xlim(0, max(100, values.max() + 8))
+    for position, value in zip(positions, values, strict=True):
+        ax.text(value + 0.8, position, f"{value:.1f}%", va="center", fontsize=7)
     ax.set(
         yticks=list(positions),
         yticklabels=summary["model_display"],
@@ -37,8 +39,10 @@ def plot_leaderboard(results: pd.DataFrame) -> None:
         title="Model performance on the full corpus",
     )
     ax.invert_yaxis()
+    ax.grid(axis="x", alpha=0.35)
+    ax.grid(axis="y", visible=False)
     fig.tight_layout()
-    save_figure_pair(fig, figure_stem("model_results", "full_corpus_leaderboard"))
+    save_figure_pair(fig, figure_stem("model_results", "leaderboard_v2"))
     plt.close(fig)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     summary.to_csv(OUTPUT_DIR / "full_corpus_leaderboard.csv", index=False)

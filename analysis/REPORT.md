@@ -88,7 +88,7 @@ largest theme: 33 selections (27%) across 33 communities (54%).
 | Places           |          2 |
 | Heritage         |          2 |
 
-![Wildcard themes](figures/r_wildcard_themes_full.png)
+![Wildcard themes](figures/r_wildcard_themes.png)
 
 _Figure R2. Exclusive coding of 122 community wildcard selections._
 
@@ -128,16 +128,21 @@ _Figure W2. Resources selected while writing; selections are not mutually exclus
 ### Topic difficulty and model performance
 
 Politics has the highest reported writing difficulty (3.41/5; n=59), whereas
-Everyday Life is lowest (2.37; n=63). The paired plot compares these ratings
-with the mean strict AI match rate across the 12 evaluated models. Across the
-nine topics, the Spearman correlation is +0.52: the relationship is moderate
+Everyday Life is lowest (2.37; n=63). The correlation plot compares these ratings
+with the mean strict AI match rate across the 12 evaluated models, excluding Wild
+Card because its broad composition produces too much variation. Across the eight
+fixed topics, the Spearman correlation is +0.31: the relationship is modest
 and in the opposite direction from the proposed inverse relationship. It is
-descriptive only, given nine aggregate observations and the confounding effects
+descriptive only, given eight aggregate observations and the confounding effects
 of topic content, language, and answer conventions.
 
-![Writing difficulty and model performance](figures/w_topic_writing_difficulty.png)
+![Writing difficulty by topic](figures/w_topic_writing_difficulty.png)
 
-_Figure W3. Reported topic-writing difficulty (left) and its association with mean model match rate (right)._
+_Figure W3. Reported topic-writing difficulty by benchmark topic._
+
+![Topic difficulty and model performance](figures/w_topic_difficulty_model_match.png)
+
+_Figure W4. Association between reported topic-writing difficulty and mean model match rate across the eight fixed topics; Wild Card is excluded._
 
 Most respondents estimated fewer than 15 minutes per complete riddle; sixteen
 said time varied too much to estimate. National and mixed specificity strategies
@@ -147,15 +152,15 @@ testing difficulty, 30 brainstorming, and four paraphrasing or co-writing.
 
 ![Estimated time per riddle](figures/w_time_per_riddle.png)
 
-_Figure W4. Estimated time to write one complete riddle._
+_Figure W5. Estimated time to write one complete riddle._
 
 ![Specificity strategy](figures/w_specificity_strategy.png)
 
-_Figure W5. Contributors’ reported specificity strategy._
+_Figure W6. Contributors’ reported specificity strategy._
 
 ![AI use functions](figures/w_ai_use_functions.png)
 
-_Figure W6. Reported functions of generative AI in riddle writing._
+_Figure W7. Reported functions of generative AI in riddle writing._
 
 ## Model performance analysis
 
@@ -185,11 +190,11 @@ is labelled accordingly.
 | Tiny-Aya fire             |       4.7% |   100.0% | closed book    |
 | Tiny-Aya water            |       4.6% |   100.0% | closed book    |
 
-![Full model leaderboard](figures/m_full_corpus_leaderboard.png)
+![Full model leaderboard](figures/m_leaderboard_v2.png)
 
-_Figure M1. Strict score-3 match rate over all responses._
+_Figure M1. Strict score-3 match rate over all responses; labels give exact rates._
 
-![Heuristic score distribution](figures/m_full_corpus_outcomes.png)
+![Heuristic score distribution](figures/m_outcomes_v2.png)
 
 _Figure M2. Deterministic outcome distribution; it is diagnostic and is not averaged as a score._
 
@@ -199,32 +204,37 @@ Topics in Figure M3 are ordered from highest to lowest mean model match rate.
 History (27.8%) and Geography (27.7%) are highest, while Kid’s World (19.6%)
 and Everyday Life (19.7%) are lowest. Model-specific topic rankings closely
 follow this aggregate ordering (median Spearman rho = 0.94 across models), so
-the aggregate is more informative than twelve near-parallel rows. The important
-exceptions are the small Tiny-Aya models, whose correlations range from 0.52 to
-0.62.
+the aggregate is more informative than twelve near-parallel rows. Gemini is the
+main exception (rho = 0.52); all other models are at least 0.83. The ranked,
+model-averaged topic profile is therefore the appropriate main-text comparison
+with perceived writing difficulty (Figure W4), while the full matrix is most
+useful as a robustness check.
 
-![Topic performance](figures/m_full_corpus_topic_performance.png)
+![Topic performance](figures/m_topic_performance_v2.png)
 
-_Figure M3. Strict match rate by topic; x-axis labels give the number of evaluated riddles._
+_Figure M3. Strict match rate by topic; cells give exact rates and x-axis labels give the number of evaluated riddles._
 
-Regional rankings are similarly consistent (median Spearman rho = 0.92).
+Regional rankings are similarly consistent (median Spearman rho = 0.92), with
+the three Tiny-Aya variants the only substantial departures (rho = 0.51--0.60;
+all other models are at least 0.83). A model-averaged regional ranking is thus a
+more economical main-text summary than the near-parallel rows.
 North America has the highest aggregate match rate (42.1%), followed by the
 Caribbean (35.9%; only 99 evaluated riddles) and South America (32.4%).
 Sub-Saharan Africa is lowest (8.3%). These gaps combine language, community,
 topic, answer conventions, and conservative string matching; they are audit
 signals rather than causal estimates of model capability.
 
-![Regional performance](figures/m_full_corpus_region_performance.png)
+![Regional performance](figures/m_region_performance_v2.png)
 
-_Figure M4. Strict match rate by region; labels give evaluated-riddle counts._
+_Figure M4. Strict match rate by region; cells give exact rates and x-axis labels give the number of evaluated riddles._
 
 Language-group labels report the number of communities averaged, highlighting
 the limited support for several groups (for example, English has two communities
 and Arabic varieties six).
 
-![Language-group performance](figures/m_full_corpus_language_group_performance.png)
+![Language-group performance](figures/m_language_group_performance_v2.png)
 
-_Figure M5. Strict match rate across multi-community language groups._
+_Figure M5. Strict match rate across multi-community language groups; cells give exact rates and x-axis labels give the number of communities averaged._
 
 ### Thinking mode
 
@@ -235,7 +245,7 @@ points; Politics has the largest gain (+6.7 pp) and Everyday Life the smallest
 
 ![DeepSeek thinking delta](figures/m_deepseek_thinking_delta_by_topic.png)
 
-_Figure M6. Paired difference in strict match rate (thinking minus non-thinking)._
+_Figure M6. Paired difference in strict match rate (thinking minus non-thinking); labels give percentage-point changes._
 
 The archive contains a complete GPT5.5 Search run but no matched no-search run,
 so it cannot estimate the effect of search. The deterministic matcher normalizes
