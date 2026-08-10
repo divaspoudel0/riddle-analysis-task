@@ -92,6 +92,34 @@ def fig_boxplot(m, complete):
     return fig
 
 
+def fig_culture_heatmap(m, complete):
+    """Per-culture human accuracy for every model (the 'rank per culture' view)."""
+    style.apply_style()
+    sub = m[m.community.isin(complete) & ~m.is_pending]
+    piv = (sub.groupby(["model_display", "community"])["is_correct"]
+           .mean().mul(100).unstack())
+    piv = piv.loc[piv.mean(axis=1).sort_values(ascending=False).index]   # best model top
+    piv = piv[piv.mean(axis=0).sort_values(ascending=False).index]       # easiest culture left
+
+    fig, ax = plt.subplots(figsize=(11, 8.5))
+    im = ax.imshow(piv.values, cmap="Blues", vmin=0, vmax=100, aspect="auto")
+    ax.set_xticks(range(len(piv.columns)))
+    ax.set_xticklabels(piv.columns, rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(piv.index)))
+    ax.set_yticklabels(piv.index, fontsize=7.5)
+    for i in range(piv.shape[0]):
+        for j in range(piv.shape[1]):
+            v = piv.values[i, j]
+            ax.text(j, i, f"{v:.0f}", ha="center", va="center", fontsize=6,
+                    color="white" if v > 55 else style.PALETTE["black"])
+    cbar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+    cbar.set_label("Human-eval accuracy (%)", fontsize=9)
+    ax.set_title(f"How models rank per culture (human eval)\n"
+                 f"(N={len(complete)}/{TOTAL} complete cultures, provisional)")
+    fig.tight_layout()
+    return fig
+
+
 def fig_error_types(m, complete):
     """How models fail: stacked outcome/error-type breakdown."""
     style.apply_style()
@@ -167,6 +195,7 @@ def main():
     m, complete, mtime = prep()
     print(f"flat file {mtime} | {len(complete)}/{TOTAL} complete cultures")
     _save(fig_boxplot(m, complete), "human_boxplot_cultures")
+    _save(fig_culture_heatmap(m, complete), "human_culture_heatmap")
     _save(fig_error_types(m, complete), "human_error_types")
     _save(fig_floor_ceiling(m, complete), "human_floor_ceiling")
     _save(fig_semantic_broadening(m, complete), "human_semantic_broadening")
