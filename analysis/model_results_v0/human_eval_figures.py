@@ -102,6 +102,7 @@ def fig_culture_heatmap(m, complete):
     piv = piv[piv.mean(axis=0).sort_values(ascending=False).index]       # easiest culture left
 
     fig, ax = plt.subplots(figsize=(11, 8.5))
+    ax.grid(False)  # style.py enables gridlines; unwanted over a heatmap
     im = ax.imshow(piv.values, cmap="Blues", vmin=0, vmax=100, aspect="auto")
     ax.set_xticks(range(len(piv.columns)))
     ax.set_xticklabels(piv.columns, rotation=45, ha="right", fontsize=7)
