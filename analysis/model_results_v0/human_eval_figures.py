@@ -78,12 +78,12 @@ def fig_boxplot(m, complete):
         ax.plot(np.min(d), i, marker="D", ms=5, color=style.PALETTE["vermillion"],
                 zorder=5)
     ax.plot([], [], "D", ms=5, color=style.PALETTE["vermillion"],
-            label="minimum (worst culture)")
+            label="minimum across cultures")
     ax.set_yticks(range(1, len(order) + 1))
     ax.set_yticklabels(order, fontsize=8)
     ax.set_xlim(0, 100)
     ax.set_xlabel("Human-eval accuracy per culture (%)")
-    ax.set_title(f"Model performance across cultures — human eval\n"
+    ax.set_title(f"Model performance across cultures (human eval)\n"
                  f"(N={len(complete)}/{TOTAL} complete cultures, provisional)")
     ax.grid(axis="x", alpha=0.3)
     ax.grid(axis="y", visible=False)
@@ -106,7 +106,7 @@ def fig_error_types(m, complete):
     ax.set_xlim(0, 100)
     ax.set_xlabel("Share of human-scored responses (%)")
     ax.set_yticklabels(fm.index, fontsize=8)
-    ax.set_title(f"How models fail — human error types\n"
+    ax.set_title(f"How models fail: human error types\n"
                  f"(N={len(complete)}/{TOTAL} complete cultures, provisional)")
     ax.grid(axis="x", alpha=0.3)
     ax.grid(axis="y", visible=False)
@@ -154,8 +154,8 @@ def fig_semantic_broadening(m, complete):
     ax.barh(miss.index, miss.values, color=style.PALETTE["orange"])
     ax.set_xlabel("Human-correct answers missed by exact-match (%)")
     ax.set_yticklabels(miss.index, fontsize=8)
-    ax.set_title("Semantic broadening the heuristic misses\n"
-                 "(share of human-accepted answers exact-match rejected)")
+    ax.set_title("Correct answers missed by the exact-match heuristic\n"
+                 "(share of human-accepted answers the heuristic rejected)")
     ax.grid(axis="x", alpha=0.3)
     ax.grid(axis="y", visible=False)
     fig.tight_layout()
