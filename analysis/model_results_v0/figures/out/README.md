@@ -7,8 +7,8 @@ Benchmark, computed on the **17 of 44 cultures** with complete human coverage
 
 Two scores appear throughout:
 
-- **Heuristic (floor)** — the automatic judge: reference-based string matching
-  (exact match after normalization). A conservative _lower bound_.
+- **Heuristic (floor)** — the heuristic judge: reference-based string matching,
+  no LLM (exact match after normalization). A conservative _lower bound_.
 - **Human (ceiling)** — a native speaker's judgement on a 0–3 scale
   (0 hallucination, 1 admits not knowing, 2 partially correct, 3 correct).
   "Correct" here means the top score of 3 (strict).
@@ -35,7 +35,7 @@ snapshot on the 17 fully-evaluated cultures and will firm up as coverage grows.
    heuristic misses **45.9%** of the answers humans accept as correct (3,188 of
    6,948), so a purely automatic score would badly understate the models.
 
-3. **The automatic judge only moderately agrees with humans, and breaks down on
+3. **The heuristic judge only moderately agrees with humans, and breaks down on
    non-Latin scripts.** Cohen's κ between heuristic judge and human is 0.60
    overall ("substantial"), but falls below 0.4 for cultures such as Cantonese
    (0.10), Serbian, Marathi and Telugu — motivating human evaluation over
@@ -62,7 +62,7 @@ snapshot on the 17 fully-evaluated cultures and will firm up as coverage grows.
 
 ## Models and language coverage
 
-**Corpus by round.** Each round adds cultures. The automatic judge covers every
+**Corpus by round.** Each round adds cultures. The heuristic judge covers every
 round; human evaluation so far covers v0.
 
 | Round | Communities | Languages | Riddles |
@@ -89,7 +89,7 @@ across the paper, which is the common point of confusion:
 - The other **17 human-eval models** ran only v0 automatic, so they are not in
   the full-corpus leaderboard.
 
-Human evaluation is v0-only; the automatic judge covers every round.
+Human evaluation is v0-only; the heuristic judge covers every round.
 
 | Model | Human eval (v0) | Full v0–v2 (automatic) |
 |---|:---:|:---:|
@@ -129,11 +129,11 @@ Human evaluation is v0-only; the automatic judge covers every round.
 
 ![](human_floor_ceiling.png)
 
-Per model, the grey dot is the automatic exact-match score and the blue dot is
+Per model, the grey dot is the heuristic exact-match score and the blue dot is
 the human score; the line between them is the lift from human judging. **How to
 read:** the gap is what string-matching misses — real correct answers a
 person recognizes but the exact-match check rejects. The gap is largest for the
-strongest models, so automatic scoring understates the best models the most.
+strongest models, so heuristic scoring understates the best models the most.
 
 ---
 
@@ -193,25 +193,26 @@ confident wrong answer instead.
 ![](human_semantic_broadening.png)
 
 Take only the answers a **human marked correct**, then ask what share the
-automatic exact-match judge scored as _wrong_. **How to read:** higher = the
-automatic judge throws away more genuinely-correct answers (synonyms,
-translations, reworded answers). This is the concrete cost of automatic-only
+heuristic exact-match judge scored as _wrong_. **How to read:** higher = the
+heuristic judge throws away more genuinely-correct answers (synonyms,
+translations, reworded answers). This is the concrete cost of heuristic-only
 scoring, per model.
 
 ---
 
-## Does the auto-judge agree with humans? (Cohen's κ)
+## Does the heuristic judge agree with humans? (Cohen's κ)
 
 ![](judge_human_kappa.png)
 
-Cohen's κ measures how well the **automatic judge** agrees with the **human**,
-per culture — corrected for chance agreement. **How to read:** 0 = no better
+Cohen's κ measures how well the **heuristic judge** (string matching, no LLM)
+agrees with the **human**, per culture — corrected for chance agreement.
+**How to read:** 0 = no better
 than random, 1 = perfect. Rough scale: <0.2 poor, 0.2–0.4 fair, 0.4–0.6
 moderate, 0.6–0.8 substantial, >0.8 near-perfect. **Red bars (κ < 0.4)** are
 cultures where string-matching is unreliable — mostly non-Latin scripts. The
 dashed line is the overall κ (≈0.60).
 
-**Formula.** Two raters (here: auto-judge and human) label the same items:
+**Formula.** Two raters (here: heuristic judge and human) label the same items:
 
 ```
         p_o − p_e
