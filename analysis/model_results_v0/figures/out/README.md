@@ -18,6 +18,48 @@ Rerun everything after a newer flat file is dropped in:
 
 ---
 
+## Insights for the paper (provisional, 17/44 cultures)
+
+Written to be lifted directly. All numbers are from the current human-eval
+snapshot on the 17 fully-evaluated cultures and will firm up as coverage grows.
+
+1. **Human-curated riddles remain hard for frontier models.** Under human
+   evaluation the strongest model reaches only 77.9% accuracy (Gemini 3.1 Pro),
+   followed by GPT-5.5 (75.9%) and GPT-5.5 high-effort (73.9%); most models score
+   far lower, and the mean across all evaluated models is 33.4%.
+
+2. **Automatic exact-match scoring understates ability, most of all for the best
+   models.** Human judgement lifts every model above its heuristic score — Gemini
+   from 65.1% to 77.9%, GPT-5.5 high-effort from 59.4% to 73.9% — because
+   string-matching rejects correct answers phrased differently. Overall, the
+   heuristic misses **45.9%** of the answers humans accept as correct (3,188 of
+   6,948), so a purely automatic score would badly understate the models.
+
+3. **The automatic judge only moderately agrees with humans, and breaks down on
+   non-Latin scripts.** Cohen's κ between heuristic judge and human is 0.60
+   overall ("substantial"), but falls below 0.4 for cultures such as Cantonese
+   (0.10), Serbian, Marathi and Telugu — motivating human evaluation over
+   heuristic scoring alone.
+
+4. **When models fail, they fabricate rather than abstain.** Hallucination is the
+   dominant error mode and scales inversely with capability — from 7.1% of
+   responses for the strongest model to 77.3% for the smallest — while models
+   almost never admit uncertainty (mean 0.18%). The typical failure is a
+   confident wrong answer, not an "I don't know."
+
+5. **Difficulty varies enormously across cultures, and even top models are
+   uneven.** Mean accuracy ranges from 68.4% (English–US) to 5.2% (Mongondow,
+   Indonesia), with regional Indonesian languages near-zero for almost every
+   model. Robustness matters: Gemini averages ~85% on a typical culture but drops
+   to 22% on its weakest, so a single leaderboard number hides large per-culture
+   gaps.
+
+6. **Scope.** Human evaluation covers 24 models on v0 (17 of 44 cultures complete
+   so far); the full-corpus automatic leaderboard covers 12 models across v0–v2.
+   All human-eval numbers are provisional until coverage completes.
+
+---
+
 ## Models and language coverage
 
 **Corpus by round.** Each round adds cultures. The automatic judge covers every
