@@ -339,7 +339,7 @@ def main() -> None:
 HTML = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Multicultural Riddles — Human Evaluation</title>
+<title>Multicultural Riddles Benchmark</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
  :root{
@@ -389,7 +389,7 @@ HTML = r"""<!doctype html>
 </style></head><body><div class="wrap">
 <header>
  <div class="pill">Human evaluation · provisional</div>
- <h1>🧩 Multicultural Riddles Benchmark — Human Evaluation</h1>
+ <h1>🧩 Multicultural Riddles Benchmark</h1>
  <div class="sub" id="sub"></div>
 </header>
 <div class="cards" id="cards"></div>
@@ -456,6 +456,24 @@ HTML = r"""<!doctype html>
  <div class="cap" id="mapcap"></div>
 </div>
 
+<div id="ridge" class="pane">
+ <div class="h2">Distribution of per-culture accuracy (ridgeline)</div>
+ <div id="ridgechart"></div>
+ <div class="cap" id="ridgecap"></div>
+</div>
+
+<div id="insights" class="pane">
+ <div class="h2">Key findings (provisional, 38/44 cultures)</div>
+ <div class="note" style="line-height:1.75">
+  <p style="margin:.2em 0"><b>1. Human-curated riddles remain hard for frontier models.</b> Under human evaluation the strongest model reaches only <b>80.1%</b> (Gemini 3.1 Pro), then GPT-5.5 (77.6%) and GPT-5.5 high (76.0%); the mean across all 24 models is 36.9%.</p>
+  <p style="margin:.2em 0"><b>2. Exact-match scoring understates ability, most for the best models.</b> Human judging lifts every model above its heuristic score (Gemini 65.7% to 80.1%); overall the heuristic misses <b>50.2%</b> of the answers humans accept as correct.</p>
+  <p style="margin:.2em 0"><b>3. When models fail, they fabricate rather than abstain.</b> Hallucination is the dominant error mode and grows as models weaken (from 5.4% for the strongest to 69.9% for the smallest); models almost never admit uncertainty (0.19% on average).</p>
+  <p style="margin:.2em 0"><b>4. Difficulty varies enormously across cultures.</b> Mean accuracy ranges from 68.4% (English-US) to 5.2% (Mongondow, Indonesia); even top models collapse on the hardest cultures.</p>
+  <p style="margin:.2em 0"><b>5. The auto-judge only moderately tracks humans.</b> Cohen's &kappa; = 0.56 overall, below 0.4 on non-Latin scripts (Cantonese, Serbian, Marathi, Telugu), so exact-match is a lower bound and human evaluation matters.</p>
+  <p style="margin:.6em 0 0;color:var(--mut)"><b>Scope:</b> 24 models on v0; 38 of 44 communities with complete MAIN human evaluation. Provisional; every number validated against the official stats file.</p>
+ </div>
+</div>
+
 <div class="foot" id="foot"></div>
 </div>
 <script>
@@ -467,7 +485,7 @@ document.getElementById('sub').textContent=`Live from the human-eval flat file (
 const cards=[['Communities complete',`${D.meta.complete} / ${D.meta.total}`],['Models',D.meta.models],['Human-scored rows',D.meta.human_rows.toLocaleString()],['Pending',D.meta.pending.toLocaleString()]];
 document.getElementById('cards').innerHTML=cards.map(c=>`<div class="card"><div class="v">${c[1]}</div><div class="l">${c[0]}</div></div>`).join('');
 
-const TABS=[['lb','🏆 Leaderboard'],['fail','🔍 How models fail'],['region','🗺️ By region'],['calib','🎯 Calibration'],['rank','🔀 Rank shift'],['map','🌐 Map'],['diff','🌍 Community difficulty'],['kappa','🤝 Judge vs human'],['cov','📊 Coverage']];
+const TABS=[['insights','📌 Key findings'],['lb','🏆 Leaderboard'],['fail','🔍 How models fail'],['region','🗺️ By region'],['calib','🎯 Calibration'],['rank','🔀 Rank shift'],['map','🌐 Map'],['ridge','⛰️ Ridgeline'],['diff','🌍 Community difficulty'],['kappa','🤝 Judge vs human'],['cov','📊 Coverage']];
 document.getElementById('tabs').innerHTML=TABS.map((t,i)=>`<button class="tab${i==0?' on':''}" data-p="${t[0]}">${t[1]}</button>`).join('');
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
@@ -539,12 +557,12 @@ const HICOL={'gemini-3.1-pro-preview':'#c0392b','GPT5.5 [high]':'#e69f00','claud
 const HIMK={'gemini-3.1-pro-preview':'cross','GPT5.5 [high]':'diamond','claude-opus-4-7 [thinking]':'triangle-up','deepseek-v4-pro':'triangle-down','Qwen/Qwen3.5-0.8B':'star'};
 (function(){ // region box + markers
  const C=D.charts, regs=C.region_order.filter(r=>C.region_box[r]);
- const traces=[];
- regs.forEach(r=>{const b=C.region_box[r]; traces.push({type:'box',y:b.all,x:b.all.map(()=>r),name:r,marker:{color:'#aab4c0'},fillcolor:'#eef2f7',line:{color:'#aab4c0'},showlegend:false,hoverinfo:'y'});});
+ const bx=[],by=[]; regs.forEach(r=>C.region_box[r].all.forEach(v=>{bx.push(r);by.push(v);}));
+ const traces=[{type:'box',x:bx,y:by,name:'all models',boxpoints:false,marker:{color:'#aab4c0'},fillcolor:'#eef2f7',line:{color:'#aab4c0'},showlegend:false,hovertemplate:'%{x}<extra></extra>'}];
  C.highlights.forEach(mdl=>{const xs=[],ys=[];regs.forEach(r=>{const v=C.region_box[r].hi[mdl];if(v!=null){xs.push(r);ys.push(v);}});
-   traces.push({type:'scatter',mode:'markers',name:mdl.replace(' [',' ').replace(']',''),x:xs,y:ys,marker:{symbol:HIMK[mdl]||'circle',color:HICOL[mdl]||'#333',size:11,line:{color:'white',width:1}},hovertemplate:'%{x}<br>'+mdl+': %{y:.1f}%<extra></extra>'});});
- Plotly.newPlot('regionchart',traces,{...L,height:520,boxmode:'group',yaxis:{...L.yaxis,title:'Human-eval accuracy (%)',range:[0,100]},xaxis:{...L.xaxis,tickangle:-25},legend:{orientation:'h',y:1.12,font:{size:11}}},{displayModeBar:false,responsive:true});
- document.getElementById('regioncap').textContent='Each box is the spread of all 24 models within a region; markers are five representative models. Regions with no fully-evaluated cultures are omitted.';
+   traces.push({type:'scatter',mode:'markers',name:mdl.replace(' [',' ').replace(']',''),x:xs,y:ys,marker:{symbol:HIMK[mdl]||'circle',color:HICOL[mdl]||'#333',size:12,line:{color:'white',width:1}},hovertemplate:'%{x}<br>'+mdl+': %{y:.1f}%<extra></extra>'});});
+ Plotly.newPlot('regionchart',traces,{height:560,plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{family:'-apple-system,Segoe UI,Roboto,sans-serif',size:12,color:'#14181f'},margin:{l:58,r:16,t:8,b:120},yaxis:{type:'linear',title:'Human-eval accuracy (%)',range:[0,100],dtick:20,gridcolor:'#eef0f2',zeroline:false},xaxis:{type:'category',categoryorder:'array',categoryarray:regs,tickangle:-35,automargin:true},legend:{orientation:'h',y:1.13,font:{size:11}}},{responsive:true,displaylogo:false});
+ document.getElementById('regioncap').textContent='Each box is the spread of all 24 models within a region (regions sorted easiest to hardest); coloured markers are five representative models. Drag to zoom, double-click to reset. Regions with no fully-evaluated cultures are omitted.';
 })();
 (function(){ // calibration bubble
  const b=D.charts.bubble;
@@ -564,6 +582,12 @@ const HIMK={'gemini-3.1-pro-preview':'cross','GPT5.5 [high]':'diamond','claude-o
  const tr={type:'choropleth',locations:c.map(r=>r.country),locationmode:'country names',z:c.map(r=>r.accuracy),text:c.map(r=>r.country+': '+r.accuracy+'% ('+r.n+' culture(s))'),hovertemplate:'%{text}<extra></extra>',colorscale:'Blues',zmin:0,zmax:100,marker:{line:{color:'white',width:0.5}},colorbar:{title:'Accuracy %',thickness:12,len:0.7}};
  Plotly.newPlot('mapchart',[tr],{height:520,paper_bgcolor:'#fff',geo:{showframe:false,showcoastlines:false,landcolor:'#e5e7eb',showcountries:true,countrycolor:'white',projection:{type:'natural earth'}},margin:{l:0,r:0,t:0,b:0}},{displayModeBar:false,responsive:true});
  document.getElementById('mapcap').textContent='Mean human-eval accuracy per country over its fully-evaluated cultures. Grey countries are in the benchmark but not yet complete.';
+})();
+(function(){ // ridgeline
+ const R=D.charts.ridge, models=Object.keys(R);
+ const traces=models.slice().reverse().map(mdl=>({type:'violin',x:R[mdl],y0:mdl,orientation:'h',side:'positive',width:2.6,points:false,bandwidth:6,spanmode:'hard',line:{color:'#3b6fb6',width:1},fillcolor:'rgba(59,111,182,0.35)',showlegend:false,hovertemplate:mdl+': %{x:.0f}%<extra></extra>',meanline:{visible:false},box:{visible:false}}));
+ Plotly.newPlot('ridgechart',traces,{height:Math.max(560,26*models.length),plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{size:11},margin:{l:175,r:20,t:8,b:44},xaxis:{title:'Per-culture accuracy (%)',range:[0,100],gridcolor:'#eef0f2',zeroline:false},yaxis:{automargin:true,type:'category'}},{responsive:true,displaylogo:false});
+ document.getElementById('ridgecap').textContent="Each ridge is one model's distribution of accuracy across the "+D.meta.complete+" complete cultures (models ordered by mean). The bimodal shape - mass near 0 and near 100 - shows models tend to be near-perfect on well-represented cultures and near-zero on others.";
 })();
 document.getElementById('foot').innerHTML='Methodology: single human annotator per riddle (no inter-annotator agreement). Charts use the '+D.meta.complete+' of '+D.meta.total+' v0 communities whose MAIN human evaluation is complete (matching the official main_pct_complete from Henry); the separate \"extras\" answer sheets are still in progress. Scores are the human 0-3 rating where a person scored, else the automatic value; pending (extras) rows are dropped. Source of truth: model_riddle_results_flat.csv + human_eval_stats.xlsx (Henry Gagnier); per-model means match his stats exactly. Heuristic judge is reference-based string matching (no LLM). Cuba riddle spanish_cuba_history_016 excluded (redone in v2). Provisional until coverage completes.';
 </script></body></html>"""
