@@ -106,12 +106,6 @@
  <div class="cap" id="calibcap"></div>
 </div>
 
-<div id="rank" class="pane">
- <div class="h2">Rank shift: heuristic floor to human ceiling</div>
- <div id="rankchart"></div>
- <div class="cap" id="rankcap"></div>
-</div>
-
 <div id="map" class="pane">
  <div class="h2">Human-eval accuracy by country</div>
  <div id="mapchart"></div>
@@ -147,7 +141,7 @@ document.getElementById('sub').textContent=`Live from the human-eval flat file (
 const cards=[['Communities complete',`${D.meta.complete} / ${D.meta.total}`],['Models',D.meta.models],['Human-scored rows',D.meta.human_rows.toLocaleString()],['Pending',D.meta.pending.toLocaleString()]];
 document.getElementById('cards').innerHTML=cards.map(c=>`<div class="card"><div class="v">${c[1]}</div><div class="l">${c[0]}</div></div>`).join('');
 
-const TABS=[['insights','📌 Key findings'],['lb','🏆 Leaderboard'],['fail','🔍 How models fail'],['region','🗺️ By region'],['calib','🎯 Calibration'],['rank','🔀 Rank shift'],['map','🌐 Map'],['ridge','⛰️ Ridgeline'],['diff','🌍 Community difficulty'],['kappa','🤝 Judge vs human'],['cov','📊 Coverage']];
+const TABS=[['insights','📌 Key findings'],['lb','🏆 Leaderboard'],['fail','🔍 How models fail'],['region','🗺️ By region'],['calib','🎯 Calibration'],['map','🌐 Map'],['ridge','⛰️ Ridgeline'],['diff','🌍 Community difficulty'],['kappa','🤝 Judge vs human'],['cov','📊 Coverage']];
 document.getElementById('tabs').innerHTML=TABS.map((t,i)=>`<button class="tab${i==0?' on':''}" data-p="${t[0]}">${t[1]}</button>`).join('');
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
@@ -231,13 +225,6 @@ const HIMK={'gemini-3.1-pro-preview':'cross','GPT5.5 [high]':'diamond','claude-o
  const tr={x:b.map(r=>r.accuracy),y:b.map(r=>r.hallucination),text:b.map(r=>r.model),mode:'markers+text',type:'scatter',textposition:'top center',textfont:{size:8},marker:{size:13,color:b.map(r=>r.accuracy),colorscale:'Blues',line:{color:'#5b6673',width:0.6}},hovertemplate:'%{text}<br>accuracy %{x:.1f}%<br>hallucination %{y:.1f}%<extra></extra>'};
  Plotly.newPlot('calibchart',[tr],{...L,height:520,xaxis:{...L.xaxis,title:'Accuracy (% correct, human eval)'},yaxis:{...L.yaxis,title:'Hallucination rate (%)'}},{displayModeBar:false,responsive:true});
  document.getElementById('calibcap').textContent='Each dot is a model. Strong inverse relationship: more accurate models hallucinate less. Because models rarely abstain, low accuracy shows up as more hallucination, not more admitted uncertainty.';
-})();
-(function(){ // rank-flow slope
- const rf=D.charts.rankflow;
- const traces=rf.map(r=>({x:[0,1],y:[r.floor_rank,r.ceil_rank],mode:'lines+markers',line:{color:HICOL[r.model]||'#9aa6b2',width:2},marker:{size:7,color:HICOL[r.model]||'#9aa6b2'},showlegend:false,hovertemplate:r.model+'<br>floor #'+r.floor_rank+' to ceiling #'+r.ceil_rank+'<extra></extra>'}));
- traces.push({x:rf.map(()=>1.02),y:rf.map(r=>r.ceil_rank),text:rf.map(r=>r.model),mode:'text',textposition:'middle right',textfont:{size:8},showlegend:false,hoverinfo:'skip',type:'scatter'});
- Plotly.newPlot('rankchart',traces,{...L,height:Math.max(520,20*rf.length),margin:{l:10,r:190,t:10,b:30},xaxis:{tickvals:[0,1],ticktext:['Heuristic floor rank','Human ceiling rank'],range:[-0.1,1.6],showgrid:false,zeroline:false},yaxis:{autorange:'reversed',title:'Rank',dtick:1,gridcolor:'#eef0f2'}},{displayModeBar:false,responsive:true});
- document.getElementById('rankcap').textContent="How each model's rank changes when scored by humans instead of exact-match. Crossing lines are models the heuristic under- or over-rates.";
 })();
 (function(){ // map choropleth
  const c=D.charts.choropleth;
