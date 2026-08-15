@@ -1,5 +1,5 @@
 ---
-title: Multicultural Riddles — Human Eval
+title: Multicultural Riddles Benchmark
 emoji: 🧩
 colorFrom: indigo
 colorTo: blue

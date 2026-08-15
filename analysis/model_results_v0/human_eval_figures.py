@@ -191,6 +191,40 @@ def fig_semantic_broadening(m, complete):
     return fig
 
 
+def fig_difficulty(m, complete):
+    """Per-community difficulty (floor vs ceiling), from the validated source."""
+    style.apply_style()
+    d = bs.community_difficulty(m, complete, True).sort_values("Human %")
+    y = range(len(d))
+    fig, ax = plt.subplots(figsize=(7, 10))
+    ax.hlines(y, d["Heuristic %"], d["Human %"], color=style.PALETTE["light_grey"], lw=2, zorder=1)
+    ax.plot(d["Heuristic %"], y, "o", ms=5, color=style.PALETTE["grey"], zorder=2, label="Heuristic (floor)")
+    ax.plot(d["Human %"], y, "o", ms=5, color=style.PALETTE["blue"], zorder=3, label="Human (ceiling)")
+    ax.set_yticks(list(y)); ax.set_yticklabels(d.index, fontsize=7)
+    ax.set_xlim(0, 100); ax.set_xlabel("Mean accuracy across models (%)")
+    ax.set_title(f"Community difficulty (human eval, N={len(complete)}/{TOTAL} complete)")
+    ax.grid(axis="x", alpha=0.3); ax.grid(axis="y", visible=False)
+    ax.legend(loc="lower right", fontsize=8)
+    fig.tight_layout(); return fig
+
+
+def fig_kappa(m, complete):
+    """Per-community Cohen's kappa (heuristic judge vs human), validated source."""
+    style.apply_style()
+    per, overall, misses, over, n = bs.community_kappa(m, complete)
+    per = per.sort_values()
+    colors = [style.PALETTE["vermillion"] if v < 0.4 else style.PALETTE["blue"] for v in per.values]
+    fig, ax = plt.subplots(figsize=(7, 10))
+    ax.barh(range(len(per)), per.values, color=colors)
+    ax.axvline(overall, color=style.PALETTE["grey"], ls="--", lw=1.2, label=f"overall κ={overall:.2f}")
+    ax.set_yticks(range(len(per))); ax.set_yticklabels(per.index, fontsize=7)
+    ax.set_xlabel("Cohen's κ (heuristic judge vs human)")
+    ax.set_title(f"Judge–human agreement (N={len(complete)}/{TOTAL} complete)")
+    ax.grid(axis="x", alpha=0.3); ax.grid(axis="y", visible=False)
+    ax.legend(loc="lower right", fontsize=8)
+    fig.tight_layout(); return fig
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     m, complete, mtime = prep()
@@ -200,6 +234,8 @@ def main():
     _save(fig_error_types(m, complete), "human_error_types")
     _save(fig_floor_ceiling(m, complete), "human_floor_ceiling")
     _save(fig_semantic_broadening(m, complete), "human_semantic_broadening")
+    _save(fig_difficulty(m, complete), "community_difficulty")
+    _save(fig_kappa(m, complete), "judge_human_kappa")
 
 
 if __name__ == "__main__":
