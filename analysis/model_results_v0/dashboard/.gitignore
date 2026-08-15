@@ -1,3 +1,4 @@
 # data lives in the Space repo, not here (48MB); keep code only
 data/*.csv
 data/*.parquet
+data/*.xlsx

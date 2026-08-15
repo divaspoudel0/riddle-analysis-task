@@ -1,7 +1,7 @@
 # Human-evaluation figures — how to read them
 
 Provisional results from the **human evaluation** of the Multicultural Riddles
-Benchmark, computed on the **17 of 44 cultures** with complete human coverage
+Benchmark, computed on the **38 of 44 cultures** with complete human coverage
 (numbers will shift as coverage grows). Every value traces to Henry's
 `model_riddle_results_flat.csv`; pending answers are dropped, never guessed.
 
@@ -18,33 +18,33 @@ Rerun everything after a newer flat file is dropped in:
 
 ---
 
-## Insights for the paper (provisional, 17/44 cultures)
+## Insights for the paper (provisional, 38/44 cultures)
 
 Written to be lifted directly. All numbers are from the current human-eval
-snapshot on the 17 fully-evaluated cultures and will firm up as coverage grows.
+snapshot on the 38 fully-evaluated cultures and will firm up as coverage grows.
 
 1. **Human-curated riddles remain hard for frontier models.** Under human
-   evaluation the strongest model reaches only 77.9% accuracy (Gemini 3.1 Pro),
-   followed by GPT-5.5 (75.9%) and GPT-5.5 high-effort (73.9%); most models score
-   far lower, and the mean across all evaluated models is 33.4%.
+   evaluation the strongest model reaches only 80.1% accuracy (Gemini 3.1 Pro),
+   followed by GPT-5.5 (77.6%) and GPT-5.5 high-effort (76.0%); most models score
+   far lower, and the mean across all evaluated models is 36.9%.
 
 2. **Automatic exact-match scoring understates ability, most of all for the best
    models.** Human judgement lifts every model above its heuristic score — Gemini
-   from 65.1% to 77.9%, GPT-5.5 high-effort from 59.4% to 73.9% — because
+   from 65.7% to 80.1%, GPT-5.5 high-effort from 60.3% to 76.0% — because
    string-matching rejects correct answers phrased differently. Overall, the
-   heuristic misses **45.9%** of the answers humans accept as correct (3,188 of
-   6,948), so a purely automatic score would badly understate the models.
+   heuristic misses **50.2%** of the answers humans accept as correct (7,495 of
+   14,929), so a purely automatic score would badly understate the models.
 
 3. **The heuristic judge only moderately agrees with humans, and breaks down on
-   non-Latin scripts.** Cohen's κ between heuristic judge and human is 0.60
+   non-Latin scripts.** Cohen's κ between heuristic judge and human is 0.56
    overall ("substantial"), but falls below 0.4 for cultures such as Cantonese
    (0.10), Serbian, Marathi and Telugu — motivating human evaluation over
    heuristic scoring alone.
 
 4. **When models fail, they fabricate rather than abstain.** Hallucination is the
-   dominant error mode and scales inversely with capability — from 7.1% of
-   responses for the strongest model to 77.3% for the smallest — while models
-   almost never admit uncertainty (mean 0.18%). The typical failure is a
+   dominant error mode and scales inversely with capability — from 5.4% of
+   responses for the strongest model to 69.9% for the smallest — while models
+   almost never admit uncertainty (mean 0.19%). The typical failure is a
    confident wrong answer, not an "I don't know."
 
 5. **Difficulty varies enormously across cultures, and even top models are
@@ -54,7 +54,7 @@ snapshot on the 17 fully-evaluated cultures and will firm up as coverage grows.
    to 22% on its weakest, so a single leaderboard number hides large per-culture
    gaps.
 
-6. **Scope.** Human evaluation covers 24 models on v0 (17 of 44 cultures complete
+6. **Scope.** Human evaluation covers 24 models on v0 (38 of 44 cultures complete
    so far); the full-corpus automatic leaderboard covers 12 models across v0–v2.
    All human-eval numbers are provisional until coverage completes.
 
@@ -141,7 +141,7 @@ strongest models, so heuristic scoring understates the best models the most.
 
 ![](human_boxplot_cultures.png)
 
-Each model was scored on 17 cultures, giving 17 accuracy numbers; the box shows
+Each model was scored on 38 cultures, giving 38 accuracy numbers; the box shows
 how they are spread. **How to read:** the box is the middle half of cultures,
 the line inside is the median culture, whiskers are the typical range, grey dots
 are outlier cultures, and the **red diamond is the model's lowest culture**. A
@@ -210,7 +210,7 @@ agrees with the **human**, per culture — corrected for chance agreement.
 than random, 1 = perfect. Rough scale: <0.2 poor, 0.2–0.4 fair, 0.4–0.6
 moderate, 0.6–0.8 substantial, >0.8 near-perfect. **Red bars (κ < 0.4)** are
 cultures where string-matching is unreliable — mostly non-Latin scripts. The
-dashed line is the overall κ (≈0.60).
+dashed line is the overall κ (≈0.56).
 
 **Formula.** Two raters (here: heuristic judge and human) label the same items:
 
@@ -224,11 +224,11 @@ dashed line is the overall κ (≈0.60).
 - `p_e` = agreement expected by chance = for correct/incorrect,
   `P(judge=correct)·P(human=correct) + P(judge=wrong)·P(human=wrong)`.
 
-Worked example (our numbers, 31,965 doubly-labelled answers): both correct
-3,760; judge-only 540; human-only 3,188; both wrong 24,477.
-`p_o = (3,760+24,477)/31,965 = 0.883`;
-`p_e = 0.134·0.217 + 0.866·0.783 = 0.707`;
-`κ = (0.883−0.707)/(1−0.707) = 0.60`.
+Worked example (our numbers, 63,541 doubly-labelled answers): both correct
+7,434; judge-only 989; human-only 7,495; both wrong 47,623.
+`p_o = (7,434+47,623)/63,541 = 0.866`;
+`p_e = 0.133·0.235 + 0.867·0.765 = 0.695`;
+`κ = (0.866−0.695)/(1−0.695) = 0.56`.
 
-Note raw agreement is 88% but κ is only 0.60, because both raters usually say
+Note raw agreement is 87% but κ is only 0.56, because both raters usually say
 "wrong," so much of that 88% is chance — which is exactly why we report κ.
