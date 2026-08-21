@@ -33,7 +33,7 @@ from riddles_data_loading.validation import (  # noqa: E402
     validate_query_sheet_against_reference,
 )
 
-DEFAULT_REFERENCE = _HERE / "data" / "submitted_riddles" / "reference_sheet.xlsx"
+DEFAULT_REFERENCE = _HERE / "submission_template.xlsx"  # new 9-col format (no ratings)
 ENG_RIDDLE = "Riddle (English Translation)"
 ENG_ANSWER = "Reference Answer (English)"
 
