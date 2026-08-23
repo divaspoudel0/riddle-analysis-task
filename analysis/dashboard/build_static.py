@@ -1,14 +1,18 @@
-"""Build the four-tab, self-contained analysis report dashboard."""
+"""Build the analysis report dashboard."""
 
 from __future__ import annotations
 
 import base64
 import html
+import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from analysis.constants import FIGURES_DIR
+import pandas as pd
+
+from analysis.constants import CORPUS_METADATA_PATH, FIGURES_DIR, REGION_ORDER
+from analysis.eval_analysis.data import coverage_report, load_human_evaluation
 
 DASHBOARD_DIR = Path(__file__).parent
 OUTPUT = DASHBOARD_DIR / "index.html"
@@ -192,6 +196,51 @@ FIGURE_CATALOG: dict[str, tuple[FigureSpec, ...]] = {
     ),
 }
 
+TOKEN2COUNTRY: dict[str, str] = {
+    "egypt": "Egypt",
+    "morocco": "Morocco",
+    "sudan": "Sudan",
+    "syria": "Syria",
+    "belarus": "Belarus",
+    "bangladesh": "Bangladesh",
+    "india": "India",
+    "portuguese": "Brazil",
+    "indonesia": "Indonesia",
+    "bulgaria": "Bulgaria",
+    "china": "China",
+    "netherlands": "Netherlands",
+    "canada": "Canada",
+    "usa": "United States",
+    "france": "France",
+    "germany": "Germany",
+    "hungary": "Hungary",
+    "italy": "Italy",
+    "uganda": "Uganda",
+    "nepal": "Nepal",
+    "iran": "Iran",
+    "poland": "Poland",
+    "portugal": "Portugal",
+    "russia": "Russia",
+    "serbia": "Serbia",
+    "lanka": "Sri Lanka",
+    "argentina": "Argentina",
+    "cuba": "Cuba",
+    "peru": "Peru",
+    "kenya": "Kenya",
+    "thailand": "Thailand",
+    "pakistan": "Pakistan",
+    "uzbekistan": "Uzbekistan",
+    "nigeria": "Nigeria",
+}
+
+HIGHLIGHT_MODELS: tuple[str, ...] = (
+    "gemini-3.1-pro-preview",
+    "GPT5.5 [high]",
+    "claude-opus-4-7 [thinking]",
+    "deepseek-v4-pro",
+    "Qwen/Qwen3.5-0.8B",
+)
+
 SOURCE_BY_STEM: dict[str, str] = {
     "r_wildcard_theme_distribution": "../riddle_analysis/corpus_data.py",
     "r_answer_length_by_topic": "../riddle_analysis/corpus_data.py",
@@ -247,14 +296,171 @@ def _card(spec: FigureSpec) -> str:
     return f'<article class="figure-card">{media}<h3>{title}</h3><p class="caption">{caption}</p><p class="description">{description}</p>{source_link}</article>'
 
 
+def _country_of(community: str) -> str | None:
+    """Return the country encoded by a community identifier, when known."""
+    return TOKEN2COUNTRY.get(community.rsplit("_", 1)[-1])
+
+
+def _overview_data() -> dict[str, object]:
+    """Build JSON-safe data for the restored exploratory overview charts."""
+    frame = load_human_evaluation()
+    coverage = coverage_report(frame)
+    complete = set(coverage.index[coverage["status"].eq("complete")])
+    scored = frame[frame["community"].isin(complete) & ~frame["is_pending"]]
+    accuracy = (
+        scored.groupby(["model_display", "community"])["is_correct"]
+        .mean()
+        .mul(100)
+        .unstack()
+    )
+
+    metadata = pd.read_csv(CORPUS_METADATA_PATH).set_index("community")
+    region_box: dict[str, dict[str, object]] = {}
+    for region in REGION_ORDER:
+        communities = [
+            community
+            for community in accuracy.columns
+            if metadata["region"].get(community) == region
+        ]
+        if not communities:
+            continue
+        means = accuracy[communities].mean(axis=1)
+        region_box[region] = {
+            "all": [float(value) for value in means.dropna()],
+            "highlights": {
+                model: float(means[model])
+                for model in HIGHLIGHT_MODELS
+                if model in means.index and pd.notna(means[model])
+            },
+            "communities": len(communities),
+        }
+
+    human = frame[frame["is_human"] & frame["community"].isin(complete)].copy()
+    human["is_hallucinated"] = (
+        human["error_type_label"].fillna("").str.startswith("0.3")
+    )
+    bubble_frame = (
+        human.groupby("model_display").agg(
+            accuracy=("is_correct", "mean"),
+            hallucination=("is_hallucinated", "mean"),
+        )
+        * 100
+    )
+    bubble = [
+        {
+            "model": model,
+            "accuracy": float(row["accuracy"]),
+            "hallucination": float(row["hallucination"]),
+        }
+        for model, row in bubble_frame.sort_values(
+            "accuracy", ascending=False
+        ).iterrows()
+    ]
+
+    ridge = {
+        model: [float(value) for value in accuracy.loc[model].dropna()]
+        for model in accuracy.mean(axis=1).sort_values().index
+    }
+
+    country_values: dict[str, list[float]] = {}
+    for community in accuracy.columns:
+        country = _country_of(community)
+        if country is not None:
+            country_values.setdefault(country, []).extend(
+                float(value) for value in accuracy[community].dropna()
+            )
+    choropleth = [
+        {
+            "country": country,
+            "accuracy": round(sum(values) / len(values), 1),
+            "n": len(values),
+        }
+        for country, values in sorted(country_values.items())
+        if values
+    ]
+
+    coverage_records = json.loads(coverage.reset_index().to_json(orient="records"))
+    return {
+        "meta": {
+            "complete": len(complete),
+            "total": len(coverage),
+            "models": len(accuracy.index),
+        },
+        "region_box": region_box,
+        "region_order": [region for region in REGION_ORDER if region in region_box],
+        "highlights": list(HIGHLIGHT_MODELS),
+        "bubble": bubble,
+        "ridge": ridge,
+        "choropleth": choropleth,
+        "coverage": coverage_records,
+    }
+
+
+def _overview_pane() -> str:
+    """Render the first dashboard pane with its interactive chart containers."""
+    return """<section id="tab-0" class="pane active overview-pane">
+<div class="overview-intro"><h2>Overview</h2><p>These interactive views restore the exploratory charts from the earlier dashboard. They summarize recorded human-evaluation results for complete communities; use the report tabs for the source figures and detailed descriptions.</p><div class="overview-stats"><span><strong id="overview-complete">—</strong> complete communities</span><span><strong id="overview-total">—</strong> communities in the coverage export</span><span><strong id="overview-models">—</strong> evaluated models</span></div></div>
+<div class="overview-grid">
+<article class="overview-panel overview-wide"><h3>Human accuracy by region</h3><div id="overview-region" class="overview-chart" role="img" aria-label="Box plot of human accuracy by region with representative model markers"></div><p class="overview-caption">Each box shows the spread of model means across complete communities in a region. Markers identify five representative model configurations. Regions without complete communities are omitted.</p></article>
+<article class="overview-panel"><h3>Accuracy and hallucination</h3><div id="overview-bubble" class="overview-chart" role="img" aria-label="Scatter plot comparing model accuracy and hallucination rate"></div><p class="overview-caption">Each point is a model. Hallucination rate is the share of human-scored responses labeled with the 0.3 hallucination outcome.</p></article>
+<article class="overview-panel"><h3>Human accuracy by country</h3><div id="overview-map" class="overview-chart" role="img" aria-label="Choropleth map of human accuracy by country"></div><p class="overview-caption">Country values average model accuracy across complete communities that map to that country. Unfilled countries have no complete community in this export.</p></article>
+<article class="overview-panel overview-wide"><h3>Per-community accuracy distributions</h3><div id="overview-ridge" class="overview-chart" role="img" aria-label="Violin distributions of model accuracy across complete communities"></div><p class="overview-caption">Each distribution shows one model’s accuracy across complete communities. Models are ordered by their mean accuracy.</p></article>
+<article class="overview-panel overview-wide"><h3>Human-evaluation coverage</h3><div id="overview-coverage" class="overview-table"></div><p id="overview-coverage-note" class="overview-caption"></p></article>
+</div></section>"""
+
+
+def _overview_script(data: dict[str, object]) -> str:
+    """Render the JavaScript that draws the interactive overview charts."""
+    data_json = json.dumps(data, separators=(",", ":"))
+    return f"""const OVERVIEW = {data_json};
+const PLOT_LAYOUT = {{paper_bgcolor:'#fff',plot_bgcolor:'#fff',font:{{family:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',size:12,color:'#17202a'}},margin:{{l:58,r:18,t:18,b:58}},xaxis:{{gridcolor:'#edf0f2',zeroline:false}},yaxis:{{gridcolor:'#edf0f2',zeroline:false}},hoverlabel:{{namelength:-1}}}};
+const HIGHLIGHT_COLORS = ['#28658f','#c46b2b','#3b7d54','#7651a8','#8a5a44'];
+const HIGHLIGHT_SYMBOLS = ['cross','diamond','triangle-up','triangle-down','star'];
+function renderOverview() {{
+  document.getElementById('overview-complete').textContent = OVERVIEW.meta.complete;
+  document.getElementById('overview-total').textContent = OVERVIEW.meta.total;
+  document.getElementById('overview-models').textContent = OVERVIEW.meta.models;
+  const regions = OVERVIEW.region_order;
+  const regionX = [], regionY = [];
+  regions.forEach(function (region) {{ OVERVIEW.region_box[region].all.forEach(function (value) {{ regionX.push(region); regionY.push(value); }}); }});
+  const regionTraces = [{{type:'box',x:regionX,y:regionY,name:'All models',boxpoints:false,fillcolor:'#e9f0f5',line:{{color:'#8ea4b5'}},showlegend:false,hovertemplate:'%{{x}}<br>%{{y:.1f}}%<extra></extra>'}}];
+  OVERVIEW.highlights.forEach(function (model, index) {{
+    const x = [], y = [];
+    regions.forEach(function (region) {{ const value = OVERVIEW.region_box[region].highlights[model]; if (value != null) {{ x.push(region); y.push(value); }} }});
+    regionTraces.push({{type:'scatter',mode:'markers',name:model,x:x,y:y,marker:{{symbol:HIGHLIGHT_SYMBOLS[index],color:HIGHLIGHT_COLORS[index],size:11,line:{{color:'#fff',width:1}}}},hovertemplate:model+'<br>%{{x}}: %{{y:.1f}}%<extra></extra>'}});
+  }});
+  Plotly.newPlot('overview-region',regionTraces,{{...PLOT_LAYOUT,height:500,margin:{{l:58,r:18,t:18,b:110}},yaxis:{{title:'Human accuracy (%)',range:[0,100],dtick:20,gridcolor:'#edf0f2',zeroline:false}},xaxis:{{type:'category',categoryorder:'array',categoryarray:regions,tickangle:-35,automargin:true}},legend:{{orientation:'h',y:1.15,font:{{size:10}}}}}},{{responsive:true,displaylogo:false}});
+
+  const bubble = OVERVIEW.bubble;
+  Plotly.newPlot('overview-bubble',[{{type:'scatter',mode:'markers+text',x:bubble.map(function (row) {{ return row.accuracy; }}),y:bubble.map(function (row) {{ return row.hallucination; }}),text:bubble.map(function (row) {{ return row.model; }}),textposition:'top center',textfont:{{size:8}},marker:{{size:12,color:bubble.map(function (row) {{ return row.accuracy; }}),colorscale:'Blues',cmin:0,cmax:100,line:{{color:'#52606d',width:.6}}}},hovertemplate:'%{{text}}<br>accuracy: %{{x:.1f}}%<br>hallucination: %{{y:.1f}}%<extra></extra>'}}],{{...PLOT_LAYOUT,height:500,xaxis:{{title:'Accuracy (%)',range:[0,100],gridcolor:'#edf0f2',zeroline:false}},yaxis:{{title:'Hallucination (%)',range:[0,100],gridcolor:'#edf0f2',zeroline:false}}}},{{responsive:true,displaylogo:false}});
+
+  const countries = OVERVIEW.choropleth;
+  Plotly.newPlot('overview-map',[{{type:'choropleth',locations:countries.map(function (row) {{ return row.country; }}),locationmode:'country names',z:countries.map(function (row) {{ return row.accuracy; }}),text:countries.map(function (row) {{ return row.country+': '+row.accuracy+'% ('+row.n+' model-community means)'; }}),hovertemplate:'%{{text}}<extra></extra>',colorscale:'Blues',zmin:0,zmax:100,marker:{{line:{{color:'#fff',width:.5}}}},colorbar:{{title:'Accuracy %',thickness:12,len:.7}}}}],{{height:500,margin:{{l:0,r:0,t:18,b:0}},geo:{{showframe:false,showcoastlines:false,landcolor:'#e7ebee',showcountries:true,countrycolor:'#fff',projection:{{type:'natural earth'}}}}}},{{responsive:true,displaylogo:false}});
+
+  const models = Object.keys(OVERVIEW.ridge);
+  const ridgeTraces = models.slice().reverse().map(function (model) {{ return {{type:'violin',x:OVERVIEW.ridge[model],y0:model,orientation:'h',side:'positive',width:2.5,points:false,bandwidth:6,spanmode:'hard',line:{{color:'#28658f',width:1}},fillcolor:'rgba(40,101,143,.28)',showlegend:false,hovertemplate:model+': %{{x:.1f}}%<extra></extra>'}}; }});
+  Plotly.newPlot('overview-ridge',ridgeTraces,{{...PLOT_LAYOUT,height:Math.max(500,26*models.length),margin:{{l:185,r:20,t:18,b:48}},xaxis:{{title:'Accuracy (%)',range:[0,100],gridcolor:'#edf0f2',zeroline:false}},yaxis:{{automargin:true,type:'category'}}}},{{responsive:true,displaylogo:false}});
+
+  const order = {{complete:0,partial:1,thin:2,not_started:3}};
+  const coverage = OVERVIEW.coverage.slice().sort(function (a,b) {{ return order[a.status]-order[b.status] || b.pct_complete-a.pct_complete; }});
+  document.getElementById('overview-coverage').innerHTML = '<table><thead><tr><th>Community</th><th>Status</th><th>Complete</th><th>Human</th><th>Pending</th><th>Eligible</th></tr></thead><tbody>'+coverage.map(function (row) {{ return '<tr><td>'+row.community+'</td><td><span class="status status-'+row.status+'">'+row.status.replace('_',' ')+'</span></td><td>'+((row.pct_complete == null) ? '—' : row.pct_complete+'%')+'</td><td>'+row.human_done+'</td><td>'+row.pending+'</td><td>'+row.human_eligible+'</td></tr>'; }}).join('')+'</tbody></table>';
+  const unfinished = coverage.filter(function (row) {{ return row.status === 'not_started' || row.status === 'thin'; }}).map(function (row) {{ return row.community; }});
+  document.getElementById('overview-coverage-note').textContent = unfinished.length ? 'Not started or thin coverage: '+unfinished.join(', ') : 'All communities have complete human-evaluation coverage.';
+}}
+renderOverview();
+"""
+
+
 def build_html() -> str:
     """Render all dashboard tabs from the figure catalog."""
     generated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-    tabs: list[str] = []
-    panes: list[str] = []
-    for index, (name, specs) in enumerate(FIGURE_CATALOG.items()):
+    tabs: list[str] = [
+        '<button class="tab active" data-target="tab-0">Overview</button>'
+    ]
+    panes: list[str] = [_overview_pane()]
+    for index, (name, specs) in enumerate(FIGURE_CATALOG.items(), start=1):
         tab_id = f"tab-{index}"
-        active = " active" if index == 0 else ""
+        active = ""
         tabs.append(
             f'<button class="tab{active}" data-target="{tab_id}">{html.escape(name)}</button>'
         )
@@ -263,7 +469,11 @@ def build_html() -> str:
             f'<section id="{tab_id}" class="pane{active}"><div class="grid">{cards}</div></section>'
         )
     return HTML_TEMPLATE.format(
-        generated=generated, tabs="\n".join(tabs), panes="\n".join(panes)
+        generated=generated,
+        tabs="\n".join(tabs),
+        panes="\n".join(panes),
+        overview_css=OVERVIEW_CSS,
+        overview_script=_overview_script(_overview_data()),
     )
 
 
@@ -279,6 +489,7 @@ def main() -> None:
 HTML_TEMPLATE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Multicultural Riddles — Analysis report</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script>
 <style>
 :root {{ --ink:#17202a; --muted:#637080; --line:#dfe5ea; --blue:#28658f; --bg:#f7f9fb; --card:#fff; }}
@@ -295,6 +506,7 @@ h1 {{ margin:5px 0 8px; font-size:30px; letter-spacing:-.025em; }} .intro {{ col
 .figure-card h3 {{ font-size:17px; margin-top:16px; margin-bottom:4px; }} .caption {{ color:var(--ink); font-size:13px; font-style:italic; margin-top:0; margin-bottom:7px; }} .description {{ color:var(--muted); font-size:13px; margin-top:0; margin-bottom:18px; }}
 .source {{ display:block; color:var(--blue); font-size:12px; margin:0 18px 18px; text-decoration:none; }} .source:hover {{ text-decoration:underline; }}
 .tool-card {{ display:flex; align-items:center; justify-content:center; min-height:180px; padding:24px; color:var(--blue); background:#eef5fa; border-bottom:1px solid var(--line); font-size:21px; font-weight:700; text-align:center; }} .tool-card span {{ display:block; color:var(--muted); font-size:13px; font-weight:400; margin-top:5px; }}
+{overview_css}
 footer {{ color:var(--muted); font-size:12px; border-top:1px solid var(--line); margin-top:34px; padding-top:16px; }}
 @media (max-width:600px) {{ .wrap {{ padding:24px 14px 44px; }} h1 {{ font-size:25px; }} .grid {{ grid-template-columns:1fr; }} .tab {{ padding-left:9px; padding-right:9px; }} }}
 </style></head><body><main class="wrap">
@@ -302,9 +514,19 @@ footer {{ color:var(--muted); font-size:12px; border-top:1px solid var(--line); 
 <nav class="tabs" aria-label="Analysis sections">{tabs}</nav>{panes}
 <footer>Source figures live in <code>analysis/figures/</code>. Figure ownership and the reproducibility map are documented in <code>analysis/AGENTS.md</code>.</footer>
 </main><script>
-document.querySelectorAll('.tab').forEach(function (button) {{ button.addEventListener('click', function () {{ document.querySelectorAll('.tab,.pane').forEach(function (element) {{ element.classList.remove('active'); }}); button.classList.add('active'); document.getElementById(button.dataset.target).classList.add('active'); }}); }});
+document.querySelectorAll('.tab').forEach(function (button) {{ button.addEventListener('click', function () {{ document.querySelectorAll('.tab,.pane').forEach(function (element) {{ element.classList.remove('active'); }}); button.classList.add('active'); document.getElementById(button.dataset.target).classList.add('active'); window.dispatchEvent(new Event('resize')); }}); }});
 if (window.mediumZoom) {{ mediumZoom('.zoomable', {{ background: '#17202a' }}); }}
+{overview_script}
 </script></body></html>"""
+
+
+OVERVIEW_CSS = """.overview-intro {{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:22px; box-shadow:0 2px 7px rgba(23,32,42,.04); }}
+.overview-intro h2 {{ margin:0 0 4px; font-size:21px; }} .overview-intro p {{ color:var(--muted); font-size:14px; margin:0; max-width:880px; }}
+.overview-stats {{ display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:16px; color:var(--muted); font-size:12px; }} .overview-stats strong {{ color:var(--blue); font-size:20px; margin-right:4px; }}
+.overview-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; align-items:start; }} .overview-panel {{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 18px 14px; box-shadow:0 2px 7px rgba(23,32,42,.04); min-width:0; }} .overview-wide {{ grid-column:1 / -1; }}
+.overview-panel h3 {{ margin:0; font-size:17px; }} .overview-chart {{ min-height:320px; width:100%; }} .overview-caption {{ color:var(--muted); font-size:12px; margin:0 2px 2px; }}
+.overview-table {{ overflow-x:auto; margin-top:10px; }} .overview-table table {{ border-collapse:collapse; font-size:12px; min-width:720px; width:100%; }} .overview-table th,.overview-table td {{ border-bottom:1px solid var(--line); padding:7px 9px; text-align:left; white-space:nowrap; }} .overview-table th {{ color:var(--muted); font-weight:700; }} .status {{ border-radius:999px; display:inline-block; font-size:11px; padding:2px 7px; }} .status-complete {{ background:#e3f1e8; color:#27603a; }} .status-partial {{ background:#fff2d8; color:#7b5b18; }} .status-thin,.status-not_started {{ background:#f9e4e1; color:#8b3427; }}
+@media (max-width:800px) {{ .overview-grid {{ grid-template-columns:1fr; }} .overview-wide {{ grid-column:auto; }} }}"""
 
 
 if __name__ == "__main__":

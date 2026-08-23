@@ -10,17 +10,26 @@ pinned: false
 
 # Analysis report dashboard
 
-The dashboard is a self-contained static report for the four analysis areas:
+The dashboard is a static report with an Overview tab followed by four analysis areas:
+
+- **Overview** — restored exploratory views for human accuracy by region and country, model accuracy versus hallucination rate, per-community accuracy distributions, and human-evaluation coverage.
 
 - **Riddle analysis** — corpus structure, topics, regions, and validation coverage.
 - **Riddle writing** — contributor difficulty, process, resources, and AI use.
 - **Model results** — full-corpus exact-match accuracy, including topic, region, and language breakdowns.
 - **Evaluation** — human comparison, outcome and failure modes, and the optional LLM-as-a-judge tool.
 
-Each tab presents the current PNG figures with the figure caption and a short
-description. The dashboard has no private data dependency at runtime because
-the builder embeds each image in `index.html`. Click a figure to zoom it; each
-card also links to the Python script that generated it.
+Each report tab presents the current PNG figures with the figure caption and a
+short description. The dashboard has no private data dependency at runtime
+because the builder embeds each image and the Overview data in `index.html`.
+The Overview charts use Plotly from a CDN, and report figures use Medium Zoom
+from a CDN. Click a figure to zoom it; each card also links to the Python
+script that generated it.
+
+The Overview is built from the recorded evaluation export and does not run the
+removed heuristic judge. Run the builder from a checkout that contains the
+private evaluation export at
+`analysis/eval_analysis/data/model_riddle_results_flat.csv`.
 
 ## Rebuild the dashboard
 
