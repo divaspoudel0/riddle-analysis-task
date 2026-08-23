@@ -14,8 +14,11 @@ hand-fixing:
   reasoning_mode, so model identity is (model_name, reasoning_mode)
 
 Usage:
-    python load_results.py [runs_dir] [out_path] [evals_dir]
+    python load_results.py [runs_dir] [out_path] [judge_outputs_dir]
     defaults: data/responses_v0  ->  data/processed/results_tidy.parquet
+
+The optional ``judge_outputs_dir`` argument adds recorded verdicts when they
+exist. Raw model results load successfully without any judge output.
 """
 
 from __future__ import annotations
@@ -241,14 +244,18 @@ def build_frame(runs_dir: Path) -> pd.DataFrame:
     return full
 
 
-def load_judge_outputs(evals_outputs_dir: Path) -> pd.DataFrame:
-    """Load heuristic judge outputs from evals/outputs/<run_id>/ folders.
+def load_judge_outputs(judge_outputs_dir: Path) -> pd.DataFrame:
+    """Load recorded judge outputs from per-run folders.
 
     The judge writes one folder per run_id; rows key on riddle_id, which is
     unique within a run (one condition in v0). Join key: (run_id, riddle_id).
+    Return an empty frame when no recorded outputs exist.
     """
+    if not judge_outputs_dir.is_dir():
+        return pd.DataFrame()
+
     frames = []
-    for folder in sorted(p for p in evals_outputs_dir.iterdir() if p.is_dir()):
+    for folder in sorted(p for p in judge_outputs_dir.iterdir() if p.is_dir()):
         match_path = folder / "heuristic_match.jsonl"
         if not match_path.exists():
             continue
@@ -273,18 +280,7 @@ def load_judge_outputs(evals_outputs_dir: Path) -> pd.DataFrame:
                 )
         frames.append(pd.DataFrame(rows))
     if not frames:
-        return pd.DataFrame(
-            columns=[
-                "run_id",
-                "riddle_id",
-                "judge_candidate",
-                "judge_parse_status",
-                "judge_match",
-                "judge_match_type",
-                "judge_score",
-                "judge_verdict",
-            ]
-        )
+        return pd.DataFrame()
     return pd.concat(frames, ignore_index=True)
 
 
@@ -298,15 +294,15 @@ def main() -> None:
     evals_dir = (
         Path(sys.argv[3])
         if len(sys.argv) > 3
-        else Path(__file__).resolve().parents[2] / "evals" / "outputs"
+        else Path(__file__).resolve().parent / "data" / "combined" / "evals"
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading runs from {runs_dir}")
     df = build_frame(runs_dir)
 
-    if evals_dir.is_dir():
-        judge = load_judge_outputs(evals_dir)
+    judge = load_judge_outputs(evals_dir)
+    if not judge.empty:
         # A judge output folder is named after ONE run_id, but resumed runs
         # carry multiple run_ids in a single results file. Map judge folders
         # to source folders via run_id, then join on (source_folder,
@@ -332,7 +328,7 @@ def main() -> None:
         print(f"\nJudge outputs merged from {evals_dir}")
         print(f"  rows without judge score: {missing}")
     else:
-        print(f"\nNo judge outputs at {evals_dir}, skipping merge")
+        print(f"\nNo recorded judge outputs at {evals_dir}; raw results only")
 
     print("\nSummary")
     print(f"  rows: {len(df)}")

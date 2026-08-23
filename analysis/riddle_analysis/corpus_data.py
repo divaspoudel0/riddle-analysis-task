@@ -23,7 +23,6 @@ from analysis.constants import (
 from analysis.corpus import add_corpus_groups
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
 
-
 DATASET_PATH = CANONICAL_CORPUS_PATH
 TABLE_DIR = Path(__file__).resolve().parent / "outputs"
 
@@ -211,7 +210,7 @@ def save_tables(df: pd.DataFrame) -> None:
         .reset_index()
         .to_csv(TABLE_DIR / "collection_summary.csv", index=False)
     )
-    (
+    regional_summary = (
         df.assign(
             missing_english_riddle=df["riddle_english"].isna() & ~native_english,
             missing_english_answer=df["reference_answer_english"].isna()
@@ -227,8 +226,31 @@ def save_tables(df: pd.DataFrame) -> None:
             human_score_coverage=("has_human_score", "mean"),
         )
         .reindex(REGION_ORDER)
-        .reset_index()
-        .to_csv(TABLE_DIR / "region_corpus_summary.csv", index=False)
+    )
+    regional_summary[
+        [
+            "riddles",
+            "languages",
+            "missing_english_riddles",
+            "missing_english_answers",
+        ]
+    ] = (
+        regional_summary[
+            [
+                "riddles",
+                "languages",
+                "missing_english_riddles",
+                "missing_english_answers",
+            ]
+        ]
+        .fillna(0)
+        .astype(int)
+    )
+    regional_summary["human_score_coverage"] = regional_summary[
+        "human_score_coverage"
+    ].fillna(0.0)
+    regional_summary.reset_index().to_csv(
+        TABLE_DIR / "region_corpus_summary.csv", index=False
     )
 
 
@@ -263,7 +285,7 @@ def plot_wildcard_themes(df: pd.DataFrame) -> None:
             fontsize=7,
         )
     fig.tight_layout()
-    save_figure_pair(fig, figure_stem("riddle_analysis", "wildcard_themes_full"))
+    save_figure_pair(fig, figure_stem("riddle_analysis", "wildcard_theme_distribution"))
     plt.close(fig)
     summary = counts.rename_axis("theme").rename("wildcard_selections").reset_index()
     summary["share_of_wildcard_selections"] = summary["wildcard_selections"] / len(
@@ -316,7 +338,7 @@ def plot_english_length_by_topic(df: pd.DataFrame) -> None:
             color=PALETTE["grey"],
         )
     fig.tight_layout()
-    save_figure_pair(fig, figure_stem("riddle_analysis", "english_length_by_topic"))
+    save_figure_pair(fig, figure_stem("riddle_analysis", "answer_length_by_topic"))
     plt.close(fig)
     stats.reset_index(names="topic").to_csv(
         TABLE_DIR / "english_length_by_topic.csv", index=False
@@ -398,7 +420,7 @@ def plot_english_length_by_region(df: pd.DataFrame) -> None:
     for y, row in enumerate(stats.itertuples()):
         ax.text(row.q3 + 0.4, y, f"n={row.n}", va="center", fontsize=7)
     fig.tight_layout()
-    save_figure_pair(fig, figure_stem("riddle_analysis", "english_length_by_region"))
+    save_figure_pair(fig, figure_stem("riddle_analysis", "answer_length_by_region"))
     plt.close(fig)
     stats.reset_index(names="region").to_csv(
         TABLE_DIR / "english_length_by_region.csv", index=False

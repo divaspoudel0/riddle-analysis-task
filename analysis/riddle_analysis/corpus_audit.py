@@ -2,60 +2,15 @@
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
-from analysis.constants import RUN_BATCH_ORDER, figure_stem
-from analysis.riddle_analysis.corpus_data import load_corpus, save_tables
-from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
+from analysis.riddle_analysis.corpus_data import (
+    load_corpus,
+    plot_validation_coverage,
+    save_tables,
+)
 
 OUTPUT_DIR = Path(__file__).parent / "outputs"
-
-
-def plot_validation_coverage(corpus: pd.DataFrame) -> None:
-    """Audit and plot validator-name and answer-score coverage by round."""
-    summary = (
-        corpus.assign(
-            has_validator=corpus.human_validator_name.notna(),
-            has_score=corpus.human_answer_score.notna(),
-        )
-        .groupby("run_batch")[["has_validator", "has_score"]]
-        .mean()
-        .reindex(RUN_BATCH_ORDER)
-        .mul(100)
-    )
-    apply_style()
-    fig, ax = plt.subplots(figsize=acl_figure_size(1, 2.35))
-    positions = range(len(summary))
-    ax.plot(
-        positions,
-        summary["has_validator"],
-        marker="o",
-        color=PALETTE["blue"],
-        label="Named validator",
-    )
-    ax.plot(
-        positions,
-        summary["has_score"],
-        marker="o",
-        color=PALETTE["vermillion"],
-        label="Recorded answer score",
-    )
-    ax.set(
-        xticks=list(positions),
-        xticklabels=summary.index,
-        ylim=(0, 100),
-        ylabel="Riddles (%)",
-        title="Human-validation metadata coverage",
-    )
-    ax.legend(loc="upper left", fontsize=7)
-    fig.tight_layout()
-    save_figure_pair(fig, figure_stem("riddle_analysis", "human_validation_coverage"))
-    plt.close(fig)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    summary.reset_index(names="run_batch").to_csv(
-        OUTPUT_DIR / "human_validation_coverage.csv", index=False
-    )
 
 
 def write_quality_report(corpus: pd.DataFrame) -> None:

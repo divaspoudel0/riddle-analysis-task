@@ -1,174 +1,79 @@
-# Evals
+# Reference-answer heuristic judge
 
-This package scores a benchmark run's `results.jsonl` (the framework's output).
-It bundles two complementary evaluators:
+The benchmark framework writes model responses to `results.jsonl`. The
+reference-answer heuristic judge scores those responses without making an API
+call. It is the deterministic exact-match floor used by the model-results
+analysis.
 
-- **Reference-answer heuristic evaluator** (`reference_heuristic_judge.py`) — a
-  small, deterministic checker. No LLM call. Matches the model's answer against
-  the source-language reference answer.
-- **LLM-as-a-judge** (`llm_judge_run.py` + `llm_as_a_judge.py`) — lenient LLM
-  scoring that credits paraphrases / transliterations the deterministic match
-  misses.
+## Run the judge
 
-## Quick start
-
-Both evaluators take a framework run's `results.jsonl`. Use the committed
-example run as a ready-to-use input. Run from the repository root:
+From the repository root, run the scorer on a framework run:
 
 ```bash
-# Deterministic heuristic match (no LLM, no API key)
-python evals/reference_heuristic_judge.py \
-  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
-
-# LLM-as-a-judge (needs GEMINI_API_KEY)
-python -m evals.llm_judge_run \
-  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl \
-  --model gemini-2.5-flash-lite
+uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
+  framework/runs/<run_id>/results.jsonl
 ```
 
-See the per-evaluator sections below for inputs, outputs, and options.
+By default, the scorer writes the following files to
+`analysis/model_results/data/combined/evals/<run_id>/`:
 
----
+- `heuristic_match.jsonl` — one verdict per result row.
+- `heuristic_summary.json` — aggregate counts and the match rate.
 
-# Reference-Answer Heuristic Evaluator
-
-This script reads model outputs from a `results.jsonl` file, extracts the
-model's answer, compares it with the source-language reference answer, and
-writes a per-riddle score file plus a short summary. It does not call an LLM.
-
-Run it from the repository root:
+Use the options below to select another output directory or process a subset:
 
 ```bash
-python evals/reference_heuristic_judge.py \
-  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl
+uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
+  framework/runs/<run_id>/results.jsonl \
+  --out-dir /tmp/riddle-eval \
+  --limit 100
 ```
 
-To extend the built-in abstention phrases for a run, supply phrases directly
-or load them from a UTF-8 file:
+The scorer also accepts additional abstention phrases:
 
 ```bash
-# Supply a list
-python evals/reference_heuristic_judge.py results.jsonl \
+uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
+  framework/runs/<run_id>/results.jsonl \
   --additional-no-answer-phrases "I give up" "No clue"
-
-# Supply a UTF-8 file, one phrase per line
-python evals/reference_heuristic_judge.py results.jsonl \
-  --additional-no-answer-phrases-file phrases.txt
 ```
 
-By default, the files are written here:
+## Input schema
 
-```text
-evals/outputs/<run_id_or_input_stem>/
-  heuristic_match.jsonl
-  heuristic_summary.json
-```
+The input must be a JSONL file with one object per model response. Each row
+must contain:
 
-## Model Input And Answer Format
+- `raw_response` — the model's raw answer.
+- `reference_answer_original` — the correct answer in the source language.
 
-This evaluator does not build prompts or run models. When you prepare the model
-run, the only mandatory input the model needs is the riddle text. Do not put
-the reference answer in the prompt.
+The following fields are optional but help trace output rows:
 
-The model answer should be a JSON object with this mandatory field:
+- `riddle_id` — the riddle identifier.
+- `run_id` — the framework run identifier.
+- `parsed_json` — a previously parsed response object.
 
-```json
-{
-  "riddle_answer": "the model's answer"
-}
-```
+The model prompt must contain the riddle, but it must not contain the reference
+answer. The model response can be a JSON object with `riddle_answer`, plain
+text, or a response that contains a recoverable JSON answer.
 
-If the model also returns `reasoning`, this evaluator ignores it.
+## Scoring rules
 
-## Results File Input
+The judge applies the same conservative normalization to every language and
+script:
 
-The script expects a JSONL file where each line is one model result.
+- Unicode-normalize with `NFKC`.
+- Case-fold the text.
+- Remove whitespace, punctuation, symbols, separators, and control
+  characters.
 
-Mandatory fields:
+It also expands simple reference alternatives separated by parentheses,
+slashes, commas, semicolons, or spaced hyphens. It does not translate,
+transliterate, infer synonyms, or use language-specific cleanup.
 
-- `raw_response`: the model's raw answer text.
-- `reference_answer_original`: the correct answer in the original/source language.
+The output score uses the following values:
 
-Recommended but not required:
+- `3` — the candidate matches a normalized reference form.
+- `1` — the candidate explicitly says that it does not know.
+- `0` — the candidate does not match or cannot be parsed.
 
-- `riddle_id`: copied into the output so rows are easy to trace.
-- `run_id`: used to name the default output folder.
-- `parsed_json`: used first if it already contains the parsed model answer.
-
-If the model returns plain text, the script treats that whole text as the
-answer. If the model returns broken structured text and no answer can be
-extracted, the row is marked as a parse error.
-
-Only `reference_answer_original` is used for matching. `reference_answer_english`
-is ignored.
-
-## Output
-
-`heuristic_match.jsonl` contains one JSON object per result row:
-
-```json
-{
-  "riddle_id": "example_id",
-  "candidate": "model answer",
-  "reference": "reference answer",
-  "match": true,
-  "verdict": "correct",
-  "score": 3,
-  "match_type": "normalized_exact",
-  "matched_reference_text": "reference answer",
-  "parse_status": "raw_json",
-  "reason": "candidate matched a normalized reference form"
-}
-```
-
-Scores are intentionally simple:
-
-- `3`: the model answer matched the reference by a deterministic rule.
-- `1`: the model explicitly said it did not know.
-- `0`: the model answer did not match, or the answer could not be parsed.
-
-`heuristic_summary.json` reports totals, match rate, verdict counts, score
-counts, and match-type counts.
-
-## Matching Rules
-
-The normalizer is intentionally shared across all languages:
-
-- Unicode-normalize text with `NFKC`.
-- Lowercase with Python's `casefold()`.
-- Remove whitespace.
-- Remove punctuation, symbols, separators, and control characters.
-- Keep letters, numbers, and script marks as they are.
-
-The script also expands reference answers written as simple alternatives, such
-as `answer one / answer two`, `answer (alias)`, comma-separated lists,
-semicolon-separated lists, and spaced hyphen pairs.
-
-It does not translate, transliterate, stem words, guess synonyms, or use
-language-specific cleanup. That keeps the behavior predictable across large
-multilingual runs.
-
-## Useful Options
-
-```bash
-python evals/reference_heuristic_judge.py results.jsonl --out-dir evals/outputs/my_run
-python evals/reference_heuristic_judge.py results.jsonl --limit 100
-python evals/reference_heuristic_judge.py results.jsonl --quiet
-```
-
----
-
-# LLM-as-a-judge
-
-Lenient LLM scoring of the same `results.jsonl` (credits paraphrases /
-transliterations that exact match misses). Reuses the judge prompt + output
-schema from `llm_as_a_judge.py`; sends via Google's OpenAI-compatible Gemini
-endpoint with `gemini-2.5-flash-lite` by default. Needs `GEMINI_API_KEY`:
-
-```bash
-python -m evals.llm_judge_run \
-  framework/runs/examples/5c5b3151-d3a1-4228-9e83-742b4cd2cd58/results.jsonl \
-  --model gemini-2.5-flash-lite
-```
-
-Writes verdicts (same shape as the heuristic match) to `<run_dir>/llm_judge.jsonl`.
+Rows include the candidate, reference, verdict, score, match type, parse status,
+and a reason so that the deterministic result is auditable.

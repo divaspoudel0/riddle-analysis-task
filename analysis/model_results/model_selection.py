@@ -7,7 +7,6 @@ an entry only when its complete all-round result files are unavailable.
 
 from __future__ import annotations
 
-
 PAPER_MODEL_ORDER: tuple[str, ...] = (
     "gemini-3.1-pro-preview",
     "GPT5.5-search",

@@ -62,7 +62,7 @@ def plot_topic_performance(results: pd.DataFrame) -> None:
             )
     fig.colorbar(image, ax=ax, label="Strict match rate (%)")
     fig.tight_layout()
-    save_figure_pair(fig, figure_stem("model_results", "topic_performance_v2"))
+    save_figure_pair(fig, figure_stem("model_results", "exact_match_accuracy_by_topic"))
     plt.close(fig)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     rates.reset_index().to_csv(

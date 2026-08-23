@@ -66,8 +66,8 @@ uv run python -m riddles_framework.cli --config $cfg
 ```
 
 See the [batch guide](../../src/riddles_framework/batch/README.md). Output:
-`framework/runs/<run_id>/results.jsonl`; score with
-[`../../../evals`](../../../evals/README.md).
+`framework/runs/<run_id>/results.jsonl`; use the optional LLM-as-a-judge tool in
+[`analysis/eval_analysis/`](../../../analysis/eval_analysis/README.md).
 
 ---
 

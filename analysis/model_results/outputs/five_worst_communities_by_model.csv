@@ -1,0 +1,61 @@
+model_display,rank,community,exact_match_accuracy,n_completed
+Apertus-70B-Instruct-2509,1,afaan_oromo_oromo,0.0,100
+Apertus-70B-Instruct-2509,2,arabic_sudan,0.0,100
+Apertus-70B-Instruct-2509,3,bugisnese_indonesia,0.0,100
+Apertus-70B-Instruct-2509,4,yoruba_nigeria,0.0,100
+Apertus-70B-Instruct-2509,5,kannada_india,0.01,100
+Apertus-8B-Instruct-2509,1,afaan_oromo_oromo,0.0,100
+Apertus-8B-Instruct-2509,2,arabic_sudan,0.0,100
+Apertus-8B-Instruct-2509,3,assamese_india,0.0,99
+Apertus-8B-Instruct-2509,4,bugisnese_indonesia,0.0,100
+Apertus-8B-Instruct-2509,5,chinese_china,0.0,100
+Apertus-v1.5-70B,1,bugisnese_indonesia,0.0,100
+Apertus-v1.5-70B,2,yoruba_nigeria,0.0,100
+Apertus-v1.5-70B,3,afaan_oromo_oromo,0.01,100
+Apertus-v1.5-70B,4,arabic_sudan,0.01,100
+Apertus-v1.5-70B,5,assamese_india,0.01,100
+Apertus-v1.5-8B,1,afaan_oromo_oromo,0.0,100
+Apertus-v1.5-8B,2,arabic_sudan,0.0,100
+Apertus-v1.5-8B,3,assamese_india,0.0,100
+Apertus-v1.5-8B,4,bugisnese_indonesia,0.0,100
+Apertus-v1.5-8B,5,chinese_china,0.0,100
+EuroLLM-22B-Instruct-2512,1,afaan_oromo_oromo,0.0,100
+EuroLLM-22B-Instruct-2512,2,arabic_sudan,0.0,100
+EuroLLM-22B-Instruct-2512,3,assamese_india,0.0,100
+EuroLLM-22B-Instruct-2512,4,belarusian_belarus,0.0,100
+EuroLLM-22B-Instruct-2512,5,bugisnese_indonesia,0.0,100
+GPT5.5-search,1,lumasaba_uganda,0.04,100
+GPT5.5-search,2,bugisnese_indonesia,0.05,100
+GPT5.5-search,3,chinese_china,0.11,100
+GPT5.5-search,4,mongondow_indonesia,0.11,100
+GPT5.5-search,5,yoruba_nigeria,0.16,100
+Tiny-Aya earth,1,afaan_oromo_oromo,0.0,100
+Tiny-Aya earth,2,arabic_sudan,0.0,100
+Tiny-Aya earth,3,belarusian_belarus,0.0,100
+Tiny-Aya earth,4,bugisnese_indonesia,0.0,100
+Tiny-Aya earth,5,chinese_malaysia,0.0,100
+Tiny-Aya fire,1,afaan_oromo_oromo,0.0,100
+Tiny-Aya fire,2,arabic_sudan,0.0,100
+Tiny-Aya fire,3,belarusian_belarus,0.0,100
+Tiny-Aya fire,4,bugisnese_indonesia,0.0,100
+Tiny-Aya fire,5,chinese_malaysia,0.0,100
+Tiny-Aya water,1,afaan_oromo_oromo,0.0,100
+Tiny-Aya water,2,arabic_sudan,0.0,100
+Tiny-Aya water,3,belarusian_belarus,0.0,100
+Tiny-Aya water,4,bugisnese_indonesia,0.0,100
+Tiny-Aya water,5,chinese_malaysia,0.0,100
+deepseek-v4-pro,1,arabic_sudan,0.04,100
+deepseek-v4-pro,2,lumasaba_uganda,0.04,100
+deepseek-v4-pro,3,mongondow_indonesia,0.04,100
+deepseek-v4-pro,4,bugisnese_indonesia,0.06,100
+deepseek-v4-pro,5,yoruba_nigeria,0.12,100
+deepseek-v4-pro-thinking,1,arabic_sudan,0.02,100
+deepseek-v4-pro-thinking,2,mongondow_indonesia,0.061224489795918366,98
+deepseek-v4-pro-thinking,3,lumasaba_uganda,0.07,100
+deepseek-v4-pro-thinking,4,yoruba_nigeria,0.1414141414141414,99
+deepseek-v4-pro-thinking,5,chinese_china,0.15,100
+gemini-3.1-pro-preview,1,lumasaba_uganda,0.07,100
+gemini-3.1-pro-preview,2,chinese_china,0.14,100
+gemini-3.1-pro-preview,3,mongondow_indonesia,0.18,100
+gemini-3.1-pro-preview,4,bugisnese_indonesia,0.24,100
+gemini-3.1-pro-preview,5,luganda_uganda,0.24,100

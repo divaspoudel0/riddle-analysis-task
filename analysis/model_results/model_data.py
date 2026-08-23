@@ -17,6 +17,11 @@ DATA_PATH = Path(__file__).parent / "data/combined/processed/results_tidy.csv"
 def load_results(path: Path = DATA_PATH) -> pd.DataFrame:
     """Load selected models with complete current-corpus coverage."""
     results = add_derived_columns(pd.read_csv(path))
+    if not results["is_scored"].any():
+        raise ValueError(
+            "No recorded judge verdicts found. Run a scorer on the raw model "
+            "results before generating accuracy figures."
+        )
     coverage = results.groupby("model_display")["riddle_id"].nunique()
     if coverage.max() != 6099:
         raise ValueError(f"Expected 6,099 scored riddles; found {coverage.max():,}")
