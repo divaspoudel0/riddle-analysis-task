@@ -19,7 +19,8 @@ The dashboard is a self-contained static report for the four analysis areas:
 
 Each tab presents the current PNG figures with the figure caption and a short
 description. The dashboard has no private data dependency at runtime because
-the builder embeds each image in `index.html`.
+the builder embeds each image in `index.html`. Click a figure to zoom it; each
+card also links to the Python script that generated it.
 
 ## Rebuild the dashboard
 
