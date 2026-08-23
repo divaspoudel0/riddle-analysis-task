@@ -18,6 +18,36 @@ The root command runs four suites and then rebuilds the report dashboard:
 The writing stage reads the model topic summary produced in the preceding
 model stage. The dashboard exposes the four suites as tabs.
 
+## Score model runs
+
+The model-results package includes a deterministic reference-answer scorer for
+framework `results.jsonl` files:
+
+```bash
+uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
+  framework/runs/<run_id>/results.jsonl
+```
+
+The scorer writes `heuristic_match.jsonl` and `heuristic_summary.json` to
+`analysis/model_results/data/combined/evals/<run_id>/`. See
+[`evals/README.md`](../evals/README.md) for the input schema, matching rules,
+and options.
+
+## Optional LLM-as-a-judge
+
+The evaluation-analysis package also contains an optional provider-backed
+judge for answers that need semantic review. It requires `GEMINI_API_KEY` and
+can incur provider charges:
+
+```bash
+uv run --project analysis python -m analysis.eval_analysis.llm_judge_run \
+  framework/runs/<run_id>/results.jsonl
+```
+
+The judge writes raw verdicts beside the run or to the path supplied with
+`--out`. Keep those outputs private. See
+[`eval_analysis/README.md`](eval_analysis/README.md) for the judge contract.
+
 ## Artifact policy
 
 - Use [`style.py`](style.py), [`constants.py`](constants.py), [`corpus.py`](corpus.py),

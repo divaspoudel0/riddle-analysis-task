@@ -11,10 +11,16 @@ then audits and plots the complete-coverage subset.
 1. Download each model-run folder (containing `results.jsonl` and
    `run_config.json`) from the [shared results archive](https://drive.google.com/drive/folders/1ow1GKXeaOFJJr_59-Qg7erQf046mi2t1) into
    `analysis/model_results/data/responses/`. Keep folder names unchanged.
-2. Provide the recorded judge exports for each run under the private
-   `analysis/model_results/data/combined/evals/` directory. Existing exports
-   contain the exact-match fields consumed by this pipeline; raw judge output
-   is not committed.
+2. Score each run with the deterministic reference-answer scorer:
+
+   ```bash
+   uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
+     analysis/model_results/data/responses/<run_folder>/results.jsonl
+   ```
+
+   The scorer writes `heuristic_match.jsonl` and
+   `heuristic_summary.json` under the private
+   `analysis/model_results/data/combined/evals/<run_id>/` directory.
 3. Build the private tidy input:
 
    ```bash

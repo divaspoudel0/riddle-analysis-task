@@ -13,7 +13,7 @@ results.**
 | --- | --- | --- |
 | [`data_loading/`](data_loading/) | Validate contributor submissions and build the pilot dataset(s) | [readme](data_loading/pilot_dataset/README.md) |
 | [`framework/`](framework/) | Run models over a dataset and write per-riddle results | [readme](framework/README.md) |
-| [`analysis/eval_analysis/`](analysis/eval_analysis/) | Human comparison and optional LLM-as-a-judge evaluation | [readme](analysis/eval_analysis/README.md) |
+| [`analysis/eval_analysis/`](analysis/eval_analysis/) | Human comparison and evaluation analysis | [readme](analysis/eval_analysis/README.md) |
 | [`analysis/`](analysis/) | Analysis MultiCulture Riddles and Run Results— generates data and figures for publications | [readme](analysis/README.md) |
 
 ## The data
@@ -105,21 +105,19 @@ Output: `framework/runs/<run_id>/results.jsonl`. See the
 [batch guide](framework/src/riddles_framework/batch/README.md) and the
 [config reference](framework/configs/benchmark_v0/README.md).
 
-### 4. (Optional) Score the results
+### 4. Score the results
 
-> **Not required to complete your task.** The LLM-as-a-judge calls a paid model
-> (it spends credits), so feel free to skip scoring — just upload your raw
-> `results.jsonl` (step 5).
-
-From the **repo root**, point an evaluator at a run's `results.jsonl`:
+From the repository root, run the deterministic reference-answer scorer on the
+framework output:
 
 ```bash
-# lenient LLM-as-a-judge (credits paraphrases; needs GEMINI_API_KEY)
-uv run --project analysis python -m analysis.eval_analysis.llm_judge_run framework/runs/<run_id>/results.jsonl
+uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
+  framework/runs/<run_id>/results.jsonl
 ```
 
-The LLM judge writes verdicts next to the run. See the
-[evaluation analysis README](analysis/eval_analysis/README.md).
+The scorer writes `heuristic_match.jsonl` and `heuristic_summary.json` to the
+private model-results evaluation directory. See the
+[`evals/README.md`](evals/README.md) for the input schema and scoring rules.
 
 ### 5. Submit your results
 
