@@ -12,7 +12,6 @@ from matplotlib.offsetbox import AnnotationBbox, HPacker, TextArea
 from analysis.constants import REPO_ROOT, SURVEY_TOPICS, figure_stem
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
 
-
 DATA_PATH = (
     Path(__file__).resolve().parent
     / "data/[MCB]_Analysis_MasterSheet - reflection_form.csv"
@@ -23,6 +22,7 @@ TOPIC_MATCH_PATH = (
 )
 PII_COLUMNS = {"Timestamp", "Your Discord name", "Your Discord handle or user ID"}
 TOPICS = SURVEY_TOPICS
+NOT_APPLICABLE_DIFFICULTY_RESPONSE = "0 - N/A"
 
 
 def _count_percentage_label(value: int, denominator: int) -> HPacker:
@@ -134,13 +134,14 @@ def load_survey(path: Path = DATA_PATH) -> pd.DataFrame:
     ]
     for column in numeric_columns:
         survey[column] = pd.to_numeric(
-            survey[column].replace("0 - N/A", pd.NA), errors="coerce"
+            survey[column].replace(NOT_APPLICABLE_DIFFICULTY_RESPONSE, pd.NA),
+            errors="coerce",
         )
     return survey
 
 
 def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
-    """Plot topic-writing difficulty and its fixed-topic model relationship."""
+    """Plot 1--5 topic-writing difficulty and model-accuracy correlation."""
     rows = []
     for topic in TOPICS:
         values = survey[f"difficulty_{topic.casefold().replace(' ', '_')}"]
@@ -159,11 +160,13 @@ def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
     model_summary = pd.read_csv(TOPIC_MATCH_PATH)
     model_summary["topic"] = model_summary["topic"].replace({"Wildcard": "Wild Card"})
     comparison = summary.merge(model_summary, on="topic", how="inner")
-    correlation_comparison = comparison.loc[comparison["topic"] != "Wild Card"].copy()
+    topic_accuracy_comparison = comparison.loc[
+        comparison["topic"] != "Wild Card"
+    ].copy()
     correlation = (
-        correlation_comparison["mean_difficulty"]
+        topic_accuracy_comparison["mean_difficulty"]
         .rank()
-        .corr(correlation_comparison["mean_model_match_rate"].rank())
+        .corr(topic_accuracy_comparison["mean_model_match_rate"].rank())
     )
 
     apply_style()
@@ -172,9 +175,24 @@ def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
         PALETTE["vermillion"] if topic == summary.iloc[-1].topic else PALETTE["grey"]
         for topic in summary.topic
     ]
-    ax.barh(summary.topic, summary.mean_difficulty, color=colors, height=0.62)
-    ax.set_xlim(0, 5)
-    ax.set_xlabel("Mean reported writing difficulty (0--5)")
+    ax.hlines(
+        y=summary.topic,
+        xmin=1,
+        xmax=summary.mean_difficulty,
+        color=colors,
+        linewidth=2,
+        zorder=2,
+    )
+    ax.scatter(
+        summary.mean_difficulty,
+        summary.topic,
+        color=colors,
+        s=32,
+        zorder=3,
+    )
+    ax.set_xlim(1, 5)
+    ax.set_xticks(range(1, 6))
+    ax.set_xlabel("Mean reported writing difficulty (1--5)")
     ax.set_title("Writing difficulty by benchmark topic")
     ax.grid(axis="x", alpha=0.35)
     ax.grid(axis="y", visible=False)
@@ -201,38 +219,55 @@ def plot_topic_difficulty(survey: pd.DataFrame) -> pd.DataFrame:
     )
     plt.close(fig)
 
-    fig, scatter_ax = plt.subplots(figsize=acl_figure_size(1, 2.7))
-    scatter_ax.scatter(
-        correlation_comparison["mean_difficulty"],
-        correlation_comparison["mean_model_match_rate"] * 100,
-        color=PALETTE["blue"],
-        s=28,
-        zorder=3,
-    )
+    # This is descriptive because it contains only eight topic aggregates.
+    fig, correlation_ax = plt.subplots(figsize=acl_figure_size(1, 3.25))
     label_offsets = {
-        "Everyday Life": (4, 12),
-        "Kid's World": (4, 3),
+        "Everyday Life": (-8, 7),
+        "Kid's World": (-8, -9),
+        "National Heritage": (-8, -9),
+        "Geography": (-8, 7),
+        "History": (7, 5),
+        "Sports": (7, 5),
+        "Arts": (7, -8),
+        "Politics": (7, -5),
     }
-    for row in correlation_comparison.itertuples():
-        scatter_ax.annotate(
+    for row in topic_accuracy_comparison.itertuples():
+        correlation_ax.scatter(
+            row.mean_difficulty,
+            row.mean_model_match_rate * 100,
+            color=PALETTE["vermillion"],
+            s=32,
+            zorder=3,
+        )
+        correlation_ax.annotate(
             row.topic,
             (row.mean_difficulty, row.mean_model_match_rate * 100),
-            xytext=label_offsets.get(row.topic, (3, 3)),
+            xytext=label_offsets[row.topic],
             textcoords="offset points",
-            fontsize=6.5,
+            ha="right" if label_offsets[row.topic][0] < 0 else "left",
+            va="center",
+            fontsize=7,
         )
-    scatter_ax.set_xlabel("Mean writing difficulty (0--5)")
-    scatter_ax.set_ylabel("Mean model match rate (%)")
-    scatter_ax.set_title(f"Topic relationship (Spearman $\\rho$={correlation:.2f})")
-    scatter_ax.grid(alpha=0.35)
+
+    correlation_ax.set_xlim(1, 5)
+    correlation_ax.set_xticks(range(1, 6))
+    correlation_ax.set_ylim(18, 30)
+    correlation_ax.set_yticks(range(18, 31, 3))
+    correlation_ax.set_xlabel("Mean reported writing difficulty (1--5)")
+    correlation_ax.set_ylabel("Mean strict model match rate (%)")
+    correlation_ax.set_title(
+        f"Topic-level correlation (Spearman $\\rho$={correlation:.2f})"
+    )
+    correlation_ax.grid(alpha=0.35)
     fig.tight_layout()
     save_figure_pair(
-        fig, figure_stem("riddle_writing_analysis", "topic_difficulty_model_match")
+        fig,
+        figure_stem("riddle_writing_analysis", "topic_difficulty_vs_model_accuracy"),
     )
     plt.close(fig)
-    correlation_comparison["spearman_rho"] = correlation
-    correlation_comparison.to_csv(
-        OUTPUT_DIR / "topic_difficulty_model_match_comparison.csv", index=False
+    topic_accuracy_comparison["spearman_rho"] = correlation
+    topic_accuracy_comparison.to_csv(
+        OUTPUT_DIR / "topic_difficulty_model_accuracy_comparison.csv", index=False
     )
     return summary
 

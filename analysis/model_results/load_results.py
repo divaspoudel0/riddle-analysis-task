@@ -14,7 +14,7 @@ hand-fixing:
   reasoning_mode, so model identity is (model_name, reasoning_mode)
 
 Usage:
-    python load_results.py [runs_dir] [out_path] [evals_dir]
+    python load_results.py [runs_dir] [out_path] [judge_outputs_dir]
     defaults: data/responses_v0  ->  data/processed/results_tidy.parquet
 """
 
@@ -241,14 +241,14 @@ def build_frame(runs_dir: Path) -> pd.DataFrame:
     return full
 
 
-def load_judge_outputs(evals_outputs_dir: Path) -> pd.DataFrame:
-    """Load heuristic judge outputs from evals/outputs/<run_id>/ folders.
+def load_judge_outputs(judge_outputs_dir: Path) -> pd.DataFrame:
+    """Load recorded judge outputs from per-run folders.
 
     The judge writes one folder per run_id; rows key on riddle_id, which is
     unique within a run (one condition in v0). Join key: (run_id, riddle_id).
     """
     frames = []
-    for folder in sorted(p for p in evals_outputs_dir.iterdir() if p.is_dir()):
+    for folder in sorted(p for p in judge_outputs_dir.iterdir() if p.is_dir()):
         match_path = folder / "heuristic_match.jsonl"
         if not match_path.exists():
             continue
@@ -298,7 +298,7 @@ def main() -> None:
     evals_dir = (
         Path(sys.argv[3])
         if len(sys.argv) > 3
-        else Path(__file__).resolve().parents[2] / "evals" / "outputs"
+        else Path(__file__).resolve().parent / "data" / "combined" / "evals"
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 

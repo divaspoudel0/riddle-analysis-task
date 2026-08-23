@@ -13,7 +13,7 @@ ARTIFACT_PREFIXES: dict[str, str] = {
     "model_results": "m_",
     "riddle_analysis": "r_",
     "riddle_writing_analysis": "w_",
-    "judge_analysis": "j_",
+    "eval_analysis": "e_",
 }
 
 FIXED_TOPICS: tuple[str, ...] = (
@@ -30,16 +30,17 @@ TOPICS: tuple[str, ...] = (*FIXED_TOPICS, "Wildcard")
 SURVEY_TOPICS: tuple[str, ...] = (*FIXED_TOPICS, "Wild Card")
 RUN_BATCH_ORDER: tuple[str, ...] = ("v0", "v1", "v2")
 REGION_ORDER: tuple[str, ...] = (
-    "Sub-Saharan Africa",
-    "North Africa",
     "North America",
-    "Caribbean",
-    "South America",
+    "Latin America",
     "Europe",
+    "North Africa",
+    "Sub-Saharan Africa",
     "West Asia",
     "Central Asia",
     "South Asia",
-    "East & Southeast Asia",
+    "East Asia",
+    "Southeast Asia",
+    "Oceania & Pacific",
 )
 LANGUAGE_GROUP_ORDER: tuple[str, ...] = (
     "Arabic varieties",

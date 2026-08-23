@@ -25,12 +25,11 @@ whole paper by editing this one file.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap
-
 
 # ACL's two-column layout has a 6.5-inch text block. These dimensions leave a
 # small safety margin so exported figures fit without LaTeX scaling artifacts.

@@ -154,8 +154,8 @@ activemq-data/
 .env
 .envrc
 .venv
-analysis/figures/*.pdf
 analysis/model_results/data/
+analysis/eval_analysis/data/
 analysis/riddle_writing_analysis/data/
 analysis/judge_analysis/data/
 .mplconfig/
@@ -241,8 +241,3 @@ HumanEval
 
 # Analysis inputs may contain contributor-provided or non-public data.
 analysis/**/data/
-# Figures are emitted in review-friendly PNG and publication PDF forms;
-# keep generated PDFs out of version control.
-analysis/**/figures/*.pdf
-
-paper/

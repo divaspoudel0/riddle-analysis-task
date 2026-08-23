@@ -32,7 +32,7 @@ The frozen version keeps its files as-is (the model answers are answers to
 the OLD riddle, so scoring them would be noise). We just skip the id in the
 analysis loader.
 
-In `analysis/model_results_v0/load_results.py`, add the id to
+In `analysis/model_results/load_results.py`, add the id to
 `EXCLUDED_RIDDLES` with a one-line reason (mirrors the existing
 `EXCLUDED_FOLDERS` pattern). Then rerun the runbook to regenerate the tidy
 frame, the data quality report, and the figures. Denominators drop by one

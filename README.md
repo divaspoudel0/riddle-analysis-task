@@ -13,7 +13,7 @@ results.**
 | --- | --- | --- |
 | [`data_loading/`](data_loading/) | Validate contributor submissions and build the pilot dataset(s) | [readme](data_loading/pilot_dataset/README.md) |
 | [`framework/`](framework/) | Run models over a dataset and write per-riddle results | [readme](framework/README.md) |
-| [`evals/`](evals/) | Score a run's results — deterministic heuristic + LLM-as-a-judge | [readme](evals/README.md) |
+| [`analysis/eval_analysis/`](analysis/eval_analysis/) | Human comparison and optional LLM-as-a-judge evaluation | [readme](analysis/eval_analysis/README.md) |
 | [`analysis/`](analysis/) | Analysis MultiCulture Riddles and Run Results— generates data and figures for publications | [readme](analysis/README.md) |
 
 ## The data
@@ -109,20 +109,17 @@ Output: `framework/runs/<run_id>/results.jsonl`. See the
 
 > **Not required to complete your task.** The LLM-as-a-judge calls a paid model
 > (it spends credits), so feel free to skip scoring — just upload your raw
-> `results.jsonl` (step 5). The heuristic evaluator below is free (no LLM).
+> `results.jsonl` (step 5).
 
 From the **repo root**, point an evaluator at a run's `results.jsonl`:
 
 ```bash
-# deterministic reference-answer match (no LLM, no key)
-python evals/reference_heuristic_judge.py framework/runs/<run_id>/results.jsonl
-
 # lenient LLM-as-a-judge (credits paraphrases; needs GEMINI_API_KEY)
-python -m evals.llm_judge_run framework/runs/<run_id>/results.jsonl
+uv run --project analysis python -m analysis.eval_analysis.llm_judge_run framework/runs/<run_id>/results.jsonl
 ```
 
-The heuristic evaluator writes a per-riddle score file and a summary; the LLM
-judge writes verdicts next to the run. See the [evals README](evals/README.md).
+The LLM judge writes verdicts next to the run. See the
+[evaluation analysis README](analysis/eval_analysis/README.md).
 
 ### 5. Submit your results
 
@@ -151,4 +148,4 @@ Find your assigned task ID in the
   [`framework/docs/getting-started.md`](framework/docs/getting-started.md).
 - **Dataset schema & rebuild** — [`data_loading/`](data_loading/).
 - **Publish to HuggingFace** — [`data_loading/RELEASE.md`](data_loading/RELEASE.md).
-- **Scoring details** — [`evals/README.md`](evals/README.md).
+- **Scoring details** — [`analysis/eval_analysis/README.md`](analysis/eval_analysis/README.md).
