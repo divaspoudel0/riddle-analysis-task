@@ -158,6 +158,7 @@ analysis/model_results/data/
 analysis/eval_analysis/data/
 analysis/riddle_writing_analysis/data/
 analysis/judge_analysis/data/
+paper/
 .mplconfig/
 env/
 venv/

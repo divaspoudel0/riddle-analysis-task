@@ -11,7 +11,8 @@ then audits and plots the complete-coverage subset.
 1. Download each model-run folder (containing `results.jsonl` and
    `run_config.json`) from the [shared results archive](https://drive.google.com/drive/folders/1ow1GKXeaOFJJr_59-Qg7erQf046mi2t1) into
    `analysis/model_results/data/responses/`. Keep folder names unchanged.
-2. Score each run with the deterministic reference-answer scorer:
+2. Scoring is optional for loading raw results. To generate accuracy figures,
+   score each run with the deterministic reference-answer scorer:
 
    ```bash
    uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
@@ -21,7 +22,8 @@ then audits and plots the complete-coverage subset.
    The scorer writes `heuristic_match.jsonl` and
    `heuristic_summary.json` under the private
    `analysis/model_results/data/combined/evals/<run_id>/` directory.
-3. Build the private tidy input:
+3. Build the private tidy input. This command also works when the evaluation
+   directory is absent; it writes raw extracted answers without verdicts:
 
    ```bash
    uv run --project analysis python -m analysis.model_results.load_results \

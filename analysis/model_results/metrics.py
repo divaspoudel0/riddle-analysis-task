@@ -60,8 +60,18 @@ TEMPLATE_ECHO_ANSWERS = frozenset(
 
 
 def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Add is_completed / is_correct / is_abstention / is_format_failure."""
+    """Add completion, scoring, correctness, and format-status columns.
+
+    ``judge_verdict`` is optional at load time. When no recorded scorer output
+    is present, ``is_scored`` is false and accuracy remains missing rather than
+    being reported as zero.
+    """
     df = df.copy()
+    if "judge_verdict" not in df:
+        df["judge_verdict"] = pd.Series(pd.NA, index=df.index, dtype="string")
+    else:
+        df["judge_verdict"] = df["judge_verdict"].astype("string")
+    df["is_scored"] = df["judge_verdict"].notna()
     df["is_completed"] = (df["generation_status"] == "success") & (
         df["answer_parse_status"] != "empty"
     )
@@ -71,9 +81,11 @@ def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["is_template_echo"] = (
         df["answer_text"].fillna("").str.strip().isin(TEMPLATE_ECHO_ANSWERS)
     )
-    df["is_correct"] = df["judge_verdict"].eq("correct") & ~df["is_template_echo"]
+    df["is_correct"] = (
+        df["is_scored"] & df["judge_verdict"].eq("correct") & ~df["is_template_echo"]
+    )
     # judge 'unknown' = explicit "I don't know" style responses
-    df["is_abstention"] = df["judge_verdict"].eq("unknown")
+    df["is_abstention"] = df["is_scored"] & df["judge_verdict"].eq("unknown")
     df["is_format_failure"] = df["is_completed"] & (
         df["answer_parse_status"].eq("unparsed") | df["is_template_echo"]
     )
@@ -85,13 +97,15 @@ def model_summary(df: pd.DataFrame) -> pd.DataFrame:
 
     def agg(g: pd.DataFrame) -> pd.Series:
         completed = g[g.is_completed]
+        scored = completed[completed.is_scored]
         return pd.Series(
             {
-                "accuracy": completed.is_correct.mean(),
-                "abstention_rate": completed.is_abstention.mean(),
+                "accuracy": scored.is_correct.mean(),
+                "abstention_rate": scored.is_abstention.mean(),
                 "format_failure_rate": completed.is_format_failure.mean(),
                 "coverage": g.is_completed.mean(),
                 "n_completed": len(completed),
+                "n_scored": len(scored),
                 "n_total": len(g),
                 # search-enabled runs are a separate evaluation category,
                 # not comparable to closed-book recall (see load_results)
@@ -115,6 +129,8 @@ def bootstrap_ci(
     values: np.ndarray, n_boot: int = 2000, alpha: float = 0.05
 ) -> tuple[float, float]:
     """Percentile bootstrap CI for the mean of a 0/1 array."""
+    if len(values) == 0:
+        return (float("nan"), float("nan"))
     rng = np.random.default_rng(RNG_SEED)
     idx = rng.integers(0, len(values), size=(n_boot, len(values)))
     means = values[idx].mean(axis=1)

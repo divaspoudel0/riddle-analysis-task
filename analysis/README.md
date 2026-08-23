@@ -33,6 +33,10 @@ The scorer writes `heuristic_match.jsonl` and `heuristic_summary.json` to
 [`evals/README.md`](../evals/README.md) for the input schema, matching rules,
 and options.
 
+Loading raw model results does not require a scorer. Accuracy figures do
+require recorded verdicts from a scorer, and the model-results analysis raises
+an explicit error when those verdicts are absent.
+
 ## Optional LLM-as-a-judge
 
 The evaluation-analysis package also contains an optional provider-backed
