@@ -47,7 +47,6 @@ these figures in four tabs.
 | `e_` | `community_accuracy_exact_match_vs_human` | `eval_analysis/community_metrics.py` |
 | `e_` | `exact_match_agreement_by_community` | `eval_analysis/community_metrics.py` |
 | `e_` | `outcome_failure_mode_composition` | `eval_analysis/outcome_failure_modes.py` |
-| `e_` | `human_outcomes_and_culture_distribution` | `eval_analysis/outcome_culture_composite.py` |
 
 Do not create a second generator for an existing stem. If a figure changes its
 meaning, update the stem, generator, dashboard card, and this table together.

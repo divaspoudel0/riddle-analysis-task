@@ -4,9 +4,6 @@ from analysis.eval_analysis.accuracy_comparison import main as run_accuracy_comp
 from analysis.eval_analysis.community_metrics import main as run_community_metrics
 from analysis.eval_analysis.human_accuracy import main as run_human_accuracy
 from analysis.eval_analysis.model_summary import main as write_model_summary
-from analysis.eval_analysis.outcome_culture_composite import (
-    main as run_outcome_culture_composite,
-)
 from analysis.eval_analysis.outcome_failure_modes import (
     main as run_outcome_failure_modes,
 )
@@ -19,7 +16,6 @@ def main() -> None:
     run_accuracy_comparison()
     run_community_metrics()
     run_outcome_failure_modes()
-    run_outcome_culture_composite()
 
 
 if __name__ == "__main__":

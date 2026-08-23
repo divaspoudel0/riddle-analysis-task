@@ -182,12 +182,6 @@ FIGURE_CATALOG: dict[str, tuple[FigureSpec, ...]] = {
             "Detailed outcome and failure-mode composition of human-scored responses.",
             "Breaks responses into exact, valid-but-different, partial, and incorrect outcomes.",
         ),
-        figure(
-            "e_human_outcomes_and_culture_distribution",
-            "Outcomes and community distribution",
-            "Outcome composition paired with human-correct accuracy across communities.",
-            "Connects each model’s response types with the spread of its performance across cultures.",
-        ),
         FigureSpec(
             None,
             "LLM-as-a-judge tooling",
@@ -223,7 +217,6 @@ SOURCE_BY_STEM: dict[str, str] = {
     "e_community_accuracy_exact_match_vs_human": "../eval_analysis/community_metrics.py",
     "e_exact_match_agreement_by_community": "../eval_analysis/community_metrics.py",
     "e_outcome_failure_mode_composition": "../eval_analysis/outcome_failure_modes.py",
-    "e_human_outcomes_and_culture_distribution": "../eval_analysis/outcome_culture_composite.py",
 }
 
 
