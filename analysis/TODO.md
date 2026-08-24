@@ -15,51 +15,6 @@ evaluations.
 
 ## Tasks
 
-### Reconcile the human-score schema
-
-- **Scope:** medium
-- **Priority:** high
-- **Description:** Define one canonical representation for human scores. The
-  contribution schema stores a raw 0–2 label, while evaluation analysis uses a
-  0–3 scale for incorrect, uncertain, partial, and correct outcomes. Preserve
-  the raw value, document the mapping, parse it once, and make strict and
-  lenient metrics use named constants.
-- **Relevant files to start:** `data_loading/pilot_dataset_config.py`,
-  `data_loading/build_pilot_dataset.py`, `data_loading/pilot_dataset/README.md`,
-  `analysis/eval_analysis/data.py`, `analysis/eval_analysis/README.md`.
-
-### Crawl and integrate additional model results
-
-- **Scope:** large
-- **Priority:** high
-- **Description:** Add the next model-run folders, verify run metadata and
-  response coverage, join recorded judge outputs, rerun data-quality audits,
-  update the model roster, and regenerate model tables, figures, and dashboard
-  assets. Keep incomplete or malformed runs visible in the audit without
-  including them in complete-coverage comparisons.
-- **Relevant files to start:** `analysis/model_results/load_results.py`,
-  `analysis/model_results/data_audit.py`, `analysis/model_results/model_data.py`,
-  `analysis/model_results/model_registry.py`,
-  `analysis/model_results/model_selection.py`,
-  `analysis/model_results/main.py`, `analysis/model_results/README.md`.
-
-### Complete the human-evaluation collection refresh
-
-- **Scope:** large
-- **Priority:** high
-- **Description:** Ingest the next human-evaluation export, update community
-  coverage and completion statuses, verify model-name mappings, and regenerate
-  the human-comparison tables and `e_` figures. Record which communities and
-  models remain pending so that partial coverage is not mistaken for a final
-  ranking.
-- **Relevant files to start:** `analysis/eval_analysis/data.py`,
-  `analysis/eval_analysis/model_summary.py`,
-  `analysis/eval_analysis/human_accuracy.py`,
-  `analysis/eval_analysis/community_metrics.py`,
-  `analysis/eval_analysis/outcome_failure_modes.py`,
-  `analysis/eval_analysis/join_human_eval.py`,
-  `analysis/eval_analysis/README.md`.
-
 ### Design the LLM-as-a-judge protocol
 
 - **Scope:** large
@@ -110,39 +65,6 @@ evaluations.
   `analysis/eval_analysis/community_metrics.py`,
   `analysis/model_results/load_results.py`.
 
-### Close corpus data-quality follow-ups
-
-- **Scope:** medium
-- **Priority:** medium
-- **Description:** Resolve or explicitly document the remaining missing English
-  riddles and answers, review metadata aliases and country geometry coverage,
-  and explain incomplete validator coverage by collection round. Keep the
-  corpus figures reproducible while distinguishing data limitations from
-  modeling results.
-- **Relevant files to start:** `analysis/riddle_analysis/corpus_audit.py`,
-  `analysis/riddle_analysis/corpus_data.py`,
-  `analysis/riddle_analysis/coverage_map.py`,
-  `analysis/corpus.py`, `analysis/corpus_metadata.csv`,
-  `analysis/riddle_analysis/outputs/corpus_quality_report.md`.
-
-### Extend the cross-task analysis
-
-- **Scope:** medium
-- **Priority:** high
-- **Description:** Build a topic-level cross-task figure that combines writer
-  difficulty, model exact-match rate, human-versus-automatic score gap, and
-  human-evaluation coverage. Use a scatter plot with writing difficulty on the
-  x-axis, the human-versus-automatic gap on the y-axis, bubble size for the
-  number of evaluated riddles, and color for model or topic family. This
-  extends the existing writing-difficulty versus model-accuracy figure while
-  making coverage and evaluator disagreement visible.
-- **Relevant files to start:** `analysis/riddle_writing_analysis/survey_analysis.py`,
-  `analysis/model_results/topic_performance.py`,
-  `analysis/eval_analysis/model_summary.py`,
-  `analysis/eval_analysis/data.py`,
-  `analysis/figures/w_topic_difficulty_vs_model_accuracy.png`,
-  `analysis/dashboard/build_static.py`.
-
 ### Add uncertainty to model and evaluation reports
 
 - **Scope:** medium
@@ -157,6 +79,74 @@ evaluations.
   `analysis/model_results/group_performance.py`,
   `analysis/eval_analysis/model_summary.py`, `analysis/style.py`.
 
+### Select qualitative examples for the paper and blog
+
+- **Scope:** medium
+- **Priority:** high
+- **Description:** Select 10 to 20 high-signal qualitative examples that
+  illustrate strong successes, culturally revealing misses, confident
+  fabrications, honest uncertainty, translation-sensitive cases, and why
+  native-designed riddles matter. Record the model, riddle, reference answer,
+  human and automatic judgments, community, language, and a short rationale
+  for each selection. Keep the examples traceable to private row-level data
+  while preparing a shareable redacted version for the paper or blog.
+- **Relevant files to start:** `analysis/model_results/export_model_answers.py`,
+  `analysis/eval_analysis/outcome_failure_modes.py`,
+  `analysis/eval_analysis/data.py`, `analysis/figures/`,
+  `analysis/model_results/outputs/`, `analysis/eval_analysis/README.md`.
+
+### Pitch a wildcard analysis task
+
+- **Scope:** medium
+- **Priority:** medium
+- **Description:** Propose an analysis task that is not already represented by
+  the existing figures, tables, or tasks. Every proposal must include a task
+  name and description, explain what value it adds beyond the existing
+  artifacts, and explain how it contributes to the benchmark, paper, blog, or
+  analysis workflow. The proposal must identify its data source, expected
+  output, and a reproducible starting point in the repository.
+- **Relevant files to start:** `analysis/README.md`, `analysis/TODO.md`,
+  `analysis/figures/`, `analysis/tables/`, and the module that owns the proposed
+  data source.
+
+## Analysis team lead tasks
+
+The analysis team leads own the following maintenance tasks. Contributors can
+help with focused subproblems, but the leads coordinate the final refresh and
+approval.
+
+### Integrate additional model results
+
+- **Scope:** large
+- **Priority:** high
+- **Description:** Add the next model-run folders, verify run metadata and
+  response coverage, join recorded judge outputs, rerun data-quality audits,
+  update the model roster, and regenerate model tables, figures, and dashboard
+  assets. Keep incomplete or malformed runs visible in the audit without
+  including them in complete-coverage comparisons.
+- **Relevant files to start:** `analysis/model_results/load_results.py`,
+  `analysis/model_results/data_audit.py`, `analysis/model_results/model_data.py`,
+  `analysis/model_results/model_registry.py`,
+  `analysis/model_results/model_selection.py`,
+  `analysis/model_results/main.py`, `analysis/model_results/README.md`.
+
+### Complete the human-evaluation collection refresh
+
+- **Scope:** large
+- **Priority:** high
+- **Description:** Ingest the next human-evaluation export, update community
+  coverage and completion statuses, verify model-name mappings, and regenerate
+  the human-comparison tables and `e_` figures. Record which communities and
+  models remain pending so that partial coverage is not mistaken for a final
+  ranking.
+- **Relevant files to start:** `analysis/eval_analysis/data.py`,
+  `analysis/eval_analysis/model_summary.py`,
+  `analysis/eval_analysis/human_accuracy.py`,
+  `analysis/eval_analysis/community_metrics.py`,
+  `analysis/eval_analysis/outcome_failure_modes.py`,
+  `analysis/eval_analysis/join_human_eval.py`,
+  `analysis/eval_analysis/README.md`.
+
 ### Add automated checks for analysis artifacts
 
 - **Scope:** medium
@@ -169,33 +159,3 @@ evaluations.
 - **Relevant files to start:** `analysis/tables/build.py`,
   `analysis/dashboard/build_static.py`, `analysis/constants.py`,
   `analysis/run_all.py`, `analysis/pyproject.toml`, `analysis/figures/`.
-
-### Complete publication figure and dashboard QA
-
-- **Scope:** small
-- **Priority:** medium
-- **Description:** Render every figure at publication size and inspect labels,
-  legends, font coverage, captions, and accessible descriptions. Fix clipped
-  labels and overly dense annotations, then rebuild the dashboard so the PNG,
-  PDF, CSV, Markdown, and embedded HTML artifacts come from one documented
-  command.
-- **Relevant files to start:** `analysis/style.py`,
-  `analysis/riddle_analysis/corpus_data.py`,
-  `analysis/model_results/leaderboard.py`,
-  `analysis/eval_analysis/outcome_failure_modes.py`,
-  `analysis/dashboard/build_static.py`, `analysis/dashboard/README.md`,
-  `analysis/figures/`.
-
-### Strengthen riddle-writing survey conclusions
-
-- **Scope:** medium
-- **Priority:** low
-- **Description:** Treat the current descriptive survey as a baseline, then
-  add respondents for underrepresented communities and report uncertainty or
-  minimum group sizes. If free-text responses become part of the paper,
-  define a documented coding guide and inter-coder review rather than folding
-  uncoded comments into the existing aggregate figures.
-- **Relevant files to start:** `analysis/riddle_writing_analysis/survey_analysis.py`,
-  `analysis/riddle_writing_analysis/survey_audit.py`,
-  `analysis/riddle_writing_analysis/README.md`,
-  `analysis/riddle_writing_analysis/outputs/`.

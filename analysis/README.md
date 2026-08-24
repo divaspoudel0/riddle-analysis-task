@@ -3,6 +3,31 @@
 `analysis` is an importable Python package for reproducible corpus, model, and
 contributor-writing analyses. From the repository root:
 
+## Quick links
+
+The following links point to the main local inputs and shared data locations:
+
+### Local inputs
+
+- [Released riddle corpus](../data_loading/pilot_dataset/pilot_dataset_v1.jsonl)
+- [Model-response input directory](model_results/data/responses/) (private and
+  Git-ignored)
+- [Human-evaluation responses](eval_analysis/data/model_riddle_results_flat.csv)
+  (private and Git-ignored)
+
+### Shared data
+
+- [Shared Google Drive](https://drive.google.com/drive/u/0/folders/1-HxD2QfqCOqvoHUeYezEMxvo1-CezzrU)
+  contains intermediary data from all teams.
+- [Riddles from v0 through v2](https://drive.google.com/drive/u/0/folders/11zefNCw2VnECz2CytJVwpG8E4VDiZEvy)
+- [Model responses](https://drive.google.com/drive/u/0/folders/1ow1GKXeaOFJJr_59-Qg7erQf046mi2t1)
+- Human-evaluation responses are available from the [shared Google Drive](https://drive.google.com/drive/u/0/folders/1-HxD2QfqCOqvoHUeYezEMxvo1-CezzrU).
+
+The local model-response and human-evaluation paths contain private data. Do
+not commit raw responses, annotations, or credentials.
+
+## Setup
+
 ```bash
 uv sync --project analysis
 uv run --project analysis python -m analysis.run_all
