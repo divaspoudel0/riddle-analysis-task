@@ -23,6 +23,7 @@ from analysis.eval_analysis.data import (
     coverage_report,
     load_human_evaluation,
 )
+from analysis.eval_analysis.plot_helpers import plot_accuracy_dumbbell
 
 
 def _complete(m: pd.DataFrame) -> tuple[pd.DataFrame, set]:
@@ -38,78 +39,17 @@ def difficulty_fig(m: pd.DataFrame, strict: bool = True):
     floor = sub.assign(a=sub.is_exact_match).groupby("community")["a"].mean().mul(100)
     d = pd.DataFrame({"human": human, "floor": floor}).sort_values("human")
 
-    fig, ax = plt.subplots(figsize=(7, 9))
-    y = list(range(len(d)))
-    ax.hlines(y, d.floor, d.human, color=style.PALETTE["light_grey"], lw=2, zorder=1)
-    ax.plot(
-        d.floor,
-        y,
-        "o",
-        color=style.PALETTE["grey"],
-        ms=6,
-        zorder=2,
-        label="Exact match",
+    return plot_accuracy_dumbbell(
+        d,
+        left_column="floor",
+        right_column="human",
+        left_label="Exact match",
+        right_label="Human evaluation",
+        x_label="Mean accuracy across models (%)",
+        title=f"Community Difficulty: Exact Match and Human Evaluation ({len(complete)} Communities)",
+        figsize=(7, 9),
+        ytick_fontsize=8,
     )
-    ax.plot(
-        d.human,
-        y,
-        "o",
-        color=style.PALETTE["blue"],
-        ms=6,
-        zorder=3,
-        label="Human evaluation",
-    )
-    for position, floor_value, human_value in zip(
-        y, d.floor, d.human, strict=True
-    ):
-        delta = human_value - floor_value
-        near_left_edge = min(floor_value, human_value) < 2
-        floor_offset = (4, -6) if near_left_edge else (-4, 0)
-        human_offset = (4, 6) if near_left_edge else (4, 0)
-        ax.annotate(
-            f"{floor_value:.1f}",
-            (floor_value, position),
-            xytext=floor_offset,
-            textcoords="offset points",
-            ha="left" if near_left_edge else "right",
-            va="top" if near_left_edge else "center",
-            fontsize=6.5,
-            color=style.PALETTE["grey"],
-        )
-        ax.annotate(
-            f"{human_value:.1f}",
-            (human_value, position),
-            xytext=human_offset,
-            textcoords="offset points",
-            ha="left",
-            va="bottom" if near_left_edge else "center",
-            fontsize=6.5,
-            color=style.PALETTE["blue"],
-        )
-        midpoint = (floor_value + human_value) / 2
-        ax.annotate(
-            f"{delta:+.1f}pp",
-            (midpoint, position),
-            xytext=(16, 0) if near_left_edge else (0, 4),
-            textcoords="offset points",
-            ha="left" if near_left_edge else "center",
-            va="center" if near_left_edge else "bottom",
-            fontsize=5.5,
-            color=style.PALETTE["black"],
-            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8, "pad": 0.1},
-            zorder=4,
-        )
-    ax.set_yticks(list(y), d.index, fontsize=8)
-    ax.set_ylim(-0.5, len(d) - 0.5)
-    ax.set_xlabel("Mean accuracy across models (%)")
-    ax.set_title(
-        f"Community Difficulty: Exact Match and Human Evaluation ({len(complete)} Communities)"
-    )
-    ax.grid(axis="x", alpha=0.3)
-    ax.grid(axis="y", visible=False)
-    ax.legend(loc="lower right", frameon=True, framealpha=0.9, fontsize=8)
-    fig.tight_layout()
-    return fig
 
 
 def kappa_fig(m: pd.DataFrame):

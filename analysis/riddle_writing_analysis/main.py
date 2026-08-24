@@ -12,28 +12,24 @@ from analysis.riddle_writing_analysis.survey_analysis import (
     plot_topic_difficulty,
     summarize_scale_relationships,
 )
+from analysis.utils import write_csv
 
 
 def main() -> None:
     """Regenerate every survey table and figure."""
     survey_audit.main()
     survey = load_survey()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    plot_topic_difficulty(survey).to_csv(
-        OUTPUT_DIR / "topic_difficulty.csv", index=False
+    outputs = (
+        (plot_topic_difficulty, "topic_difficulty.csv"),
+        (plot_specificity, "specificity_strategy.csv"),
+        (plot_ai_uses, "ai_use_functions.csv"),
+        (plot_confidence_distribution, "confidence_distribution.csv"),
+        (plot_time_per_riddle, "time_per_riddle.csv"),
+        (plot_resources_used, "resources_used.csv"),
+        (summarize_scale_relationships, "scale_spearman_correlations.csv"),
     )
-    plot_specificity(survey).to_csv(
-        OUTPUT_DIR / "specificity_strategy.csv", index=False
-    )
-    plot_ai_uses(survey).to_csv(OUTPUT_DIR / "ai_use_functions.csv", index=False)
-    plot_confidence_distribution(survey).to_csv(
-        OUTPUT_DIR / "confidence_distribution.csv", index=False
-    )
-    plot_time_per_riddle(survey).to_csv(OUTPUT_DIR / "time_per_riddle.csv", index=False)
-    plot_resources_used(survey).to_csv(OUTPUT_DIR / "resources_used.csv", index=False)
-    summarize_scale_relationships(survey).to_csv(
-        OUTPUT_DIR / "scale_spearman_correlations.csv", index=False
-    )
+    for transform, filename in outputs:
+        write_csv(transform(survey), OUTPUT_DIR / filename)
 
 
 if __name__ == "__main__":

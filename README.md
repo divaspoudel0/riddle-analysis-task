@@ -1,6 +1,7 @@
 # RiddlesBenchmarking
+
 MultiCulture Riddles builds naive-written, human-curated cultural riddle benchmarks for solving **culturally specific riddles** across many languages and
-communities. 
+communities.
 
 This repo takes you end-to-end: **build the dataset → run models → score the
 results.**
@@ -9,12 +10,11 @@ results.**
 
 ## Repository layout
 
-| Directory | What it does | Guide |
-| --- | --- | --- |
+| Directory                        | What it does                                                    | Guide                                          |
+| -------------------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
 | [`data_loading/`](data_loading/) | Validate contributor submissions and build the pilot dataset(s) | [readme](data_loading/pilot_dataset/README.md) |
-| [`framework/`](framework/) | Run models over a dataset and write per-riddle results | [readme](framework/README.md) |
-| [`analysis/eval_analysis/`](analysis/eval_analysis/) | Human comparison and evaluation analysis | [readme](analysis/eval_analysis/README.md) |
-| [`analysis/`](analysis/) | Analysis MultiCulture Riddles and Run Results— generates data and figures for publications | [readme](analysis/README.md) |
+| [`framework/`](framework/)       | Run models over a dataset and write per-riddle results          | [readme](framework/README.md)                  |
+| [`analysis/`](analysis/)         | Analyze data and generate figures for publications              | [readme](analysis/README.md)                   |
 
 ## The data
 
@@ -33,7 +33,7 @@ Each line is one riddle (source + English text, reference answers, topic,
 community, run batch, optional hint). See the
 [dataset README](data_loading/pilot_dataset/README.md) for the full schema.
 
-> To evaluate only the communities added in a later round, pass `--run-batch v1` 
+> To evaluate only the communities added in a later round, pass `--run-batch v1`
 > to both the framework CLI and `riddles_framework.batch.fill`; omit it to run the full set.
 > See [`framework/README.md`](framework/README.md).
 
@@ -58,13 +58,13 @@ uv sync                 # core deps
 **example** configs — one per model; treat them as templates (edit the model
 ids/keys, or drop in your own `<name>.yaml`). The examples:
 
-| Config | Model | API key |
-| --- | --- | --- |
-| `gpt55_high.yaml` | GPT-5.5 | `OPENAI_API_KEY` |
-| `gemini_pro.yaml` | Gemini Pro | `GEMINI_API_KEY` |
-| `cohere_tiny_aya.yaml` | Cohere Tiny-Aya | `COHERE_API_KEY` |
-| `gemma4_openrouter.yaml` | Gemma 4 (OpenRouter) | `OPENROUTER_API_KEY` |
-| `qwen3.5_vllm.yaml` | Qwen 3.5 (vLLM) | `OPENAI_API_KEY` (Placeholder) |
+| Config                   | Model                | API key                        |
+| ------------------------ | -------------------- | ------------------------------ |
+| `gpt55_high.yaml`        | GPT-5.5              | `OPENAI_API_KEY`               |
+| `gemini_pro.yaml`        | Gemini Pro           | `GEMINI_API_KEY`               |
+| `cohere_tiny_aya.yaml`   | Cohere Tiny-Aya      | `COHERE_API_KEY`               |
+| `gemma4_openrouter.yaml` | Gemma 4 (OpenRouter) | `OPENROUTER_API_KEY`           |
+| `qwen3.5_vllm.yaml`      | Qwen 3.5 (vLLM)      | `OPENAI_API_KEY` (Placeholder) |
 
 > ⚠️ The shipped configs use **placeholder** model ids. Before a real run, set
 > each config's `model_spec.provider_model_name` to a real id and export its API
@@ -105,9 +105,9 @@ Output: `framework/runs/<run_id>/results.jsonl`. See the
 [batch guide](framework/src/riddles_framework/batch/README.md) and the
 [config reference](framework/configs/benchmark_v0/README.md).
 
-### 4. Score the results
+### 4. Score the results (optional)
 
-From the repository root, run the deterministic reference-answer scorer on the
+From the repository root, you can optionally run the deterministic reference-answer scorer on the
 framework output:
 
 ```bash
@@ -146,4 +146,3 @@ Find your assigned task ID in the
   [`framework/docs/getting-started.md`](framework/docs/getting-started.md).
 - **Dataset schema & rebuild** — [`data_loading/`](data_loading/).
 - **Publish to HuggingFace** — [`data_loading/RELEASE.md`](data_loading/RELEASE.md).
-- **Scoring details** — [`analysis/eval_analysis/README.md`](analysis/eval_analysis/README.md).

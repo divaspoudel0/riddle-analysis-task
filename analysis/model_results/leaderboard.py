@@ -1,15 +1,14 @@
 """Generate the human-evaluation exact-match leaderboard."""
 
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from analysis.constants import figure_stem
+from analysis.constants import MODEL_RESULTS_OUTPUT_DIR, figure_stem
 from analysis.eval_analysis.data import coverage_report, load_human_evaluation
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
+from analysis.utils import write_csv
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 
 
 def load_human_eval_leaderboard() -> pd.DataFrame:
@@ -62,8 +61,7 @@ def plot_leaderboard(summary: pd.DataFrame) -> None:
         fig, figure_stem("model_results", "exact_match_accuracy_leaderboard")
     )
     plt.close(fig)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    summary.to_csv(OUTPUT_DIR / "human_eval_exact_match_leaderboard.csv", index=False)
+    write_csv(summary, OUTPUT_DIR / "human_eval_exact_match_leaderboard.csv")
 
 
 def main() -> None:

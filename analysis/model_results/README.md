@@ -32,9 +32,9 @@ then audits and plots the complete-coverage subset.
      analysis/model_results/data/combined/evals
    ```
 
-   `load_results` extracts answers, applies documented run/riddle exclusions,
-   assigns canonical collection rounds from the released corpus, and joins judge
-   outputs. Raw runs and the tidy CSV are Git-ignored.
+   The `load_results.py` ingestion command extracts answers, applies documented
+   run/riddle exclusions, assigns canonical collection rounds from the released
+   corpus, and joins judge outputs. Raw runs and the tidy CSV are Git-ignored.
 
 4. Audit and produce figures:
 
@@ -42,6 +42,10 @@ then audits and plots the complete-coverage subset.
    uv run --project analysis python -m analysis.model_results.data_audit
    uv run --project analysis python -m analysis.model_results.main
    ```
+
+The ingestion command produces the raw tidy table. The analysis modules use
+`model_data.load_scored_results()` to add derived metrics, require recorded
+verdicts, enforce complete coverage, and select the analysis roster.
 
 `model_data_quality.csv` and `model_data_quality_report.md` document parse,
 coverage, judge-join, and token-limit follow-up checks. Performance figures use

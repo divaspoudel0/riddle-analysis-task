@@ -17,6 +17,7 @@ from analysis.constants import (
     CANONICAL_CORPUS_PATH,
     FIXED_TOPICS,
     REGION_ORDER,
+    RIDDLE_ANALYSIS_OUTPUT_DIR,
     RUN_BATCH_ORDER,
     figure_stem,
 )
@@ -24,7 +25,7 @@ from analysis.corpus import add_corpus_groups
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
 
 DATASET_PATH = CANONICAL_CORPUS_PATH
-TABLE_DIR = Path(__file__).resolve().parent / "outputs"
+TABLE_DIR = RIDDLE_ANALYSIS_OUTPUT_DIR
 
 # Exclusive, manual semantic coding of the 85 distinct wildcard labels in the
 # released corpus. Ambiguous labels are assigned on their primary referent;
@@ -176,12 +177,12 @@ def validate_wildcard_theme_codebook(topics: set[str]) -> None:
 def save_tables(df: pd.DataFrame) -> None:
     """Write compact, non-sensitive tables that support every figure."""
     TABLE_DIR.mkdir(parents=True, exist_ok=True)
-    native_english = df["community"].isin({"english_canada", "english_usa"})
+    native_english = df["language_code"].eq("eng")
     audit = pd.DataFrame(
         [
             {"metric": "riddles", "value": len(df)},
             {"metric": "communities", "value": df["community"].nunique()},
-            {"metric": "languages", "value": df["language"].nunique()},
+            {"metric": "languages", "value": df["language_code"].nunique()},
             {
                 "metric": "missing English riddles",
                 "value": int((df["riddle_english"].isna() & ~native_english).sum()),
@@ -204,7 +205,7 @@ def save_tables(df: pd.DataFrame) -> None:
         .agg(
             riddles=("riddle_id", "size"),
             communities=("community", "nunique"),
-            languages=("language", "nunique"),
+            languages=("language_code", "nunique"),
         )
         .reindex(RUN_BATCH_ORDER)
         .reset_index()
@@ -220,7 +221,7 @@ def save_tables(df: pd.DataFrame) -> None:
         .groupby("region")
         .agg(
             riddles=("riddle_id", "size"),
-            languages=("language", "nunique"),
+            languages=("language_code", "nunique"),
             missing_english_riddles=("missing_english_riddle", "sum"),
             missing_english_answers=("missing_english_answer", "sum"),
             human_score_coverage=("has_human_score", "mean"),

@@ -9,14 +9,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.offsetbox import AnnotationBbox, HPacker, TextArea
 
-from analysis.constants import REPO_ROOT, SURVEY_TOPICS, figure_stem
+from analysis.constants import (
+    REPO_ROOT,
+    RIDDLE_WRITING_OUTPUT_DIR,
+    SURVEY_TOPICS,
+    figure_stem,
+)
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
 
 DATA_PATH = (
     Path(__file__).resolve().parent
     / "data/[MCB]_Analysis_MasterSheet - reflection_form.csv"
 )
-OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
+OUTPUT_DIR = RIDDLE_WRITING_OUTPUT_DIR
 TOPIC_MATCH_PATH = (
     REPO_ROOT / "analysis/model_results/outputs/topic_match_rate_summary.csv"
 )

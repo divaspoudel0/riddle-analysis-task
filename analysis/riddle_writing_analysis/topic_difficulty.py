@@ -1,17 +1,18 @@
 """Analyze writing difficulty by benchmark topic."""
 
+from analysis.constants import RIDDLE_WRITING_OUTPUT_DIR
 from analysis.riddle_writing_analysis.survey_analysis import (
-    OUTPUT_DIR,
     load_survey,
     plot_topic_difficulty,
 )
+from analysis.utils import write_csv
 
 
 def main() -> None:
     """Regenerate topic-difficulty figure and aggregate table."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    plot_topic_difficulty(load_survey()).to_csv(
-        OUTPUT_DIR / "topic_difficulty.csv", index=False
+    write_csv(
+        plot_topic_difficulty(load_survey()),
+        RIDDLE_WRITING_OUTPUT_DIR / "topic_difficulty.csv",
     )
 
 

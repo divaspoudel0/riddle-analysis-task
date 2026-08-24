@@ -17,17 +17,17 @@ from pathlib import Path
 
 import pandas as pd
 
-from analysis.constants import CORPUS_METADATA_PATH, FIGURES_DIR
+from analysis.constants import FIGURES_DIR
+from analysis.corpus import load_corpus_metadata
 from analysis.eval_analysis.data import (
-    EXCLUDED_RIDDLES,
     FLAT_CSV,
-    MODEL_NAME_MAP,
+    STRICT_SCORE,
+    coverage_report,
+    load_flat_frame,
 )
 from analysis.model_results.leaderboard import load_human_eval_leaderboard
 
 OUTPUT_CSV = FIGURES_DIR / "e_human_eval_model_summary.csv"
-STRICT_SCORE = 3.0
-COMPLETE_THRESHOLD = 99.0
 
 # These are API-only models in the evaluated closed-book roster.  The remaining
 # models have publicly available weights.  Keep this explicit: licensing is a
@@ -47,17 +47,7 @@ PROPRIETARY_MODELS = {
 
 def complete_communities(frame: pd.DataFrame) -> set[str]:
     """Return communities whose eligible human evaluation is at least 99% done."""
-    coverage = (
-        frame.assign(
-            human_done=frame["scoring_method"].eq("human_eval"),
-            pending=frame["scoring_method"].eq("pending_human_eval"),
-        )
-        .groupby("community")[["human_done", "pending"]]
-        .sum()
-    )
-    eligible = coverage["human_done"] + coverage["pending"]
-    percent_complete = coverage["human_done"].div(eligible.where(eligible > 0)) * 100
-    return set(percent_complete[percent_complete >= COMPLETE_THRESHOLD].index)
+    return set(coverage_report(frame).query("status == 'complete'").index)
 
 
 def build_summary(flat_csv: Path = FLAT_CSV) -> pd.DataFrame:
@@ -70,14 +60,9 @@ def build_summary(flat_csv: Path = FLAT_CSV) -> pd.DataFrame:
     Returns:
         One row per evaluated model. Percentage columns are on a 0--100 scale.
     """
-    frame = pd.read_csv(flat_csv, low_memory=False)
-    frame = frame[~frame["riddle_id"].isin(EXCLUDED_RIDDLES)].copy()
-    frame["model"] = frame["model_name"].map(MODEL_NAME_MAP)
-    unmapped = sorted(frame.loc[frame["model"].isna(), "model_name"].unique())
-    if unmapped:
-        raise ValueError(f"Unmapped human-evaluation models: {unmapped}")
+    frame = load_flat_frame(flat_csv).assign(model=lambda data: data["model_display"])
 
-    canonical_communities = set(pd.read_csv(CORPUS_METADATA_PATH)["community"])
+    canonical_communities = set(load_corpus_metadata()["community"])
     unknown_communities = set(frame["community"]) - canonical_communities
     if unknown_communities:
         raise ValueError(

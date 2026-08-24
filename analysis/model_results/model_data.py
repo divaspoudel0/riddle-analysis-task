@@ -1,4 +1,4 @@
-"""Load and derive the complete-coverage model-result frame."""
+"""Load and derive the scored, complete-coverage model-result frame."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pandas as pd
 
-from analysis.constants import TOPICS
+from analysis.constants import MODEL_RESULTS_TIDY_CSV, TOPICS
 from analysis.model_results.metrics import add_derived_columns
 from analysis.model_results.model_selection import paper_models_available
 
-DATA_PATH = Path(__file__).parent / "data/combined/processed/results_tidy.csv"
+DATA_PATH = MODEL_RESULTS_TIDY_CSV
 
 
-def load_results(path: Path = DATA_PATH) -> pd.DataFrame:
+def load_scored_results(path: Path = DATA_PATH) -> pd.DataFrame:
     """Load selected models with complete current-corpus coverage."""
     results = add_derived_columns(pd.read_csv(path))
     if not results["is_scored"].any():
@@ -56,10 +56,26 @@ def performance_order(results: pd.DataFrame) -> list[str]:
     )
 
 
+def match_rates(
+    results: pd.DataFrame, group_column: str, group_order: tuple[str, ...]
+) -> pd.DataFrame:
+    """Return numeric strict-match rates by model and corpus group.
+
+    Pandas 3 may preserve Arrow extension dtypes through ``groupby().mean()``
+    and ``unstack()``. Matplotlib expects a real numeric ndarray, so the
+    shared aggregation boundary normalizes the result to float64 once for all
+    model-performance heatmaps.
+    """
+    rates = (
+        results.groupby(["model_display", group_column])["is_correct"]
+        .mean()
+        .unstack(group_column)
+        .reindex(index=performance_order(results), columns=group_order)
+    )
+    return rates.astype("float64")
+
+
 def topic_rates(results: pd.DataFrame) -> pd.DataFrame:
     """Return strict match rates by model and current topic taxonomy."""
     frame = results.assign(topic=results["riddle_id"].map(canonical_topic))
-    rates = (
-        frame.groupby(["model_display", "topic"])["is_correct"].mean().unstack("topic")
-    )
-    return rates.reindex(index=performance_order(results), columns=TOPICS)
+    return match_rates(frame, "topic", TOPICS)

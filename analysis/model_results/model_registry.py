@@ -1,13 +1,12 @@
 """Write the data-derived model registry and paper selection audit."""
 
-from pathlib import Path
-
 import pandas as pd
 
-from analysis.model_results.model_data import load_results
+from analysis.constants import MODEL_RESULTS_OUTPUT_DIR
+from analysis.model_results.model_data import load_scored_results
 from analysis.model_results.model_selection import PAPER_MODEL_ORDER
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 
 
 def write_model_registry(results: pd.DataFrame) -> None:
@@ -40,7 +39,7 @@ def write_model_registry(results: pd.DataFrame) -> None:
 
 def main() -> None:
     """Regenerate model registry outputs."""
-    write_model_registry(load_results())
+    write_model_registry(load_scored_results())
 
 
 if __name__ == "__main__":

@@ -1,21 +1,20 @@
 """Write auditable corpus summaries and targeted data-quality findings."""
 
-from pathlib import Path
-
 import pandas as pd
 
+from analysis.constants import RIDDLE_ANALYSIS_OUTPUT_DIR
 from analysis.riddle_analysis.corpus_data import (
     load_corpus,
     plot_validation_coverage,
     save_tables,
 )
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = RIDDLE_ANALYSIS_OUTPUT_DIR
 
 
 def write_quality_report(corpus: pd.DataFrame) -> None:
     """Write actionable corpus checks for data collection and repair work."""
-    native_english = corpus["community"].isin({"english_canada", "english_usa"})
+    native_english = corpus["language_code"].eq("eng")
     missing_riddle = corpus["riddle_english"].isna() & ~native_english
     missing_answer = corpus["reference_answer_english"].isna() & ~native_english
     duplicate_english = (

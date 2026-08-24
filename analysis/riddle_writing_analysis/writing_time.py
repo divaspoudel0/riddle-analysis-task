@@ -1,17 +1,18 @@
 """Analyze estimated time to write a riddle."""
 
+from analysis.constants import RIDDLE_WRITING_OUTPUT_DIR
 from analysis.riddle_writing_analysis.survey_analysis import (
-    OUTPUT_DIR,
     load_survey,
     plot_time_per_riddle,
 )
+from analysis.utils import write_csv
 
 
 def main() -> None:
     """Regenerate writing-time figure and aggregate table."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    plot_time_per_riddle(load_survey()).to_csv(
-        OUTPUT_DIR / "time_per_riddle.csv", index=False
+    write_csv(
+        plot_time_per_riddle(load_survey()),
+        RIDDLE_WRITING_OUTPUT_DIR / "time_per_riddle.csv",
     )
 
 

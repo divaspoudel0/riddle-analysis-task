@@ -1,16 +1,19 @@
 """Analyze contributor-reported generative-AI uses."""
 
+from analysis.constants import RIDDLE_WRITING_OUTPUT_DIR
 from analysis.riddle_writing_analysis.survey_analysis import (
-    OUTPUT_DIR,
     load_survey,
     plot_ai_uses,
 )
+from analysis.utils import write_csv
 
 
 def main() -> None:
     """Regenerate AI-use figure and aggregate table."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    plot_ai_uses(load_survey()).to_csv(OUTPUT_DIR / "ai_use_functions.csv", index=False)
+    write_csv(
+        plot_ai_uses(load_survey()),
+        RIDDLE_WRITING_OUTPUT_DIR / "ai_use_functions.csv",
+    )
 
 
 if __name__ == "__main__":

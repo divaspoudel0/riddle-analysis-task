@@ -6,24 +6,18 @@ from pathlib import Path
 
 import pandas as pd
 
-from analysis.constants import ANALYSIS_ROOT
-
-FLAT_CSV = ANALYSIS_ROOT / "eval_analysis" / "data" / "model_riddle_results_flat.csv"
-MODEL_RESULTS_TIDY_CSV = (
-    ANALYSIS_ROOT
-    / "model_results"
-    / "data"
-    / "combined"
-    / "processed"
-    / "results_tidy.csv"
+from analysis.constants import (
+    EXCLUDED_RIDDLE_IDS,
+    HUMAN_EVALUATION_FLAT_CSV,
+    MODEL_RESULTS_TIDY_CSV,
 )
-TOTAL_COMMUNITIES = 44
-EXPECTED_MODELS = 24
+
+FLAT_CSV = HUMAN_EVALUATION_FLAT_CSV
 STRICT_SCORE = 3.0
 LENIENT_SCORE = 2.0
 THIN_THRESHOLD = 0.20
 
-EXCLUDED_RIDDLES = frozenset({"spanish_cuba_history_016"})
+EXCLUDED_RIDDLES = EXCLUDED_RIDDLE_IDS
 
 MODEL_NAME_MAP = {
     "Amazon-Nova-Lite": "Amazon Nova Lite v1",

@@ -2,7 +2,7 @@
 
 Every plotting script should do this once, up front::
 
-    from analysis.style import apply_style, PALETTE, CONDITION_COLORS, save_figure
+    from analysis.style import apply_style, PALETTE, save_figure
     apply_style()
 
 ...then pull colors from the named maps below (never hard-code hex in a plot).
@@ -25,7 +25,6 @@ whole paper by editing this one file.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from pathlib import Path
 
 import matplotlib as mpl
@@ -69,27 +68,19 @@ CATEGORICAL_CYCLE: list[str] = [
     PALETTE["black"],
 ]
 
-# Semantic colors for the three supported benchmark conditions
-# (see framework: source_no_hint / source_with_hint / english_no_hint).
-CONDITION_COLORS: dict[str, str] = {
-    "source_no_hint": PALETTE["blue"],
-    "source_with_hint": PALETTE["sky_blue"],
-    "english_no_hint": PALETTE["vermillion"],
-}
-
-# Sequential map for continuous quantities (accuracy heatmaps, etc.).
-# "viridis" is perceptually uniform and colorblind-friendly.
-SEQUENTIAL_CMAP = "viridis"
 # A restrained sequential scale for score heatmaps. It reserves dark ink for
 # direct cell labels and uses a single blue hue only to encode ordered values.
 SCORE_CMAP = LinearSegmentedColormap.from_list(
     "riddles_score",
     ("#F7F7F5", "#D8EAF2", "#A8D0E5", "#6CAED6"),
 )
-# Diverging map for signed quantities (e.g. delta vs. a baseline).
-DIVERGING_CMAP = "vlag"  # seaborn-provided; falls back to "coolwarm" if missing
-
-
+# A higher-contrast sequential scale for geographic coverage counts. The
+# lightest tones keep countries with one language visible against the map,
+# while the dark end makes the largest coverage concentrations easy to find.
+COVERAGE_CMAP = LinearSegmentedColormap.from_list(
+    "riddles_coverage",
+    ("#F4F7F8", "#D5E8F1", "#92C3DC", "#3E83AD", "#0D4770"),
+)
 # --------------------------------------------------------------------------- #
 # Fonts
 # --------------------------------------------------------------------------- #
@@ -226,16 +217,6 @@ def acl_figure_size(columns: int = 1, height: float = 2.25) -> tuple[float, floa
     if columns not in widths:
         raise ValueError("columns must be 1 or 2")
     return widths[columns], height
-
-
-def color_for_condition(condition_id: str) -> str:
-    """Return the semantic color for a benchmark condition id."""
-    return CONDITION_COLORS.get(condition_id, PALETTE["grey"])
-
-
-def set_color_cycle(colors: Iterable[str]) -> None:
-    """Override the active categorical color cycle (e.g. a fixed model order)."""
-    mpl.rcParams["axes.prop_cycle"] = mpl.cycler(color=list(colors))
 
 
 def save_figure(fig, path: str | Path, **kwargs) -> Path:
