@@ -108,7 +108,7 @@ def model_summary(df: pd.DataFrame) -> pd.DataFrame:
                 "n_scored": len(scored),
                 "n_total": len(g),
                 # search-enabled runs are a separate evaluation category,
-                # not comparable to closed-book recall (see load_results)
+                # not comparable to closed-book recall (see load_results.py)
                 "eval_category": (
                     g["eval_category"].iloc[0]
                     if "eval_category" in g.columns

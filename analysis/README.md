@@ -6,6 +6,7 @@ contributor-writing analyses. From the repository root:
 ```bash
 uv sync --project analysis
 uv run --project analysis python -m analysis.run_all
+open analysis/dashboard/index.html
 ```
 
 The root command runs four suites and then rebuilds the report dashboard:
@@ -16,7 +17,9 @@ The root command runs four suites and then rebuilds the report dashboard:
 4. `eval_analysis/` — human comparisons, outcome categories, and optional LLM-as-a-judge analysis.
 
 The writing stage reads the model topic summary produced in the preceding
-model stage. The dashboard exposes the four suites as tabs.
+model stage. The dashboard exposes the analysis suites, paper tables, a
+full-width Paper Figures preview, and progress trackers as tabs alongside the
+Overview.
 
 ## Score model runs
 
@@ -63,6 +66,9 @@ The judge writes raw verdicts beside the run or to the path supplied with
   not add release labels such as `_v2` to figure filenames.
 - Every figure has a review PNG and publication PDF. PNGs are version-controlled;
   PDFs are Git-ignored.
+- Dashboard cards use stable tab-local IDs: `R1` for riddle analysis, `W1` for
+  riddle writing, `M1` for model results, `E1` for evaluation, and `P1` for
+  progress trackers.
 - Keep source code and compact aggregate CSVs. Survey responses and model
   responses remain private and Git-ignored pending a publication decision.
 

@@ -9,6 +9,17 @@ ANALYSIS_ROOT = Path(__file__).resolve().parent
 CANONICAL_CORPUS_PATH = REPO_ROOT / "data_loading/pilot_dataset/pilot_dataset_v1.jsonl"
 CORPUS_METADATA_PATH = ANALYSIS_ROOT / "corpus_metadata.csv"
 FIGURES_DIR = ANALYSIS_ROOT / "figures"
+MODEL_RESULTS_DATA_DIR = ANALYSIS_ROOT / "model_results" / "data"
+MODEL_RESULTS_OUTPUT_DIR = ANALYSIS_ROOT / "model_results" / "outputs"
+RIDDLE_ANALYSIS_OUTPUT_DIR = ANALYSIS_ROOT / "riddle_analysis" / "outputs"
+RIDDLE_WRITING_OUTPUT_DIR = ANALYSIS_ROOT / "riddle_writing_analysis" / "outputs"
+HUMAN_EVALUATION_FLAT_CSV = (
+    ANALYSIS_ROOT / "eval_analysis" / "data" / "model_riddle_results_flat.csv"
+)
+MODEL_RESULTS_TIDY_CSV = (
+    MODEL_RESULTS_DATA_DIR / "combined" / "processed" / "results_tidy.csv"
+)
+EXCLUDED_RIDDLE_IDS = frozenset({"spanish_cuba_history_016"})
 ARTIFACT_PREFIXES: dict[str, str] = {
     "model_results": "m_",
     "riddle_analysis": "r_",

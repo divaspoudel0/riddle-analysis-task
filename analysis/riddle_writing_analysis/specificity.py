@@ -1,17 +1,18 @@
 """Analyze contributors' local-specificity strategies."""
 
+from analysis.constants import RIDDLE_WRITING_OUTPUT_DIR
 from analysis.riddle_writing_analysis.survey_analysis import (
-    OUTPUT_DIR,
     load_survey,
     plot_specificity,
 )
+from analysis.utils import write_csv
 
 
 def main() -> None:
     """Regenerate specificity figure and aggregate table."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    plot_specificity(load_survey()).to_csv(
-        OUTPUT_DIR / "specificity_strategy.csv", index=False
+    write_csv(
+        plot_specificity(load_survey()),
+        RIDDLE_WRITING_OUTPUT_DIR / "specificity_strategy.csv",
     )
 
 

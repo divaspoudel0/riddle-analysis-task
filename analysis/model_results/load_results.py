@@ -31,6 +31,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from analysis.constants import CANONICAL_CORPUS_PATH, EXCLUDED_RIDDLE_IDS
+
 # Folders excluded from analysis, with reasons. Keep data on disk untouched;
 # exclusions are documented here so a fresh Drive download reproduces the
 # same analysis set.
@@ -43,17 +45,16 @@ EXCLUDED_FOLDERS: dict[str, str] = {
 # the shipped v0 text was later found to be wrong, so those answers are
 # answers to the wrong riddle. The corrected riddle is re-evaluated fresh in
 # a later dataset version, not backfilled into v0. See RIDDLE_CORRECTIONS.md.
-EXCLUDED_RIDDLES: dict[str, str] = {
+EXCLUDED_RIDDLE_REASONS: dict[str, str] = {
     "spanish_cuba_history_016": (
         "wrong riddle text shipped in v0; contributor corrected the source "
         "row, re-evaluated in v2 (flagged 23 Jul 2026)"
     ),
 }
+if set(EXCLUDED_RIDDLE_REASONS) != EXCLUDED_RIDDLE_IDS:
+    raise ValueError("Loader exclusions must match the shared corpus exclusions")
 
-CANONICAL_DATASET_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "data_loading/pilot_dataset/pilot_dataset_v1.jsonl"
-)
+CANONICAL_DATASET_PATH = CANONICAL_CORPUS_PATH
 
 # Columns copied through from each results.jsonl row.
 ROW_COLUMNS = [
@@ -194,7 +195,8 @@ def load_run_folder(folder: Path) -> pd.DataFrame | None:
     return df
 
 
-def build_frame(runs_dir: Path) -> pd.DataFrame:
+def build_tidy_results(runs_dir: Path) -> pd.DataFrame:
+    """Build the raw-results tidy frame before optional judge enrichment."""
     frames = []
     for folder in sorted(p for p in runs_dir.iterdir() if p.is_dir()):
         if folder.name in EXCLUDED_FOLDERS:
@@ -209,14 +211,14 @@ def build_frame(runs_dir: Path) -> pd.DataFrame:
 
     full = pd.concat(frames, ignore_index=True)
 
-    # Drop individually excluded riddles (see EXCLUDED_RIDDLES).
-    if EXCLUDED_RIDDLES:
-        excluded = full["riddle_id"].isin(EXCLUDED_RIDDLES)
+    # Drop individually excluded riddles (see EXCLUDED_RIDDLE_REASONS).
+    if EXCLUDED_RIDDLE_REASONS:
+        excluded = full["riddle_id"].isin(EXCLUDED_RIDDLE_REASONS)
         if excluded.any():
             n_rows = int(excluded.sum())
             n_riddles = full.loc[excluded, "riddle_id"].nunique()
             full = full[~excluded].reset_index(drop=True)
-            for rid, reason in EXCLUDED_RIDDLES.items():
+            for rid, reason in EXCLUDED_RIDDLE_REASONS.items():
                 print(f"  EXCLUDE riddle {rid}: {reason}")
             print(f"  ({n_rows} rows across {n_riddles} riddle(s) dropped)")
 
@@ -299,7 +301,7 @@ def main() -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading runs from {runs_dir}")
-    df = build_frame(runs_dir)
+    df = build_tidy_results(runs_dir)
 
     judge = load_judge_outputs(evals_dir)
     if not judge.empty:

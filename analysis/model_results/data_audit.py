@@ -1,12 +1,11 @@
 """Audit tidy model results before generating performance figures."""
 
-from pathlib import Path
-
 import pandas as pd
 
-from analysis.model_results.model_data import load_results
+from analysis.constants import MODEL_RESULTS_OUTPUT_DIR
+from analysis.model_results.model_data import load_scored_results
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 TRUNCATION_TOKENS = 4000
 
 
@@ -90,7 +89,7 @@ def write_data_quality_report(results: pd.DataFrame) -> None:
 
 def main() -> None:
     """Audit the current complete-coverage model-results frame."""
-    write_data_quality_report(load_results())
+    write_data_quality_report(load_scored_results())
 
 
 if __name__ == "__main__":

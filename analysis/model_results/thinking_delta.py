@@ -14,15 +14,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
-from analysis.constants import TOPICS, figure_stem
+from analysis.constants import MODEL_RESULTS_OUTPUT_DIR, TOPICS, figure_stem
 from analysis.eval_analysis.data import FLAT_CSV as HUMAN_EVAL_PATH
-from analysis.eval_analysis.data import MODEL_NAME_MAP
+from analysis.eval_analysis.data import load_flat_frame
 from analysis.eval_analysis.model_summary import complete_communities
-from analysis.model_results.load_results import EXCLUDED_RIDDLES
 from analysis.model_results.model_data import canonical_topic
 from analysis.style import PALETTE, acl_figure_size, apply_style, save_figure_pair
+from analysis.utils import write_csv
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 
 # ``baseline`` is the no/standard-reasoning run and ``reasoning`` is the
 # matched extended-reasoning run. Keep these explicit rather than inferring
@@ -44,17 +44,12 @@ def thinking_mode_deltas(flat_csv: Path = HUMAN_EVAL_PATH) -> pd.DataFrame:
     Only completed communities are included, matching the inclusion rule used
     for ``e_human_eval_model_summary.csv``. Values are percentage points.
     """
-    frame = pd.read_csv(flat_csv, low_memory=False)
-    frame = frame[~frame["riddle_id"].isin(EXCLUDED_RIDDLES)].copy()
-    frame["model_display"] = frame["model_name"].map(MODEL_NAME_MAP)
+    frame = load_flat_frame(flat_csv)
     frame["topic"] = frame["riddle_id"].map(canonical_topic)
 
     complete = complete_communities(frame)
-    scored = frame[
-        frame["community"].isin(complete)
-        & ~frame["scoring_method"].eq("pending_human_eval")
-    ].copy()
-    scored["is_strictly_correct"] = scored["score"].eq(3.0)
+    scored = frame[frame["community"].isin(complete) & ~frame["is_pending"]].copy()
+    scored["is_strictly_correct"] = scored["is_correct"]
 
     records: list[dict[str, str | float | int]] = []
     for label, baseline, reasoning in MODEL_PAIRS:
@@ -136,8 +131,7 @@ def plot_thinking_delta(_results: pd.DataFrame | None = None) -> None:
     )
     plt.close(fig)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    deltas.to_csv(OUTPUT_DIR / "reasoning_mode_delta_by_topic.csv", index=False)
+    write_csv(deltas, OUTPUT_DIR / "reasoning_mode_delta_by_topic.csv")
 
 
 def main() -> None:

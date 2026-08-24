@@ -10,8 +10,9 @@ invariants, writes compact audit summaries, and generates `r_` figures.
 
 The source is `data_loading/pilot_dataset/pilot_dataset_v1.jsonl`, produced by
 the validation and release workflow documented in `data_loading/pilot_dataset/`.
-No cached spreadsheet or private input is required. Region and language-group
-labels are loaded from the reviewable `analysis/corpus_metadata.csv`.
+No cached spreadsheet or private input is required. Community language codes,
+language labels, countries, regions, and language groups are loaded from the
+reviewable `analysis/corpus_metadata.csv` through `analysis/corpus.py`.
 
 Run `uv run --project analysis python -m analysis.riddle_analysis.main`, or run
 `corpus_audit`, `wildcard_themes`, or `english_length` individually. The audit

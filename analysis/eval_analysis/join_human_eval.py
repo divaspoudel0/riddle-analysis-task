@@ -37,10 +37,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from analysis.constants import ANALYSIS_ROOT
-from analysis.model_results.load_results import EXCLUDED_RIDDLES
+from analysis.constants import EXCLUDED_RIDDLE_IDS, MODEL_RESULTS_DATA_DIR
+from analysis.eval_analysis.data import MODEL_NAME_MAP
 
-DATA_DIR = ANALYSIS_ROOT / "model_results" / "data"
+DATA_DIR = MODEL_RESULTS_DATA_DIR
 AUTO_PARQUET = DATA_DIR / "processed" / "results_tidy.parquet"
 HUMAN_CSV = DATA_DIR / "human_eval_v0" / "analysis_model_level.csv"
 OUT_PARQUET = DATA_DIR / "processed" / "human_joined.parquet"
@@ -58,42 +58,15 @@ SCORE_SOURCE = {
     "auto_empty": "auto-0",  # no answer
 }
 
+
 # Human file model_name -> auto frame model_display. Built by matching the
 # two model lists; verified 24/24 map to a distinct auto model. (The auto
 # frame's GPT5.5-search has no human-eval counterpart, as expected.)
-MODEL_NAME_MAP = {
-    "Amazon-Nova-Lite": "Amazon Nova Lite v1",
-    "Amazon-Nova-Micro": "Amazon Nova Micro v1",
-    "Deepseek-v4-flash": "DeepSeek V4 Flash",
-    "EuroLLM-Instruct": "EuroLLM-22B-Instruct-2512",
-    "GPT5.5-high": "GPT5.5 [high]",
-    "GPT5.5-none": "GPT5.5 [none]",
-    "Gemini-2.5-Flash": "Gemini 2.5 Flash",
-    "Gemini-2.5-Flash-Lite": "Gemini 2.5 Flash Lite",
-    "Mistral-Large-3": "Mistral Large 3",
-    "Olmo-3-32B-Think": "OLMo-3-32B-Think",
-    "Qwen-3.5-0.8B": "Qwen/Qwen3.5-0.8B",
-    "Qwen-SEA-LION-v4.5-27B-IT": "Qwen-SEA-LION-v4.5-27B-IT",
-    "Qwen3.5-27B": "Qwen3.5 27B",
-    "claude-opus-4-7": "claude-opus-4-7 [none]",
-    "claude-opus-4-7-thinking": "claude-opus-4-7 [thinking]",
-    "command-a-plus-05-2026": "Cohere Command A Plus",
-    "deepseek-v4-pro": "deepseek-v4-pro",
-    "deepseek-v4-pro-thinking": "deepseek-v4-pro-thinking",
-    "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
-    "gemma-4-31b": "Gemma 4 31B IT",
-    "tiny-aya-earth": "Tiny-Aya earth",
-    "tiny-aya-fire": "Tiny-Aya fire",
-    "tiny-aya-global": "Tiny-Aya global",
-    "tiny-aya-water": "Tiny-Aya water",
-}
-
-
 def load_human() -> pd.DataFrame:
     if not HUMAN_CSV.exists():
         raise SystemExit(f"Human-eval file not found: {HUMAN_CSV}")
     h = pd.read_csv(HUMAN_CSV, low_memory=False)
-    h = h[~h["riddle_id"].isin(EXCLUDED_RIDDLES)].copy()
+    h = h[~h["riddle_id"].isin(EXCLUDED_RIDDLE_IDS)].copy()
     h["score_source"] = h["scoring_method"].map(SCORE_SOURCE).fillna("other")
     # Normalise to the auto frame's model_display so joins line up.
     h["model_display"] = h["model_name"].map(MODEL_NAME_MAP)
@@ -135,7 +108,7 @@ def join_for_agreement(human: pd.DataFrame, auto: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     auto = pd.read_parquet(AUTO_PARQUET)
-    auto = auto[~auto["riddle_id"].isin(EXCLUDED_RIDDLES)].copy()
+    auto = auto[~auto["riddle_id"].isin(EXCLUDED_RIDDLE_IDS)].copy()
     human = load_human()
 
     print(f"human rows (cap_policy={CAP_POLICY}): {len(human):,}")

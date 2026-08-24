@@ -32,11 +32,12 @@ The frozen version keeps its files as-is (the model answers are answers to
 the OLD riddle, so scoring them would be noise). We just skip the id in the
 analysis loader.
 
-In `analysis/model_results/load_results.py`, add the id to
-`EXCLUDED_RIDDLES` with a one-line reason (mirrors the existing
-`EXCLUDED_FOLDERS` pattern). Then rerun the runbook to regenerate the tidy
-frame, the data quality report, and the figures. Denominators drop by one
-per affected community; the data quality report documents why.
+In `analysis/constants.py`, add the id to `EXCLUDED_RIDDLE_IDS`. Then add its
+one-line explanation to `EXCLUDED_RIDDLE_REASONS` in
+`analysis/model_results/load_results.py` (mirrors the existing
+`EXCLUDED_FOLDERS` pattern). Rerun the runbook to regenerate the tidy frame,
+the data quality report, and the figures. Denominators drop by one per
+affected community; the data quality report documents why.
 
 ### 4. Let the corrected riddle run in the next version
 Because the source row is already fixed (step 1), the corrected riddle

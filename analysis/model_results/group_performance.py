@@ -1,21 +1,25 @@
 """Generate model performance matrices for regions and languages."""
 
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from analysis.constants import LANGUAGE_GROUP_ORDER, REGION_ORDER, figure_stem
-from analysis.corpus import add_corpus_groups
-from analysis.model_results.model_data import load_results, performance_order
+from analysis.constants import (
+    LANGUAGE_GROUP_ORDER,
+    MODEL_RESULTS_OUTPUT_DIR,
+    REGION_ORDER,
+    figure_stem,
+)
+from analysis.corpus import add_corpus_groups, language_label_map
+from analysis.model_results.model_data import load_scored_results, match_rates
 from analysis.style import (
     PALETTE,
     SCORE_CMAP,
     apply_style,
     save_figure_pair,
 )
+from analysis.utils import write_csv
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 
 REGION_LABELS = {
     "Sub-Saharan Africa": "Sub-Saharan\nAfrica",
@@ -33,59 +37,6 @@ LANGUAGE_GROUP_LABELS = {
     "Arabic varieties": "Arabic\nvarieties",
     "Chinese varieties": "Chinese\nvarieties",
 }
-LANGUAGE_LABELS = {
-    "aeb": "Tunisian Arabic",
-    "apc": "Levantine Arabic",
-    "apd": "Sudanese Arabic",
-    "ary": "Moroccan Arabic",
-    "arz": "Egyptian Arabic",
-    "asm": "Assamese",
-    "bel": "Belarusian",
-    "ben": "Bengali",
-    "bug": "Buginese",
-    "bul": "Bulgarian",
-    "cat": "Catalan",
-    "deu": "German",
-    "eng": "English",
-    "fra": "French",
-    "gaz": "Oromo",
-    "guj": "Gujarati",
-    "hun": "Hungarian",
-    "ind": "Indonesian",
-    "ita": "Italian",
-    "jpn": "Japanese",
-    "kan": "Kannada",
-    "kok": "Konkani",
-    "ltz": "Luxembourgish",
-    "lug": "Luganda",
-    "mal": "Malayalam",
-    "mar": "Marathi",
-    "mog": "Mongondow",
-    "myx": "Lumasaba",
-    "nep": "Nepali",
-    "nld": "Dutch",
-    "pes": "Persian",
-    "pol": "Polish",
-    "por": "Portuguese",
-    "rus": "Russian",
-    "sin": "Sinhala",
-    "snd": "Sindhi",
-    "spa": "Spanish",
-    "srp": "Serbian",
-    "swa": "Swahili",
-    "tam": "Tamil",
-    "tel": "Telugu",
-    "tha": "Thai",
-    "tur": "Turkish",
-    "ukr": "Ukrainian",
-    "urd": "Urdu",
-    "uzb": "Uzbek",
-    "vie": "Vietnamese",
-    "yor": "Yoruba",
-    "yue": "Cantonese",
-    "zho": "Chinese",
-    "zsm": "Malay",
-}
 
 
 def plot_group_performance(
@@ -100,12 +51,7 @@ def plot_group_performance(
 ) -> None:
     """Write one model-by-corpus-group strict-match matrix and summaries."""
     grouped = add_corpus_groups(results, community_column="instance_community")
-    rates = (
-        grouped.groupby(["model_display", column])["is_correct"]
-        .mean()
-        .unstack(column)
-        .reindex(index=performance_order(results), columns=order)
-    )
+    rates = match_rates(grouped, column, order)
     item_counts = (
         grouped.groupby(column).riddle_id.nunique().reindex(order).fillna(0).astype(int)
     )
@@ -121,7 +67,7 @@ def plot_group_performance(
     labels = {
         **REGION_LABELS,
         **LANGUAGE_GROUP_LABELS,
-        **LANGUAGE_LABELS,
+        **language_label_map(),
     }
     group_labels = [
         f"{labels.get(group, group)}\n(n={items})"
@@ -161,20 +107,22 @@ def plot_group_performance(
     fig.tight_layout()
     save_figure_pair(fig, figure_stem("model_results", figure_name))
     plt.close(fig)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    rates.reset_index().to_csv(OUTPUT_DIR / f"{name}.csv", index=False)
-    pd.DataFrame(
-        {
-            column: rates.columns,
-            "items": item_counts.values,
-            "mean_model_match_rate": rates.mean().values,
-        }
-    ).to_csv(OUTPUT_DIR / f"{name}_summary.csv", index=False)
+    write_csv(rates.reset_index(), OUTPUT_DIR / f"{name}.csv")
+    write_csv(
+        pd.DataFrame(
+            {
+                column: rates.columns,
+                "items": item_counts.values,
+                "mean_model_match_rate": rates.mean().values,
+            }
+        ),
+        OUTPUT_DIR / f"{name}_summary.csv",
+    )
 
 
 def main() -> None:
     """Regenerate regional and language-group performance outputs."""
-    results = load_results()
+    results = load_scored_results()
     plot_group_performance(
         results,
         "region",

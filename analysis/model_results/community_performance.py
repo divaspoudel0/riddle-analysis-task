@@ -1,12 +1,11 @@
 """Report each model's lowest exact-match-performing communities."""
 
-from pathlib import Path
-
 import pandas as pd
 
-from analysis.model_results.model_data import load_results
+from analysis.constants import MODEL_RESULTS_OUTPUT_DIR
+from analysis.model_results.model_data import load_scored_results
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 WORST_COMMUNITY_COUNT = 5
 
 
@@ -48,7 +47,7 @@ def write_worst_communities_by_model(results: pd.DataFrame) -> None:
 
 def main() -> None:
     """Regenerate the per-model lowest-performing-community table."""
-    write_worst_communities_by_model(load_results())
+    write_worst_communities_by_model(load_scored_results())
 
 
 if __name__ == "__main__":

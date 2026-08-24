@@ -1,12 +1,14 @@
 """Generate model performance by benchmark topic."""
 
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from analysis.constants import figure_stem
-from analysis.model_results.model_data import canonical_topic, load_results, topic_rates
+from analysis.constants import MODEL_RESULTS_OUTPUT_DIR, figure_stem
+from analysis.model_results.model_data import (
+    canonical_topic,
+    load_scored_results,
+    topic_rates,
+)
 from analysis.style import (
     PALETTE,
     SCORE_CMAP,
@@ -14,8 +16,9 @@ from analysis.style import (
     apply_style,
     save_figure_pair,
 )
+from analysis.utils import write_csv
 
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+OUTPUT_DIR = MODEL_RESULTS_OUTPUT_DIR
 
 TOPIC_LABELS = {
     "National Heritage": "National\nHeritage",
@@ -64,22 +67,22 @@ def plot_topic_performance(results: pd.DataFrame) -> None:
     fig.tight_layout()
     save_figure_pair(fig, figure_stem("model_results", "exact_match_accuracy_by_topic"))
     plt.close(fig)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    rates.reset_index().to_csv(
-        OUTPUT_DIR / "full_corpus_topic_performance.csv", index=False
+    write_csv(rates.reset_index(), OUTPUT_DIR / "full_corpus_topic_performance.csv")
+    write_csv(
+        pd.DataFrame(
+            {
+                "topic": rates.columns,
+                "items": item_counts.values,
+                "mean_model_match_rate": rates.mean().values,
+            }
+        ),
+        OUTPUT_DIR / "topic_match_rate_summary.csv",
     )
-    pd.DataFrame(
-        {
-            "topic": rates.columns,
-            "items": item_counts.values,
-            "mean_model_match_rate": rates.mean().values,
-        }
-    ).to_csv(OUTPUT_DIR / "topic_match_rate_summary.csv", index=False)
 
 
 def main() -> None:
     """Regenerate the topic heatmap and summary tables."""
-    plot_topic_performance(load_results())
+    plot_topic_performance(load_scored_results())
 
 
 if __name__ == "__main__":
