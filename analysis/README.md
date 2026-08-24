@@ -21,26 +21,30 @@ model stage. The dashboard exposes the analysis suites, paper tables, a
 full-width Paper Figures preview, and progress trackers as tabs alongside the
 Overview.
 
-## Score model runs
+## Analysis status
 
-The model-results package includes a deterministic reference-answer scorer for
-framework `results.jsonl` files:
+This status describes the repository's current artifacts and data dependencies.
+It supersedes older task-assignment progress columns, which do not reflect the
+figures and tables that are already checked in.
 
-```bash
-uv run --project analysis python -m analysis.model_results.reference_heuristic_judge \
-  framework/runs/<run_id>/results.jsonl
-```
+| Workstream | Status | Current boundary |
+| --- | --- | --- |
+| Riddle analysis | Nearly complete | Corpus structure, metadata, language coverage, wildcard themes, English-length summaries, and validation coverage are implemented. The remaining work is data-quality follow-up as missing translations and validation rows are resolved. |
+| Riddle-writing analysis | Nearly complete | The descriptive survey outputs cover topic difficulty, writing time, specificity, resources, generative AI use, confidence, and scale relationships. Treat small community samples as exploratory, and do not infer themes from free-text responses without a documented coding protocol. |
+| Model results | Awaiting more runs | Ingestion, scoring joins, quality audits, model selection, tables, and figures are implemented. The checked-in snapshot is not the final model comparison because more model results are still being crawled. |
+| Evaluation analysis | Awaiting more human evaluations | Human-score loading, coverage reports, exact-match comparisons, outcome categories, and dashboard views are implemented. The checked-in snapshot remains incomplete until the next human-evaluation export is available. |
+| LLM as a judge | Scaffolded, not validated | The provider-agnostic contract and a Gemini runner exist. The rubric, calibration set, agreement analysis, multilingual policy, and release criteria remain open. |
 
-The scorer writes `heuristic_match.jsonl` and `heuristic_summary.json` to
-`analysis/model_results/data/combined/evals/<run_id>/`. See
-[`evals/README.md`](../evals/README.md) for the input schema, matching rules,
-and options.
+The riddle corpus snapshot contains 6,100 riddles from 61 communities and 51
+languages. The riddle-writing snapshot contains 76 survey responses from 43
+communities. These counts describe the checked-in artifacts, not a promise that
+future data refreshes preserve the same coverage.
 
-Loading raw model results does not require a scorer. Accuracy figures do
-require recorded verdicts from a scorer, and the model-results analysis raises
-an explicit error when those verdicts are absent.
+Use [`TODO.md`](TODO.md) for scoped follow-up tasks. When more model results or
+human evaluations arrive, rebuild the private inputs first, then regenerate
+the aggregate CSVs, tables, figures, and dashboard together.
 
-## Optional LLM-as-a-judge
+## LLM-as-a-judge
 
 The evaluation-analysis package also contains an optional provider-backed
 judge for answers that need semantic review. It requires `GEMINI_API_KEY` and
