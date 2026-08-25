@@ -10,6 +10,7 @@ from analysis.constants import (
     figure_stem,
 )
 from analysis.corpus import add_corpus_groups, language_label_map
+from analysis.model_results.metrics import group_accuracy_ci
 from analysis.model_results.model_data import load_scored_results, match_rates
 from analysis.style import (
     PALETTE,
@@ -74,6 +75,15 @@ def plot_group_performance(
         for group, items in label_counts.items()
     ]
     x_label_size = 4 if wide else 5 if column == "region" else 7
+
+    ci_df = group_accuracy_ci(grouped, column)
+    ci_lookup = {}
+    for _, row in ci_df.iterrows():
+        ci_lookup[(row["model_display"], row[column])] = (
+            row["ci_low"],
+            row["ci_high"],
+        )
+
     apply_style()
     figure_width = max(6.45, 0.34 * len(order) + 1.65) if wide else 6.45
     fig, ax = plt.subplots(figsize=(figure_width, max(3.5, 0.31 * len(rates) + 1.65)))
@@ -94,13 +104,23 @@ def plot_group_performance(
             value = rates.iat[row, column_index]
             if pd.isna(value):
                 continue
+            model_name = rates.index[row]
+            group_name = rates.columns[column_index]
+            ci = ci_lookup.get((model_name, group_name))
+            if ci is not None:
+                ci_width = (ci[1] - ci[0]) / 2 * 100
+                text = f"{value * 100:.1f}\n\u00b1{ci_width:.1f}"
+                text_size = 3 if wide else 5
+            else:
+                text = f"{value * 100:.1f}"
+                text_size = 4 if wide else 7
             ax.text(
                 column_index,
                 row,
-                f"{value * 100:.1f}",
+                text,
                 ha="center",
                 va="center",
-                fontsize=4 if wide else 7,
+                fontsize=text_size,
                 color=PALETTE["black"],
             )
     fig.colorbar(image, ax=ax, label="Strict match rate (%)")
@@ -108,16 +128,23 @@ def plot_group_performance(
     save_figure_pair(fig, figure_stem("model_results", figure_name))
     plt.close(fig)
     write_csv(rates.reset_index(), OUTPUT_DIR / f"{name}.csv")
-    write_csv(
-        pd.DataFrame(
-            {
-                column: rates.columns,
-                "items": item_counts.values,
-                "mean_model_match_rate": rates.mean().values,
-            }
-        ),
-        OUTPUT_DIR / f"{name}_summary.csv",
-    )
+    summary_rows = []
+    for group in order:
+        if group not in rates.columns:
+            continue
+        for model in rates.index:
+            ci = ci_lookup.get((model, group))
+            summary_rows.append(
+                {
+                    column: group,
+                    "items": item_counts.get(group, 0),
+                    "model": model,
+                    "match_rate": rates.loc[model, group],
+                    "ci_low": ci[0] if ci else None,
+                    "ci_high": ci[1] if ci else None,
+                }
+            )
+    write_csv(pd.DataFrame(summary_rows), OUTPUT_DIR / f"{name}_summary.csv")
 
 
 def main() -> None:
