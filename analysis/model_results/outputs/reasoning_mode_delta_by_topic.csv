@@ -1,0 +1,28 @@
+topic,model_family,baseline_model,reasoning_model,baseline_n,reasoning_n,reasoning_minus_baseline_pp
+Politics,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,12.941176470588234
+History,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,5.88235294117646
+Geography,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,5.882352941176472
+Arts,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,12.941176470588234
+Sports,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,4.117647058823525
+National Heritage,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,4.117647058823537
+Kid's World,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,-2.941176470588236
+Everyday Life,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,0.8875739644970404
+Wildcard,DeepSeek V4 Pro,deepseek-v4-pro,deepseek-v4-pro-thinking,1699,1700,2.941176470588236
+Politics,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-1.17647058823529
+History,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-1.176470588235301
+Geography,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-2.35294117647058
+Arts,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-0.588235294117645
+Sports,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-0.588235294117645
+National Heritage,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-1.17647058823529
+Kid's World,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,0.588235294117645
+Everyday Life,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-1.17647058823529
+Wildcard,GPT-5.5,GPT5.5 [none],GPT5.5 [high],1700,1700,-6.176470588235294
+Politics,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,5.882352941176472
+History,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,6.470588235294117
+Geography,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,7.647058823529407
+Arts,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,7.058823529411762
+Sports,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,11.764705882352944
+National Heritage,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,8.235294117647063
+Kid's World,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,5.882352941176472
+Everyday Life,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,7.647058823529418
+Wildcard,Claude Opus 4.7,claude-opus-4-7 [none],claude-opus-4-7 [thinking],1700,1700,6.176470588235294

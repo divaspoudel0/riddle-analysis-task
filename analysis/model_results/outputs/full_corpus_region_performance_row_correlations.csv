@@ -1,0 +1,13 @@
+model_display,spearman_to_group_mean
+gemini-3.1-pro-preview,0.8303030303030302
+GPT5.5-search,0.9151515151515152
+deepseek-v4-pro-thinking,0.9515151515151514
+deepseek-v4-pro,0.9515151515151514
+Apertus-v1.5-70B,0.9515151515151514
+EuroLLM-22B-Instruct-2512,0.9272727272727272
+Apertus-70B-Instruct-2509,0.9393939393939393
+Apertus-v1.5-8B,0.8814630383360936
+Apertus-8B-Instruct-2509,0.9300954818304988
+Tiny-Aya earth,0.5757575757575757
+Tiny-Aya fire,0.5045616012544536
+Tiny-Aya water,0.6

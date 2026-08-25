@@ -1,0 +1,62 @@
+community,language_code,language_label,country,region,language_group
+afaan_oromo_oromo,gaz,Oromo,Ethiopia,Sub-Saharan Africa,
+arabic_egypt,arz,Egyptian Arabic,Egypt,North Africa,Arabic varieties
+arabic_lebanese,apc,Levantine Arabic,Lebanon,West Asia,Arabic varieties
+arabic_morocco,ary,Moroccan Arabic,Morocco,North Africa,Arabic varieties
+arabic_sudan,apd,Sudanese Arabic,Sudan,North Africa,Arabic varieties
+arabic_syria,apc,Levantine Arabic,Syria,West Asia,Arabic varieties
+assamese_india,asm,Assamese,India,South Asia,
+belarusian_belarus,bel,Belarusian,Belarus,Europe,
+bengali_bangladesh,ben,Bengali,Bangladesh,South Asia,Bengali
+bengali_india,ben,Bengali,India,South Asia,Bengali
+brazilian_portuguese,por,Portuguese,Brazil,Latin America,Portuguese
+bugisnese_indonesia,bug,Buginese,Indonesia,Southeast Asia,
+bulgarian_bulgaria,bul,Bulgarian,Bulgaria,Europe,
+cantonese_china,yue,Cantonese,China,East Asia,Chinese varieties
+catalan_catalonia,cat,Catalan,Spain,Europe,
+chinese_china,zho,Chinese,China,East Asia,Chinese varieties
+chinese_malaysia,zho,Chinese,Malaysia,Southeast Asia,Chinese varieties
+chinese_simplified_china,zho,Chinese,China,East Asia,Chinese varieties
+chinese_singapore,zho,Chinese,Singapore,Southeast Asia,Chinese varieties
+dutch_netherlands,nld,Dutch,Netherlands,Europe,
+english_canada,eng,English,Canada,North America,English
+english_usa,eng,English,United States,North America,English
+french_canada,fra,French,Canada,North America,French
+french_france,fra,French,France,Europe,French
+german_germany,deu,German,Germany,Europe,
+gujarati_india,guj,Gujarati,India,South Asia,
+hungarian_hungary,hun,Hungarian,Hungary,Europe,
+indonesian_indonesia,ind,Indonesian,Indonesia,Southeast Asia,
+italian_italy,ita,Italian,Italy,Europe,
+japanese_japan,jpn,Japanese,Japan,East Asia,
+kannada_india,kan,Kannada,India,South Asia,
+konkani_india,kok,Konkani,India,South Asia,
+luganda_uganda,lug,Luganda,Uganda,Sub-Saharan Africa,
+lumasaba_uganda,myx,Lumasaba,Uganda,Sub-Saharan Africa,
+luxembourgish_luxembourg,ltz,Luxembourgish,Luxembourg,Europe,
+malay_malaysia,zsm,Malay,Malaysia,Southeast Asia,
+malayalam_india,mal,Malayalam,India,South Asia,
+marathi_india,mar,Marathi,India,South Asia,
+mongondow_indonesia,mog,Mongondow,Indonesia,Southeast Asia,
+nepali_nepal,nep,Nepali,Nepal,South Asia,
+persian_iran,pes,Persian,Iran,West Asia,
+polish_poland,pol,Polish,Poland,Europe,
+portuguese_portugal,por,Portuguese,Portugal,Europe,Portuguese
+russian_russia,rus,Russian,Russia,Europe,
+serbian_serbia,srp,Serbian,Serbia,Europe,
+sindhi_india,snd,Sindhi,India,South Asia,
+sinhala_sri_lanka,sin,Sinhala,Sri Lanka,South Asia,
+spanish_argentina,spa,Spanish,Argentina,Latin America,Spanish
+spanish_cuba,spa,Spanish,Cuba,Latin America,Spanish
+spanish_peru,spa,Spanish,Peru,Latin America,Spanish
+swahili_kenya,swa,Swahili,Kenya,Sub-Saharan Africa,
+tamil_india,tam,Tamil,India,South Asia,
+telugu_india,tel,Telugu,India,South Asia,
+thai_thailand,tha,Thai,Thailand,Southeast Asia,
+tunisian_arabic_tunisia,aeb,Tunisian Arabic,Tunisia,North Africa,Arabic varieties
+turkish_turkey,tur,Turkish,Turkey,West Asia,
+ukrainian_ukraine,ukr,Ukrainian,Ukraine,Europe,
+urdu_pakistan,urd,Urdu,Pakistan,South Asia,
+uzbek_uzbekistan,uzb,Uzbek,Uzbekistan,Central Asia,
+vietnamese_vietnam,vie,Vietnamese,Vietnam,Southeast Asia,
+yoruba_nigeria,yor,Yoruba,Nigeria,Sub-Saharan Africa,
