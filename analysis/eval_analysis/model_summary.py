@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from analysis.constants import FIGURES_DIR
@@ -26,6 +27,7 @@ from analysis.eval_analysis.data import (
     load_flat_frame,
 )
 from analysis.model_results.leaderboard import load_human_eval_leaderboard
+from analysis.model_results.metrics import clustered_bootstrap_ci
 
 OUTPUT_CSV = FIGURES_DIR / "e_human_eval_model_summary.csv"
 
@@ -76,11 +78,24 @@ def build_summary(flat_csv: Path = FLAT_CSV) -> pd.DataFrame:
     ].copy()
     scored["human_correct"] = scored["score"].eq(STRICT_SCORE)
 
-    per_model = scored.groupby("model", as_index=False).agg(
-        human_correct=("human_correct", "mean"),
-        n=("human_correct", "size"),
-    )
-    per_model["human_correct"] *= 100
+    per_model_rows: list[dict[str, object]] = []
+    for model, grp in scored.groupby("model"):
+        vals = grp["human_correct"].to_numpy(dtype=float)
+        clusters = grp["community"].to_numpy()
+        if len(np.unique(clusters)) > 1:
+            lo, hi = clustered_bootstrap_ci(vals, clusters)
+        else:
+            lo, hi = float("nan"), float("nan")
+        per_model_rows.append(
+            {
+                "model": model,
+                "human_correct": vals.mean() * 100,
+                "human_correct_ci_low": lo * 100,
+                "human_correct_ci_high": hi * 100,
+                "n": len(grp),
+            }
+        )
+    per_model = pd.DataFrame(per_model_rows)
 
     per_community = scored.groupby(["model", "community"], as_index=False).agg(
         human_correct=("human_correct", "mean"),
@@ -109,9 +124,14 @@ def build_summary(flat_csv: Path = FLAT_CSV) -> pd.DataFrame:
         )
     )
 
-    exact = load_human_eval_leaderboard()[["model_display", "exact_match_accuracy"]]
+    exact = load_human_eval_leaderboard()[["model_display", "exact_match_accuracy", "em_ci_low", "em_ci_high"]]
     exact = exact.rename(
-        columns={"model_display": "model", "exact_match_accuracy": "exact_match"}
+        columns={
+            "model_display": "model",
+            "exact_match_accuracy": "exact_match",
+            "em_ci_low": "exact_match_ci_low",
+            "em_ci_high": "exact_match_ci_high",
+        }
     )
     summary = per_model.merge(exact, on="model", validate="one_to_one")
     summary = summary.merge(
@@ -142,7 +162,11 @@ def build_summary(flat_csv: Path = FLAT_CSV) -> pd.DataFrame:
     )
     summary["n_complete_communities"] = len(complete)
     summary["exact_match"] = summary["exact_match"].round(1)
+    summary["exact_match_ci_low"] = summary["exact_match_ci_low"].round(1)
+    summary["exact_match_ci_high"] = summary["exact_match_ci_high"].round(1)
     summary["human_correct"] = summary["human_correct"].round(1)
+    summary["human_correct_ci_low"] = summary["human_correct_ci_low"].round(1)
+    summary["human_correct_ci_high"] = summary["human_correct_ci_high"].round(1)
     summary["highest_community_human_correct"] = summary[
         "highest_community_human_correct"
     ].round(1)
@@ -156,7 +180,11 @@ def build_summary(flat_csv: Path = FLAT_CSV) -> pd.DataFrame:
                 "setting",
                 "is_proprietary",
                 "exact_match",
+                "exact_match_ci_low",
+                "exact_match_ci_high",
                 "human_correct",
+                "human_correct_ci_low",
+                "human_correct_ci_high",
                 "diff",
                 "highest_community_human_correct",
                 "community_with_highest_accuracy",

@@ -101,7 +101,11 @@ def build_model_performance() -> pd.DataFrame:
                 {True: "Proprietary", False: "Open"}
             ),
             "exact_match": summary["exact_match"],
+            "exact_match_ci_low": summary.get("exact_match_ci_low"),
+            "exact_match_ci_high": summary.get("exact_match_ci_high"),
             "human_accuracy": summary["human_correct"],
+            "human_accuracy_ci_low": summary.get("human_correct_ci_low"),
+            "human_accuracy_ci_high": summary.get("human_correct_ci_high"),
             "difference_pp": (
                 summary["human_correct"] - summary["exact_match"].astype(float)
             ).round(1),
@@ -136,12 +140,36 @@ def corpus_coverage_display(frame: pd.DataFrame | None = None) -> pd.DataFrame:
 def model_performance_display(frame: pd.DataFrame | None = None) -> pd.DataFrame:
     """Return the model table with compact paper/dashboard formatting."""
     source = build_model_performance() if frame is None else frame
+
+    def _fmt_pct_with_ci(val, ci_lo, ci_hi):
+        if pd.isna(val):
+            return ""
+        if pd.isna(ci_lo) or pd.isna(ci_hi):
+            return f"{val:.1f}"
+        return f"{val:.1f} [{ci_lo:.1f}, {ci_hi:.1f}]"
+
     display = pd.DataFrame(
         {
             "Model": source["model"],
             "Access": source["access"],
-            "Exact (%)": source["exact_match"].map(lambda value: f"{value:.1f}"),
-            "Human (%)": source["human_accuracy"].map(lambda value: f"{value:.1f}"),
+            "Exact (%)": [
+                _fmt_pct_with_ci(v, lo, hi)
+                for v, lo, hi in zip(
+                    source["exact_match"],
+                    source.get("exact_match_ci_low", pd.Series(dtype=float)),
+                    source.get("exact_match_ci_high", pd.Series(dtype=float)),
+                    strict=True,
+                )
+            ],
+            "Human (%)": [
+                _fmt_pct_with_ci(v, lo, hi)
+                for v, lo, hi in zip(
+                    source["human_accuracy"],
+                    source.get("human_accuracy_ci_low", pd.Series(dtype=float)),
+                    source.get("human_accuracy_ci_high", pd.Series(dtype=float)),
+                    strict=True,
+                )
+            ],
             "Δ (pp)": source["difference_pp"].map(lambda value: f"{value:+.1f}"),
             "Max (%)": source["max_community_accuracy"].map(
                 lambda value: f"{value:.1f}"

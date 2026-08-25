@@ -154,3 +154,133 @@ def model_summary_with_ci(df: pd.DataFrame, n_boot: int = 2000) -> pd.DataFrame:
     out["ci_low"] = lo
     out["ci_high"] = hi
     return out
+
+
+def clustered_bootstrap_ci(
+    values: np.ndarray,
+    clusters: np.ndarray,
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+) -> tuple[float, float]:
+    """Percentile bootstrap CI that resamples clusters (e.g. communities).
+
+    When rows from the same community are not independent, resampling
+    individual observations understates variance.  This function resamples
+    *communities* (clusters) with replacement and computes the statistic on
+    the pooled observations within each bootstrap replicate.
+
+    Args:
+        values: Binary 0/1 correctness array.
+        clusters: Cluster labels (e.g. community IDs) aligned with *values*.
+        n_boot: Number of bootstrap replicates.
+        alpha: Significance level for the two-sided interval.
+
+    Returns:
+        ``(ci_low, ci_high)`` bounds on the mean.
+    """
+    if len(values) == 0:
+        return (float("nan"), float("nan"))
+    unique_clusters = np.unique(clusters)
+    rng = np.random.default_rng(RNG_SEED)
+    cluster_idx = {
+        label: np.where(clusters == label)[0] for label in unique_clusters
+    }
+    means = np.empty(n_boot)
+    for i in range(n_boot):
+        sampled = rng.choice(unique_clusters, size=len(unique_clusters), replace=True)
+        idx = np.concatenate([cluster_idx[c] for c in sampled])
+        means[i] = values[idx].mean()
+    return (
+        float(np.quantile(means, alpha / 2)),
+        float(np.quantile(means, 1 - alpha / 2)),
+    )
+
+
+def group_accuracy_ci(
+    df: pd.DataFrame,
+    group_col: str,
+    *,
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+    use_clustered: bool = True,
+) -> pd.DataFrame:
+    """Bootstrap accuracy CIs for every (model_display, group) pair.
+
+    Args:
+        df: Scored results frame with ``model_display``, ``is_completed``,
+            ``is_correct``, and *group_col*.
+        group_col: Column name to group by (e.g. ``"topic"``, ``"region"``).
+        n_boot: Number of bootstrap replicates.
+        alpha: Significance level.
+        use_clustered: If True, resample by community within each
+            (model, group) cell for variance-aware intervals.
+
+    Returns:
+        DataFrame with columns ``model_display``, *group_col*, ``accuracy``,
+        ``ci_low``, ``ci_high``, ``n``.
+    """
+    records: list[dict[str, object]] = []
+    scored = df[df.is_completed].copy()
+    for (model, group), cell in scored.groupby(["model_display", group_col]):
+        vals = cell["is_correct"].to_numpy(dtype=float)
+        if use_clustered and "instance_community" in cell.columns:
+            clusters = cell["instance_community"].to_numpy()
+            lo, hi = clustered_bootstrap_ci(vals, clusters, n_boot=n_boot, alpha=alpha)
+        else:
+            lo, hi = bootstrap_ci(vals, n_boot=n_boot, alpha=alpha)
+        records.append(
+            {
+                "model_display": model,
+                group_col: group,
+                "accuracy": float(vals.mean()),
+                "ci_low": lo,
+                "ci_high": hi,
+                "n": len(vals),
+            }
+        )
+    return pd.DataFrame(records)
+
+
+def topic_ci_rates(
+    results: pd.DataFrame,
+    *,
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+    use_clustered: bool = True,
+) -> pd.DataFrame:
+    """Bootstrap CI rates by model and topic, matching ``topic_rates`` layout.
+
+    Returns:
+        Long-format DataFrame with model, topic, accuracy, ci_low, ci_high, n.
+    """
+    from analysis.model_results.model_data import canonical_topic, performance_order
+
+    frame = results.assign(topic=results["riddle_id"].map(canonical_topic))
+    ci_df = group_accuracy_ci(
+        frame, "topic", n_boot=n_boot, alpha=alpha, use_clustered=use_clustered
+    )
+    topic_order = list(
+        performance_order(results)
+    )  # reuse model ordering
+    ci_df["model_display"] = pd.Categorical(
+        ci_df["model_display"], categories=topic_order, ordered=True
+    )
+    return ci_df.sort_values(["topic", "model_display"]).reset_index(drop=True)
+
+
+def group_ci_rates(
+    results: pd.DataFrame,
+    group_col: str,
+    *,
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+    use_clustered: bool = True,
+) -> pd.DataFrame:
+    """Bootstrap CI rates by model and corpus group, matching ``match_rates`` layout.
+
+    Returns:
+        Long-format DataFrame with model, group_col, accuracy, ci_low, ci_high, n.
+    """
+    return group_accuracy_ci(
+        results, group_col, n_boot=n_boot, alpha=alpha, use_clustered=use_clustered
+    )
